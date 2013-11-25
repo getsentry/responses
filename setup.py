@@ -49,7 +49,7 @@ setup(
         'A utility library for mocking out the `requests` Python library.'
     ),
     long_description=open('README.rst').read(),
-    moduels=['responses'],
+    py_modules=['responses'],
     zip_safe=False,
     install_requires=install_requires,
     extras_require={

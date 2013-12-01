@@ -6,6 +6,7 @@ A utility library for mocking out the `requests` Python library.
 .. code-block:: python
 
     import responses
+    import requests
 
     @responses.activate
     def test_my_api():

@@ -49,7 +49,8 @@ class RequestsMock(object):
             content_type='text/plain'):
         # ensure the url has a default path set
         if url.count('/') == 2:
-            url = url + '/'
+            url = url.replace('?', '/?', 1) if match_querystring \
+                else url + '/'
 
         self._urls.append({
             'url': url,

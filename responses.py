@@ -19,9 +19,9 @@ from __future__ import absolute_import, print_function, division
 import re
 
 try:
-    from cStringIO import StringIO
+    from six import cStringIO as StringIO
 except ImportError:
-    from StringIO import StringIO
+    from six import StringIO
 
 from functools import wraps
 from requests.adapters import HTTPAdapter

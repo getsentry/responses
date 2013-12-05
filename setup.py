@@ -20,6 +20,7 @@ if 'test' in sys.argv:
 install_requires = [
     'requests',
     'mock',
+    'six',
 ]
 
 tests_require = [

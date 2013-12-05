@@ -1,6 +1,9 @@
 Responses
 =========
 
+.. image:: https://travis-ci.org/dropbox/responses.png?branch=master
+	:target: https://travis-ci.org/dropbox/responses
+
 A utility library for mocking out the `requests` Python library.
 
 .. code-block:: python

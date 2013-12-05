@@ -20,10 +20,14 @@ from __future__ import (
 
 import re
 
-try:
-    from six import cStringIO as StringIO
-except ImportError:
-    from six import StringIO
+import six
+if six.PY2:
+    try:
+        from six import cStringIO as BufferIO
+    except ImportError:
+        from six import StringIO as BufferIO
+else:
+    from io import BytesIO as BufferIO
 
 from functools import wraps
 from requests.adapters import HTTPAdapter
@@ -112,7 +116,7 @@ class RequestsMock(object):
 
         response = HTTPResponse(
             status=match['status'],
-            body=StringIO(match['body']),
+            body=BufferIO(match['body']),
             headers=headers,
             preload_content=False,
         )

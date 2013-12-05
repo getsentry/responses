@@ -18,7 +18,7 @@ def assert_response(resp, body=None):
 def test_response():
     @responses.activate
     def run():
-        responses.add(responses.GET, 'http://example.com', body=str('test'))
+        responses.add(responses.GET, 'http://example.com', body=b'test')
         resp = requests.get('http://example.com')
         assert_response(resp, 'test')
 
@@ -50,7 +50,7 @@ def test_match_querystring():
         url = 'http://example.com?test=1'
         responses.add(
             responses.GET, url,
-            match_querystring=True, body=str('test'))
+            match_querystring=True, body=b'test')
         resp = requests.get(url)
         assert_response(resp, 'test')
 

@@ -1,3 +1,7 @@
+from __future__ import (
+    absolute_import, print_function, division, unicode_literals
+)
+
 import requests
 import responses
 import pytest
@@ -14,7 +18,7 @@ def assert_response(resp, body=None):
 def test_response():
     @responses.activate
     def run():
-        responses.add(responses.GET, 'http://example.com', body='test')
+        responses.add(responses.GET, 'http://example.com', body=str('test'))
         resp = requests.get('http://example.com')
         assert_response(resp, 'test')
 
@@ -46,7 +50,7 @@ def test_match_querystring():
         url = 'http://example.com?test=1'
         responses.add(
             responses.GET, url,
-            match_querystring=True, body='test')
+            match_querystring=True, body=str('test'))
         resp = requests.get(url)
         assert_response(resp, 'test')
 

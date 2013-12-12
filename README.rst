@@ -21,6 +21,8 @@ A utility library for mocking out the `requests` Python library.
 
         assert resp.json() == {"error": "not found"}
 
+.. note:: Responses requires Requests >= 1.0
+
 
 License
 =======

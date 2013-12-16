@@ -106,7 +106,8 @@ class RequestsMock(object):
 
         # TODO(dcramer): find the correct class for this
         if match is None:
-            raise ConnectionError('Connection refused: {0}'.format(request.url))
+            error_msg = 'Connection refused: {0}'.format(request.url)
+            raise ConnectionError(error_msg)
 
         headers = {
             'Content-Type': match['content_type'],

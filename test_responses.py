@@ -9,6 +9,11 @@ import pytest
 from requests.exceptions import ConnectionError
 
 
+def assert_reset():
+    assert len(responses._default_mock._urls) == 0
+    assert len(responses.calls) == 0
+
+
 def assert_response(resp, body=None):
     assert resp.status_code == 200
     assert resp.headers['Content-Type'] == 'text/plain'
@@ -21,8 +26,12 @@ def test_response():
         responses.add(responses.GET, 'http://example.com', body=b'test')
         resp = requests.get('http://example.com')
         assert_response(resp, 'test')
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.url == 'http://example.com/'
+        assert responses.calls[0].response.content == 'test'
 
     run()
+    assert_reset()
 
 
 def test_connection_error():
@@ -32,16 +41,13 @@ def test_connection_error():
 
         with pytest.raises(ConnectionError):
             requests.get('http://example.com/foo')
-    run()
 
-
-def test_reset():
-    @responses.activate
-    def run():
-        responses.add(responses.GET, 'http://example.com')
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.url == 'http://example.com/foo'
+        assert type(responses.calls[0].response) is ConnectionError
 
     run()
-    assert len(responses._default_mock._urls) == 0
+    assert_reset()
 
 
 def test_match_querystring():
@@ -55,6 +61,7 @@ def test_match_querystring():
         assert_response(resp, 'test')
 
     run()
+    assert_reset()
 
 
 def test_match_querystring_error():
@@ -68,3 +75,4 @@ def test_match_querystring_error():
             requests.get('http://example.com/foo/?test=2')
 
     run()
+    assert_reset()

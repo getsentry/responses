@@ -21,6 +21,10 @@ A utility library for mocking out the `requests` Python library.
 
         assert resp.json() == {"error": "not found"}
 
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.url == 'http://twitter.com/api/1/foobar'
+        assert responses.calls[0].response.content == '{"error": "not found"}'
+
 .. note:: Responses requires Requests >= 1.0
 
 

@@ -29,10 +29,33 @@ if six.PY2:
 else:
     from io import BytesIO as BufferIO
 
+from collections import namedtuple, Sequence, Sized
 from functools import wraps
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 from requests.packages.urllib3.response import HTTPResponse
+
+Call = namedtuple('Call', ['request', 'response'])
+
+
+class CallList(Sequence, Sized):
+    def __init__(self):
+        self._calls = []
+
+    def __iter__(self):
+        return iter(self._calls)
+
+    def __len__(self):
+        return len(self._calls)
+
+    def __getitem__(self, idx):
+        return self._calls[idx]
+
+    def add(self, request, response):
+        self._calls.append(Call(request, response))
+
+    def reset(self):
+        self._calls = []
 
 
 class RequestsMock(object):
@@ -45,10 +68,12 @@ class RequestsMock(object):
     PUT = 'PUT'
 
     def __init__(self):
+        self._calls = CallList()
         self.reset()
 
     def reset(self):
         self._urls = []
+        self._calls.reset()
 
     def add(self, method, url, body='', match_querystring=False,
             status=200, adding_headers=None, stream=False,
@@ -68,6 +93,10 @@ class RequestsMock(object):
             'adding_headers': adding_headers,
             'stream': stream,
         })
+
+    @property
+    def calls(self):
+        return self._calls
 
     def activate(self, func):
         @wraps(func)
@@ -107,7 +136,10 @@ class RequestsMock(object):
         # TODO(dcramer): find the correct class for this
         if match is None:
             error_msg = 'Connection refused: {0}'.format(request.url)
-            raise ConnectionError(error_msg)
+            response = ConnectionError(error_msg)
+
+            self._calls.add(request, response)
+            raise response
 
         headers = {
             'Content-Type': match['content_type'],
@@ -124,10 +156,13 @@ class RequestsMock(object):
 
         adapter = HTTPAdapter()
 
-        r = adapter.build_response(request, response)
+        response = adapter.build_response(request, response)
         if not match['stream']:
-            r.content  # NOQA
-        return r
+            response.content  # NOQA
+
+        self._calls.add(request, response)
+
+        return response
 
     def _start(self):
         import mock

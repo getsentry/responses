@@ -28,7 +28,7 @@ def test_response():
         assert_response(resp, 'test')
         assert len(responses.calls) == 1
         assert responses.calls[0].request.url == 'http://example.com/'
-        assert responses.calls[0].response.content == 'test'
+        assert responses.calls[0].response.content == b'test'
 
     run()
     assert_reset()

@@ -83,6 +83,10 @@ class RequestsMock(object):
             url = url.replace('?', '/?', 1) if match_querystring \
                 else url + '/'
 
+        # body must be bytes
+        if isinstance(body, six.text_type):
+            body = body.encode('utf-8')
+
         self._urls.append({
             'url': url,
             'method': method,

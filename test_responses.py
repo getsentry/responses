@@ -76,3 +76,16 @@ def test_match_querystring_error():
 
     run()
     assert_reset()
+
+
+def test_accept_string_body():
+    @responses.activate
+    def run():
+        url = 'http://example.com/'
+        responses.add(
+            responses.GET, url, body='test')
+        resp = requests.get(url)
+        assert_response(resp, 'test')
+
+    run()
+    assert_reset()

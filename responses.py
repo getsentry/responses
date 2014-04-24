@@ -105,11 +105,11 @@ class RequestsMock(object):
     def activate(self, func):
         @wraps(func)
         def wrapped(*args, **kwargs):
-            self._start()
+            self.start()
             try:
                 return func(*args, **kwargs)
             finally:
-                self._stop()
+                self.stop()
                 self.reset()
         return wrapped
 
@@ -168,12 +168,12 @@ class RequestsMock(object):
 
         return response
 
-    def _start(self):
+    def start(self):
         import mock
         self._patcher = mock.patch('requests.Session.send', self._on_request)
         self._patcher.start()
 
-    def _stop(self):
+    def stop(self):
         self._patcher.stop()
 
 

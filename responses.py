@@ -33,7 +33,10 @@ from collections import namedtuple, Sequence, Sized
 from functools import wraps
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
-from requests.packages.urllib3.response import HTTPResponse
+try:
+    from requests.packages.urllib3.response import HTTPResponse
+except ImportError:
+    from urllib3.response import HTTPResponse
 
 Call = namedtuple('Call', ['request', 'response'])
 

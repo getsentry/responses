@@ -30,7 +30,7 @@ else:
     from io import BytesIO as BufferIO
 
 from collections import namedtuple, Sequence, Sized
-from functools import wraps
+from decorator import decorator
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 try:
@@ -105,16 +105,16 @@ class RequestsMock(object):
     def calls(self):
         return self._calls
 
+    def _activate(self, func, *args, **kwargs):
+        self.start()
+        try:
+            return func(*args, **kwargs)
+        finally:
+            self.stop()
+            self.reset()
+
     def activate(self, func):
-        @wraps(func)
-        def wrapped(*args, **kwargs):
-            self.start()
-            try:
-                return func(*args, **kwargs)
-            finally:
-                self.stop()
-                self.reset()
-        return wrapped
+        return decorator(caller=self._activate, func=func)
 
     def _find_match(self, request):
         url = request.url

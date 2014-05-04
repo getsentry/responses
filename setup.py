@@ -21,6 +21,7 @@ install_requires = [
     'requests',
     'mock',
     'six',
+    'decorator',
 ]
 
 tests_require = [

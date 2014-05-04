@@ -2,6 +2,7 @@ from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
 
+from inspect import getargspec
 import requests
 import responses
 import pytest
@@ -89,3 +90,13 @@ def test_accept_string_body():
 
     run()
     assert_reset()
+
+
+def test_activate_doesnt_change_signature():
+
+    def test_function(a, b=None):
+        pass
+
+    decorated_test_function = responses.activate(test_function)
+
+    assert getargspec(test_function) == getargspec(decorated_test_function)

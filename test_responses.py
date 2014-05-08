@@ -89,3 +89,24 @@ def test_accept_string_body():
 
     run()
     assert_reset()
+
+
+def test_one_shot():
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET, 'http://example.com',
+            body=b'test', one_shot=True)
+
+        resp = requests.get('http://example.com')
+        assert_response(resp, 'test')
+
+        with pytest.raises(ConnectionError):
+            requests.get('http://example.com')
+
+        assert len(responses.calls) == 2
+        assert responses.calls[0].response.content == b'test'
+        assert type(responses.calls[1].response) is ConnectionError
+
+    run()
+    assert_reset()

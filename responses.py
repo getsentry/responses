@@ -80,7 +80,7 @@ class RequestsMock(object):
 
     def add(self, method, url, body='', match_querystring=False,
             status=200, adding_headers=None, stream=False,
-            content_type='text/plain'):
+            content_type='text/plain', one_shot=False):
         # ensure the url has a default path set
         if url.count('/') == 2:
             url = url.replace('?', '/?', 1) if match_querystring \
@@ -99,6 +99,7 @@ class RequestsMock(object):
             'status': status,
             'adding_headers': adding_headers,
             'stream': stream,
+            'one_shot': one_shot,
         })
 
     @property
@@ -120,7 +121,7 @@ class RequestsMock(object):
         url = request.url
         url_without_qs = url.split('?', 1)[0]
 
-        for match in self._urls:
+        for i, match in enumerate(self._urls):
             if request.method != match['method']:
                 continue
 
@@ -133,6 +134,8 @@ class RequestsMock(object):
                 if match['url'] != url_without_qs:
                     continue
 
+            if match['one_shot']:
+                del self._urls[i]
             return match
 
         return None

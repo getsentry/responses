@@ -53,11 +53,13 @@ def test_connection_error():
 def test_match_querystring():
     @responses.activate
     def run():
-        url = 'http://example.com?test=1'
+        url = 'http://example.com?test=1&foo=bar'
         responses.add(
             responses.GET, url,
             match_querystring=True, body=b'test')
-        resp = requests.get(url)
+        resp = requests.get('http://example.com?test=1&foo=bar')
+        assert_response(resp, 'test')
+        resp = requests.get('http://example.com?foo=bar&test=1')
         assert_response(resp, 'test')
 
     run()

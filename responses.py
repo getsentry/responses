@@ -19,8 +19,8 @@ from __future__ import (
 )
 
 import re
-
 import six
+
 if six.PY2:
     try:
         from six import cStringIO as BufferIO
@@ -37,6 +37,11 @@ try:
     from requests.packages.urllib3.response import HTTPResponse
 except ImportError:
     from urllib3.response import HTTPResponse
+if six.PY2:
+    from urlparse import urlparse, parse_qsl
+else:
+    from urllib.parse import urlparse, parse_qsl
+
 
 Call = namedtuple('Call', ['request', 'response'])
 
@@ -124,10 +129,8 @@ class RequestsMock(object):
             if request.method != match['method']:
                 continue
 
-            # TODO(dcramer): we could simplify this by compiling a single
-            # regexp on register
             if match['match_querystring']:
-                if not re.match(re.escape(match['url']), url):
+                if not self._has_url_match(match['url'], url):
                     continue
             else:
                 if match['url'] != url_without_qs:
@@ -136,6 +139,17 @@ class RequestsMock(object):
             return match
 
         return None
+
+    def _has_url_match(self, url, other):
+        url_parsed = urlparse(url)
+        other_parsed = urlparse(other)
+
+        if url_parsed[:3] != other_parsed[:3]:
+            return False
+
+        url_qsl = sorted(parse_qsl(url_parsed.query))
+        other_qsl = sorted(parse_qsl(other_parsed.query))
+        return url_qsl == other_qsl
 
     def _on_request(self, request, **kwargs):
         match = self._find_match(request)

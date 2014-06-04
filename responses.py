@@ -144,7 +144,6 @@ class RequestsMock(object):
         return self._calls
 
     def activate(self, func):
-        # @wraps(func)
         def wrapped(*args, **kwargs):
             self.start()
             try:
@@ -152,9 +151,7 @@ class RequestsMock(object):
             finally:
                 self.stop()
                 self.reset()
-
         return update_wrapper(wrapped, func)
-        # return wrapped
 
     def _find_match(self, request):
         url = request.url

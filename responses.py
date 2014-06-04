@@ -28,8 +28,9 @@ if six.PY2:
 else:
     from io import BytesIO as BufferIO
 
+import inspect
 from collections import namedtuple, Sequence, Sized
-from functools import wraps
+from functools import update_wrapper as _update_wrapper
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 try:
@@ -43,6 +44,39 @@ else:
 
 
 Call = namedtuple('Call', ['request', 'response'])
+
+_wrapper_template = """\
+def _wrapper_(%(signature)s):
+    return %(tgt_func)s(%(signature)s)
+"""
+
+
+def update_wrapper(wrapper, wrapped):
+    """Preserves the argspec for a wrapped function so that testing tools such as pytest
+    can continue to use their fixture injection.
+    :param wrapper: the wrapper function to update
+    :param wrapped: the decorated test function
+    """
+    target_argspec = inspect.getargspec(wrapper)
+    need_self = len(target_argspec[0]) > 0 and target_argspec[0][0] == 'self'
+
+    newargspec = inspect.getargspec(wrapped)
+    need_self = len(newargspec[0]) > 0 and newargspec[0][0] == 'self'
+
+    if need_self:
+        newargspec = (newargspec[0],) + newargspec[1:]
+
+    signature = inspect.formatargspec(formatvalue=lambda val: "", *newargspec)[1:-1]
+    ctx = {'signature': signature, 'tgt_func': 'tgt_func'}
+
+    evaldict = {'tgt_func': wrapper}
+
+    exec _wrapper_template % ctx in evaldict
+
+    wrapper = evaldict['_wrapper_']
+    wrapper.func_defaults = wrapped.func_defaults
+    _update_wrapper(wrapper, wrapped)
+    return wrapper
 
 
 class CallList(Sequence, Sized):
@@ -110,7 +144,7 @@ class RequestsMock(object):
         return self._calls
 
     def activate(self, func):
-        @wraps(func)
+        # @wraps(func)
         def wrapped(*args, **kwargs):
             self.start()
             try:
@@ -118,7 +152,9 @@ class RequestsMock(object):
             finally:
                 self.stop()
                 self.reset()
-        return wrapped
+
+        return update_wrapper(wrapped, func)
+        # return wrapped
 
     def _find_match(self, request):
         url = request.url

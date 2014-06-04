@@ -57,9 +57,6 @@ def update_wrapper(wrapper, wrapped):
     :param wrapper: the wrapper function to update
     :param wrapped: the decorated test function
     """
-    target_argspec = inspect.getargspec(wrapper)
-    need_self = len(target_argspec[0]) > 0 and target_argspec[0][0] == 'self'
-
     newargspec = inspect.getargspec(wrapped)
     need_self = len(newargspec[0]) > 0 and newargspec[0][0] == 'self'
 

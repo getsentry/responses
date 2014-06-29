@@ -30,6 +30,7 @@ else:
 
 from collections import namedtuple, Sequence, Sized
 from functools import wraps
+import json
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 try:
@@ -104,6 +105,17 @@ class RequestsMock(object):
             'adding_headers': adding_headers,
             'stream': stream,
         })
+
+    def add_json(self, method, url, body=None, match_querystring=False,
+                 status=200, adding_headers=None, stream=False):
+        """
+        Adds a JSON response. It's the same as calling `responses.add`
+        assuming that `body` is a dict and content_type is `application/json`.
+        """
+        body = json.dumps(body or {})
+        self.add(method, url, body=body, match_querystring=match_querystring,
+                 status=status, adding_headers=adding_headers, stream=stream,
+                 content_type='application/json')
 
     @property
     def calls(self):

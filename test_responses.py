@@ -101,8 +101,8 @@ def test_add_json():
         body = {'some-key': 'a-value'}
         responses.add_json(responses.GET, url, body=body)
         resp = requests.get(url)
-        assert_response(resp, json.dumps(body), content_type='application/json')
+        assert_response(resp, json.dumps(body),
+                        content_type='application/json')
 
     run()
     assert_reset()
-

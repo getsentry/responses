@@ -5,6 +5,7 @@ from __future__ import (
 import requests
 import responses
 import pytest
+import json
 
 from requests.exceptions import ConnectionError
 
@@ -14,9 +15,9 @@ def assert_reset():
     assert len(responses.calls) == 0
 
 
-def assert_response(resp, body=None):
+def assert_response(resp, body=None, content_type='text/plain'):
     assert resp.status_code == 200
-    assert resp.headers['Content-Type'] == 'text/plain'
+    assert resp.headers['Content-Type'] == content_type
     assert resp.text == body
 
 
@@ -91,3 +92,17 @@ def test_accept_string_body():
 
     run()
     assert_reset()
+
+
+def test_add_json():
+    @responses.activate
+    def run():
+        url = 'http://example.com/'
+        body = {'some-key': 'a-value'}
+        responses.add_json(responses.GET, url, body=body)
+        resp = requests.get(url)
+        assert_response(resp, json.dumps(body), content_type='application/json')
+
+    run()
+    assert_reset()
+

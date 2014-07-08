@@ -84,7 +84,7 @@ class RequestsMock(object):
 
     def add(self, method, url, body='', match_querystring=False,
             status=200, adding_headers=None, stream=False,
-            content_type='text/plain'):
+            throw_exception=None, content_type='text/plain'):
         # ensure the url has a default path set
         if url.count('/') == 2:
             url = url.replace('?', '/?', 1) if match_querystring \
@@ -103,6 +103,7 @@ class RequestsMock(object):
             'status': status,
             'adding_headers': adding_headers,
             'stream': stream,
+            'throw_exception': throw_exception
         })
 
     @property
@@ -160,6 +161,10 @@ class RequestsMock(object):
 
             self._calls.add(request, response)
             raise response
+
+        if match['throw_exception']:
+            self._calls.add(request, match['throw_exception'])
+            raise match['throw_exception']
 
         headers = {
             'Content-Type': match['content_type'],

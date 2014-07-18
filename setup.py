@@ -33,7 +33,7 @@ tests_require = [
 class PyTest(TestCommand):
     def finalize_options(self):
         TestCommand.finalize_options(self)
-        self.test_args = ['tests']
+        self.test_args = ['test_responses.py']
         self.test_suite = True
 
     def run_tests(self):

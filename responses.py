@@ -105,6 +105,17 @@ class RequestsMock(object):
             'stream': stream,
         })
 
+    def add_callback(self, method, url, callback, match_querystring=False,
+                     content_type='text/plain'):
+
+        self._urls.append({
+            'url': url,
+            'method': method,
+            'callback': callback,
+            'content_type': content_type,
+            'match_querystring': match_querystring,
+        })
+
     @property
     def calls(self):
         return self._calls
@@ -164,12 +175,21 @@ class RequestsMock(object):
         headers = {
             'Content-Type': match['content_type'],
         }
-        if match['adding_headers']:
-            headers.update(match['adding_headers'])
+
+        if 'callback' in match:  # use callback
+            status, r_headers, body = match['callback'](request)
+            body = BufferIO(body.encode('utf-8'))
+            headers.update(r_headers)
+
+        elif 'body' in match:
+            if match['adding_headers']:
+                headers.update(match['adding_headers'])
+            status = match['status']
+            body = BufferIO(match['body'])
 
         response = HTTPResponse(
-            status=match['status'],
-            body=BufferIO(match['body']),
+            status=status,
+            body=body,
             headers=headers,
             preload_content=False,
         )
@@ -177,7 +197,7 @@ class RequestsMock(object):
         adapter = HTTPAdapter()
 
         response = adapter.build_response(request, response)
-        if not match['stream']:
+        if not match.get('stream'):
             response.content  # NOQA
 
         self._calls.add(request, response)

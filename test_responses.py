@@ -91,3 +91,25 @@ def test_accept_string_body():
 
     run()
     assert_reset()
+
+
+def test_callback():
+    body = 'test callback'
+    status = 400
+    headers = {'foo': 'bar'}
+    url = 'http://example.com/'
+
+    def request_callback(request):
+        return (status, headers, body)
+
+    @responses.activate
+    def run():
+        responses.add_callback(responses.GET, url, request_callback)
+        resp = requests.get(url)
+        assert resp.text == body
+        assert resp.status_code == status
+        assert 'foo' in resp.headers
+        assert resp.headers['foo'] == 'bar'
+
+    run()
+    assert_reset()

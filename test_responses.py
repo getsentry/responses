@@ -2,7 +2,6 @@ from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
 
-import re
 import requests
 import responses
 import pytest
@@ -114,6 +113,7 @@ def test_callback():
 
     run()
     assert_reset()
+
 
 def test_regular_expression_url():
     @responses.activate

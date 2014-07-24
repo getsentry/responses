@@ -18,6 +18,7 @@ from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
 
+import re
 import six
 
 if six.PY2:
@@ -144,7 +145,8 @@ class RequestsMock(object):
                     continue
             else:
                 if match['url'] != url_without_qs:
-                    continue
+                    if re.search(match['url'], url_without_qs) is None:
+                        continue
 
             return match
 

@@ -2,6 +2,7 @@ from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
 
+import re
 import requests
 import responses
 import pytest
@@ -37,7 +38,7 @@ def test_response():
 def test_connection_error():
     @responses.activate
     def run():
-        responses.add(responses.GET, 'http://example.com')
+        responses.add(responses.GET, 'http://example.com$')
 
         with pytest.raises(ConnectionError):
             requests.get('http://example.com/foo')
@@ -110,6 +111,27 @@ def test_callback():
         assert resp.status_code == status
         assert 'foo' in resp.headers
         assert resp.headers['foo'] == 'bar'
+
+    run()
+    assert_reset()
+
+def test_regular_expression_url():
+    @responses.activate
+    def run():
+        url_re = r'https?://(.*\.)?example.com'
+        responses.add(responses.GET, url_re, body=b'test')
+
+        resp = requests.get('http://example.com')
+        assert_response(resp, 'test')
+
+        resp = requests.get('https://example.com')
+        assert_response(resp, 'test')
+
+        resp = requests.get('https://uk.example.com')
+        assert_response(resp, 'test')
+
+        with pytest.raises(ConnectionError):
+            requests.get('https://uk.exaaample.com')
 
     run()
     assert_reset()

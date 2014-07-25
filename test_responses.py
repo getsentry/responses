@@ -35,20 +35,6 @@ def test_response():
     assert_reset()
 
 
-def test_response_unicode():
-    @responses.activate
-    def run():
-        responses.add(responses.GET, u'http://example.com', body=b'test')
-        resp = requests.get('http://example.com')
-        assert_response(resp, 'test')
-        assert len(responses.calls) == 1
-        assert responses.calls[0].request.url == 'http://example.com/'
-        assert responses.calls[0].response.content == b'test'
-
-    run()
-    assert_reset()
-
-
 def test_connection_error():
     @responses.activate
     def run():

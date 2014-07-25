@@ -19,6 +19,7 @@ from __future__ import (
 )
 
 import re
+import types
 import six
 
 if six.PY2:
@@ -86,8 +87,9 @@ class RequestsMock(object):
     def add(self, method, url, body='', match_querystring=False,
             status=200, adding_headers=None, stream=False,
             content_type='text/plain'):
-        # ensure the url has a default path set
-        if url.count('/') == 2:
+
+        # ensure the url has a default path set if the url is a string
+        if isinstance(url, types.StringTypes) and url.count('/') == 2:
             url = url.replace('?', '/?', 1) if match_querystring \
                 else url + '/'
 
@@ -133,26 +135,31 @@ class RequestsMock(object):
         return wrapped
 
     def _find_match(self, request):
-        url = request.url
-        url_without_qs = url.split('?', 1)[0]
-
         for match in self._urls:
             if request.method != match['method']:
                 continue
 
-            if match['match_querystring']:
-                if not self._has_url_match(match['url'], url):
-                    continue
-            else:
-                if match['url'] != url_without_qs:
-                    if re.search(match['url'], url_without_qs) is None:
-                        continue
+            if not self._has_url_match(match, request.url):
+                continue
 
             return match
 
         return None
 
-    def _has_url_match(self, url, other):
+    def _has_url_match(self, match, request_url):
+        url = match['url']
+
+        if isinstance(url, types.StringTypes):
+            if match['match_querystring']:
+                return self._has_strict_url_match(url, request_url)
+            else:
+                return url == request_url
+        elif isinstance(url, re._pattern_type) and url.match(request_url):
+            return True
+        else:
+            return False
+
+    def _has_strict_url_match(self, url, other):
         url_parsed = urlparse(url)
         other_parsed = urlparse(other)
 

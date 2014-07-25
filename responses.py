@@ -19,7 +19,6 @@ from __future__ import (
 )
 
 import re
-import types
 import six
 
 if six.PY2:
@@ -89,7 +88,7 @@ class RequestsMock(object):
             content_type='text/plain'):
 
         # ensure the url has a default path set if the url is a string
-        if isinstance(url, types.StringTypes) and url.count('/') == 2:
+        if self._is_string(url) and url.count('/') == 2:
             url = url.replace('?', '/?', 1) if match_querystring \
                 else url + '/'
 
@@ -149,7 +148,7 @@ class RequestsMock(object):
     def _has_url_match(self, match, request_url):
         url = match['url']
 
-        if isinstance(url, types.StringTypes):
+        if self._is_string(url):
             if match['match_querystring']:
                 return self._has_strict_url_match(url, request_url)
             else:
@@ -169,6 +168,9 @@ class RequestsMock(object):
         url_qsl = sorted(parse_qsl(url_parsed.query))
         other_qsl = sorted(parse_qsl(other_parsed.query))
         return url_qsl == other_qsl
+
+    def _is_string(self, s):
+        return isinstance(s, (six.string_types, six.text_type))
 
     def _on_request(self, request, **kwargs):
         match = self._find_match(request)

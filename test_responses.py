@@ -31,6 +31,12 @@ def test_response():
         assert responses.calls[0].request.url == 'http://example.com/'
         assert responses.calls[0].response.content == b'test'
 
+        resp = requests.get('http://example.com?foo=bar')
+        assert_response(resp, 'test')
+        assert len(responses.calls) == 2
+        assert responses.calls[1].request.url == 'http://example.com/?foo=bar'
+        assert responses.calls[1].response.content == b'test'
+
     run()
     assert_reset()
 

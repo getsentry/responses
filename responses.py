@@ -152,7 +152,8 @@ class RequestsMock(object):
             if match['match_querystring']:
                 return self._has_strict_url_match(url, request_url)
             else:
-                return url == request_url
+                url_without_qs = request_url.split('?', 1)[0]
+                return url == url_without_qs
         elif isinstance(url, re._pattern_type) and url.match(request_url):
             return True
         else:

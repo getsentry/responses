@@ -28,7 +28,6 @@ Response body as string
         assert responses.calls[0].request.url == 'http://twitter.com/api/1/foobar'
         assert responses.calls[0].response.content == '{"error": "not found"}'
 
-
 Request callback
 ----------------
 
@@ -70,6 +69,25 @@ Request callback
             '728d329e-0e86-11e4-a748-0c84dc037c13'
         )
 
+Instead of passing a string URL into `responses.add` or `responses.add_callback`
+you can also supply a compiled regular expression.
+
+.. code-block:: python
+
+    import re
+    import responses
+    import requests
+
+    # Instead of
+    responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
+                  body='{"error": "not found"}', status=404,
+                  content_type='application/json')
+
+    # You can do the following
+    url_re = re.compile(r'https?://twitter.com/api/\d+/foobar')
+    responses.add(responses.GET, url_re,
+                  body='{"error": "not found"}', status=404,
+                  content_type='application/json')
 
 .. note:: Responses requires Requests >= 1.0
 

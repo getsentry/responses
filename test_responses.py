@@ -1,11 +1,11 @@
 from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
+import json
 
 import requests
 import responses
 import pytest
-import json
 
 from requests.exceptions import ConnectionError
 

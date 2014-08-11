@@ -2,6 +2,7 @@ from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
 
+import re
 import requests
 import responses
 import pytest
@@ -29,6 +30,12 @@ def test_response():
         assert len(responses.calls) == 1
         assert responses.calls[0].request.url == 'http://example.com/'
         assert responses.calls[0].response.content == b'test'
+
+        resp = requests.get('http://example.com?foo=bar')
+        assert_response(resp, 'test')
+        assert len(responses.calls) == 2
+        assert responses.calls[1].request.url == 'http://example.com/?foo=bar'
+        assert responses.calls[1].response.content == b'test'
 
     run()
     assert_reset()
@@ -80,6 +87,54 @@ def test_match_querystring_error():
     assert_reset()
 
 
+def test_match_querystring_regex():
+    @responses.activate
+    def run():
+        """Note that `match_querystring` value shouldn't matter when passing a
+        regular expression"""
+
+        responses.add(
+            responses.GET, re.compile(r'http://example\.com/foo/\?test=1'),
+            body='test1', match_querystring=True)
+
+        resp = requests.get('http://example.com/foo/?test=1')
+        assert_response(resp, 'test1')
+
+        responses.add(
+            responses.GET, re.compile(r'http://example\.com/foo/\?test=2'),
+            body='test2', match_querystring=False)
+
+        resp = requests.get('http://example.com/foo/?test=2')
+        assert_response(resp, 'test2')
+
+    run()
+    assert_reset()
+
+
+def test_match_querystring_error_regex():
+    @responses.activate
+    def run():
+        """Note that `match_querystring` value shouldn't matter when passing a
+        regular expression"""
+
+        responses.add(
+            responses.GET, re.compile(r'http://example\.com/foo/\?test=1'),
+            match_querystring=True)
+
+        with pytest.raises(ConnectionError):
+            requests.get('http://example.com/foo/?test=3')
+
+        responses.add(
+            responses.GET, re.compile(r'http://example\.com/foo/\?test=2'),
+            match_querystring=False)
+
+        with pytest.raises(ConnectionError):
+            requests.get('http://example.com/foo/?test=4')
+
+    run()
+    assert_reset()
+
+
 def test_accept_string_body():
     @responses.activate
     def run():
@@ -110,6 +165,28 @@ def test_callback():
         assert resp.status_code == status
         assert 'foo' in resp.headers
         assert resp.headers['foo'] == 'bar'
+
+    run()
+    assert_reset()
+
+
+def test_regular_expression_url():
+    @responses.activate
+    def run():
+        url = re.compile(r'https?://(.*\.)?example.com')
+        responses.add(responses.GET, url, body=b'test')
+
+        resp = requests.get('http://example.com')
+        assert_response(resp, 'test')
+
+        resp = requests.get('https://example.com')
+        assert_response(resp, 'test')
+
+        resp = requests.get('https://uk.example.com')
+        assert_response(resp, 'test')
+
+        with pytest.raises(ConnectionError):
+            requests.get('https://uk.exaaample.com')
 
     run()
     assert_reset()

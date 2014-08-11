@@ -18,6 +18,7 @@ from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
 
+import re
 import six
 
 if six.PY2:
@@ -85,8 +86,9 @@ class RequestsMock(object):
     def add(self, method, url, body='', match_querystring=False,
             status=200, adding_headers=None, stream=False,
             content_type='text/plain'):
-        # ensure the url has a default path set
-        if url.count('/') == 2:
+
+        # ensure the url has a default path set if the url is a string
+        if self._is_string(url) and url.count('/') == 2:
             url = url.replace('?', '/?', 1) if match_querystring \
                 else url + '/'
 
@@ -132,25 +134,32 @@ class RequestsMock(object):
         return wrapped
 
     def _find_match(self, request):
-        url = request.url
-        url_without_qs = url.split('?', 1)[0]
-
         for match in self._urls:
             if request.method != match['method']:
                 continue
 
-            if match['match_querystring']:
-                if not self._has_url_match(match['url'], url):
-                    continue
-            else:
-                if match['url'] != url_without_qs:
-                    continue
+            if not self._has_url_match(match, request.url):
+                continue
 
             return match
 
         return None
 
-    def _has_url_match(self, url, other):
+    def _has_url_match(self, match, request_url):
+        url = match['url']
+
+        if self._is_string(url):
+            if match['match_querystring']:
+                return self._has_strict_url_match(url, request_url)
+            else:
+                url_without_qs = request_url.split('?', 1)[0]
+                return url == url_without_qs
+        elif isinstance(url, re._pattern_type) and url.match(request_url):
+            return True
+        else:
+            return False
+
+    def _has_strict_url_match(self, url, other):
         url_parsed = urlparse(url)
         other_parsed = urlparse(other)
 
@@ -160,6 +169,9 @@ class RequestsMock(object):
         url_qsl = sorted(parse_qsl(url_parsed.query))
         other_qsl = sorted(parse_qsl(other_parsed.query))
         return url_qsl == other_qsl
+
+    def _is_string(self, s):
+        return isinstance(s, (six.string_types, six.text_type))
 
     def _on_request(self, request, **kwargs):
         match = self._find_match(request)

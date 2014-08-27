@@ -154,7 +154,7 @@ def test_throw_connection_error_explicit():
         url = 'http://example.com'
         exception = HTTPError('HTTP Error')
         responses.add(
-            responses.GET, url, throw_exception=exception)
+            responses.GET, url, exception)
 
         with pytest.raises(HTTPError) as HE:
             requests.get(url)

@@ -85,7 +85,7 @@ class RequestsMock(object):
 
     def add(self, method, url, body='', match_querystring=False,
             status=200, adding_headers=None, stream=False,
-            throw_exception=None, content_type='text/plain'):
+            content_type='text/plain'):
 
         # ensure the url has a default path set if the url is a string
         if self._is_string(url) and url.count('/') == 2:
@@ -105,7 +105,6 @@ class RequestsMock(object):
             'status': status,
             'adding_headers': adding_headers,
             'stream': stream,
-            'throw_exception': throw_exception
         })
 
     def add_callback(self, method, url, callback, match_querystring=False,
@@ -185,9 +184,9 @@ class RequestsMock(object):
             self._calls.add(request, response)
             raise response
 
-        if match['throw_exception']:
-            self._calls.add(request, match['throw_exception'])
-            raise match['throw_exception']
+        if 'body' in match and isinstance(match['body'], Exception):
+            self._calls.add(request, match['body'])
+            raise match['body']
 
         headers = {
             'Content-Type': match['content_type'],

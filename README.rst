@@ -26,7 +26,7 @@ Response body as string
 
         assert len(responses.calls) == 1
         assert responses.calls[0].request.url == 'http://twitter.com/api/1/foobar'
-        assert responses.calls[0].response.content == '{"error": "not found"}'
+        assert responses.calls[0].response.text == '{"error": "not found"}'
 
 Request callback
 ----------------
@@ -63,7 +63,7 @@ Request callback
 
         assert len(responses.calls) == 1
         assert responses.calls[0].request.url == 'http://calc.com/sum'
-        assert responses.calls[0].response.content == '{"value": 6}'
+        assert responses.calls[0].response.text == '{"value": 6}'
         assert (
             responses.calls[0].response.headers['request-id'] ==
             '728d329e-0e86-11e4-a748-0c84dc037c13'

@@ -192,6 +192,7 @@ def test_regular_expression_url():
     run()
     assert_reset()
 
+
 def test_custom_adapter():
     @responses.activate
     def run():
@@ -204,5 +205,6 @@ def test_custom_adapter():
 
         resp = session.get('http://example.com')
         assert mocked_adapter.build_response.called == 1
+        assert_response(resp, b'test')
 
     run()

@@ -31,7 +31,6 @@ else:
 
 from collections import namedtuple, Sequence, Sized
 from functools import wraps
-from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -218,6 +217,7 @@ class RequestsMock(object):
 
     def start(self):
         import mock
+
         def callback(session, requests, *a, **kwargs):
             return self._on_request(session, requests, *a, **kwargs)
         self._patcher = mock.patch('requests.Session.send', callback)

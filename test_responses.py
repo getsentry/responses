@@ -199,12 +199,22 @@ def test_custom_adapter():
         url = "http://example.com"
         responses.add(responses.GET, url, body=b'test')
 
-        mocked_adapter = mock.Mock(spec=requests.adapters.HTTPAdapter())
-        session = requests.Session()
-        session.mount("http://", mocked_adapter)
+        class DummyAdapter(requests.adapters.HTTPAdapter):
+            pass
 
-        resp = session.get('http://example.com')
-        assert mocked_adapter.build_response.called == 1
+        # Test that the adapter is actually used
+        adapter = mock.Mock(spec=DummyAdapter())
+        session = requests.Session()
+        session.mount("http://", adapter)
+
+        resp = session.get(url)
+        assert adapter.build_response.called == 1
+
+        # Test that the response is still correctly emulated
+        session = requests.Session()
+        session.mount("http://", DummyAdapter())
+
+        resp = session.get(url)
         assert_response(resp, b'test')
 
     run()

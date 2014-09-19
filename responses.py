@@ -218,9 +218,9 @@ class RequestsMock(object):
     def start(self):
         import mock
 
-        def callback(session, requests, *a, **kwargs):
+        def unbound_on_send(session, requests, *a, **kwargs):
             return self._on_request(session, requests, *a, **kwargs)
-        self._patcher = mock.patch('requests.Session.send', callback)
+        self._patcher = mock.patch('requests.Session.send', unbound_on_send)
         self._patcher.start()
 
     def stop(self):

@@ -215,6 +215,6 @@ def test_custom_adapter():
         session.mount("http://", DummyAdapter())
 
         resp = session.get(url)
-        assert_response(resp, b'test')
+        assert_response(resp, 'test')
 
     run()

@@ -2,6 +2,7 @@ from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
 
+import mock
 import re
 import requests
 import responses
@@ -190,3 +191,18 @@ def test_regular_expression_url():
 
     run()
     assert_reset()
+
+def test_custom_adapter():
+    @responses.activate
+    def run():
+        url = "http://example.com"
+        responses.add(responses.GET, url, body=b'test')
+
+        mocked_adapter = mock.Mock(spec=requests.adapters.HTTPAdapter())
+        session = requests.Session()
+        session.mount("http://", mocked_adapter)
+
+        resp = session.get('http://example.com')
+        assert mocked_adapter.build_response.called == 1
+
+    run()

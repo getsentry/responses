@@ -2,6 +2,7 @@ from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
 
+import mock
 import re
 import requests
 import responses
@@ -190,3 +191,30 @@ def test_regular_expression_url():
 
     run()
     assert_reset()
+
+
+def test_custom_adapter():
+    @responses.activate
+    def run():
+        url = "http://example.com"
+        responses.add(responses.GET, url, body=b'test')
+
+        class DummyAdapter(requests.adapters.HTTPAdapter):
+            pass
+
+        # Test that the adapter is actually used
+        adapter = mock.Mock(spec=DummyAdapter())
+        session = requests.Session()
+        session.mount("http://", adapter)
+
+        resp = session.get(url)
+        assert adapter.build_response.called == 1
+
+        # Test that the response is still correctly emulated
+        session = requests.Session()
+        session.mount("http://", DummyAdapter())
+
+        resp = session.get(url)
+        assert_response(resp, 'test')
+
+    run()

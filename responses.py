@@ -31,7 +31,6 @@ else:
 
 from collections import namedtuple, Sequence, Sized
 from functools import wraps
-from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -173,7 +172,7 @@ class RequestsMock(object):
     def _is_string(self, s):
         return isinstance(s, (six.string_types, six.text_type))
 
-    def _on_request(self, request, **kwargs):
+    def _on_request(self, session, request, **kwargs):
         match = self._find_match(request)
 
         # TODO(dcramer): find the correct class for this
@@ -206,7 +205,7 @@ class RequestsMock(object):
             preload_content=False,
         )
 
-        adapter = HTTPAdapter()
+        adapter = session.get_adapter(request.url)
 
         response = adapter.build_response(request, response)
         if not match.get('stream'):
@@ -218,7 +217,10 @@ class RequestsMock(object):
 
     def start(self):
         import mock
-        self._patcher = mock.patch('requests.Session.send', self._on_request)
+
+        def unbound_on_send(session, requests, *a, **kwargs):
+            return self._on_request(session, requests, *a, **kwargs)
+        self._patcher = mock.patch('requests.Session.send', unbound_on_send)
         self._patcher.start()
 
     def stop(self):

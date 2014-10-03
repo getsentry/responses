@@ -189,7 +189,7 @@ class RequestsMock(object):
 
         if 'callback' in match:  # use callback
             status, r_headers, body = match['callback'](request)
-            body = BufferIO(body.encode('utf-8'))
+            body = BufferIO(body)
             headers.update(r_headers)
 
         elif 'body' in match:

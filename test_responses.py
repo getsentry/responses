@@ -150,7 +150,7 @@ def test_accept_string_body():
 
 
 def test_callback():
-    body = 'test callback'
+    body = b'test callback'
     status = 400
     headers = {'foo': 'bar'}
     url = 'http://example.com/'

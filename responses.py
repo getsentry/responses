@@ -189,6 +189,8 @@ class RequestsMock(object):
 
         if 'callback' in match:  # use callback
             status, r_headers, body = match['callback'](request)
+            if isinstance(body, six.text_type):
+                body = body.encode('utf-8')
             body = BufferIO(body)
             headers.update(r_headers)
 

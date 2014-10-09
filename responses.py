@@ -121,15 +121,18 @@ class RequestsMock(object):
     def calls(self):
         return self._calls
 
+    def __enter__(self):
+        self.start()
+
+    def __exit__(self, *args):
+        self.stop()
+        self.reset()
+
     def activate(self, func):
         @wraps(func)
         def wrapped(*args, **kwargs):
-            self.start()
-            try:
+            with self:
                 return func(*args, **kwargs)
-            finally:
-                self.stop()
-                self.reset()
         return wrapped
 
     def _find_match(self, request):
@@ -228,7 +231,7 @@ class RequestsMock(object):
 
 
 # expose default mock namespace
-_default_mock = RequestsMock()
+mock = _default_mock = RequestsMock()
 __all__ = []
 for __attr in (a for a in dir(_default_mock) if not a.startswith('_')):
     __all__.append(__attr)

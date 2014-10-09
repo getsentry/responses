@@ -218,3 +218,24 @@ def test_custom_adapter():
         assert_response(resp, 'test')
 
     run()
+
+
+def test_responses_as_context_manager():
+    def run():
+        with responses.mock:
+            responses.add(responses.GET, 'http://example.com', body=b'test')
+            resp = requests.get('http://example.com')
+            assert_response(resp, 'test')
+            assert len(responses.calls) == 1
+            assert responses.calls[0].request.url == 'http://example.com/'
+            assert responses.calls[0].response.content == b'test'
+
+            resp = requests.get('http://example.com?foo=bar')
+            assert_response(resp, 'test')
+            assert len(responses.calls) == 2
+            assert (responses.calls[1].request.url ==
+                    'http://example.com/?foo=bar')
+            assert responses.calls[1].response.content == b'test'
+
+    run()
+    assert_reset()

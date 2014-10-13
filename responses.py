@@ -52,8 +52,9 @@ def _wrapper_(%(signature)s):
 
 
 def update_wrapper(wrapper, wrapped):
-    """Preserves the argspec for a wrapped function so that testing tools such as pytest
-    can continue to use their fixture injection.
+    """Preserves the argspec for a wrapped function so that testing tools such
+    as pytest can continue to use their fixture injection.
+
     :param wrapper: the wrapper function to update
     :param wrapped: the decorated test function
     """
@@ -63,7 +64,9 @@ def update_wrapper(wrapper, wrapped):
     if need_self:
         newargspec = (newargspec[0],) + newargspec[1:]
 
-    signature = inspect.formatargspec(formatvalue=lambda val: "", *newargspec)[1:-1]
+    signature = inspect.formatargspec(
+        formatvalue=lambda val: "", *newargspec
+    )[1:-1]
     ctx = {'signature': signature, 'tgt_func': 'tgt_func'}
 
     evaldict = {'tgt_func': wrapper}

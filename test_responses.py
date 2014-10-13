@@ -8,6 +8,7 @@ import requests
 import responses
 import pytest
 
+from inspect import getargspec
 from requests.exceptions import ConnectionError, HTTPError
 
 
@@ -256,3 +257,23 @@ def test_responses_as_context_manager():
 
     run()
     assert_reset()
+
+
+def test_activate_doesnt_change_signature():
+    def test_function(a, b=None):
+        pass
+
+    decorated_test_function = responses.activate(test_function)
+    assert getargspec(test_function) == getargspec(decorated_test_function)
+
+
+def test_activate_doesnt_change_signature_for_method():
+    class TestCase(object):
+
+        def test_function(self, a, b=None):
+            pass
+
+    test_case = TestCase()
+    argspect = getargspec(test_case.test_function)
+    decorated_test_function = responses.activate(test_case.test_function)
+    assert argspect == getargspec(decorated_test_function)

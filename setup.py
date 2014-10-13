@@ -45,7 +45,7 @@ class PyTest(TestCommand):
 
 setup(
     name='responses',
-    version='0.2.2',
+    version='0.3.0',
     author='David Cramer',
     description=(
         'A utility library for mocking out the `requests` Python library.'

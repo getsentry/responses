@@ -1,0 +1,8 @@
+0.3.0
+
+- Add the ability to mock errors (GH-22)
+- Add responses.mock context manager (GH-36)
+- Support custom adapters (GH-33)
+- Add support for regexp error matching (GH-25)
+- Add support for dynamic bodies via `responses.add_callback` (GH-24)
+- Preserve argspec when using `responses.activate` decorator (GH-18)

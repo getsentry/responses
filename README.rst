@@ -89,6 +89,20 @@ you can also supply a compiled regular expression.
                   body='{"error": "not found"}', status=404,
                   content_type='application/json')
 
+A response can also throw an exception as follows.
+
+.. code-block:: python
+
+    import responses
+    import requests
+    from requests.exceptions import HTTPError
+
+    exception = HTTPError('Something went wrong')
+    responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
+                  body=exception)
+    # All calls to 'http://twitter.com/api/1/foobar' will throw exception.
+
+
 .. note:: Responses requires Requests >= 1.0
 
 

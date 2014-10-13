@@ -8,7 +8,7 @@ import requests
 import responses
 import pytest
 
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, HTTPError
 
 
 def assert_reset():
@@ -144,6 +144,23 @@ def test_accept_string_body():
             responses.GET, url, body='test')
         resp = requests.get(url)
         assert_response(resp, 'test')
+
+    run()
+    assert_reset()
+
+
+def test_throw_connection_error_explicit():
+    @responses.activate
+    def run():
+        url = 'http://example.com'
+        exception = HTTPError('HTTP Error')
+        responses.add(
+            responses.GET, url, exception)
+
+        with pytest.raises(HTTPError) as HE:
+            requests.get(url)
+
+        assert str(HE.value) == 'HTTP Error'
 
     run()
     assert_reset()

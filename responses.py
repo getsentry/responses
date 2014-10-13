@@ -186,6 +186,10 @@ class RequestsMock(object):
             self._calls.add(request, response)
             raise response
 
+        if 'body' in match and isinstance(match['body'], Exception):
+            self._calls.add(request, match['body'])
+            raise match['body']
+
         headers = {
             'Content-Type': match['content_type'],
         }

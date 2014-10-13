@@ -64,17 +64,16 @@ def update_wrapper(wrapper, wrapped):
     if need_self:
         newargspec = (newargspec[0],) + newargspec[1:]
 
-    signature = inspect.formatargspec(
-        formatvalue=lambda val: "", *newargspec
-    )[1:-1]
+    signature = inspect.formatargspec(*newargspec)[1:-1]
     ctx = {'signature': signature, 'tgt_func': 'tgt_func'}
 
     evaldict = {'tgt_func': wrapper}
 
-    exec _wrapper_template % ctx in evaldict
+    six.exec_(_wrapper_template % ctx, evaldict)
 
     wrapper = evaldict['_wrapper_']
-    wrapper.func_defaults = wrapped.func_defaults
+    if hasattr(wrapped, 'func_defaults'):
+        wrapper.func_defaults = wrapped.func_defaults
     _update_wrapper(wrapper, wrapped)
     return wrapper
 

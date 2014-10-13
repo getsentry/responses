@@ -29,8 +29,9 @@ if six.PY2:
 else:
     from io import BytesIO as BufferIO
 
+import inspect
 from collections import namedtuple, Sequence, Sized
-from functools import wraps
+from functools import update_wrapper as _update_wrapper
 from requests.exceptions import ConnectionError
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -43,6 +44,36 @@ else:
 
 
 Call = namedtuple('Call', ['request', 'response'])
+
+_wrapper_template = """\
+def _wrapper_(%(signature)s):
+    return %(tgt_func)s(%(signature)s)
+"""
+
+
+def update_wrapper(wrapper, wrapped):
+    """Preserves the argspec for a wrapped function so that testing tools such as pytest
+    can continue to use their fixture injection.
+    :param wrapper: the wrapper function to update
+    :param wrapped: the decorated test function
+    """
+    newargspec = inspect.getargspec(wrapped)
+    need_self = len(newargspec[0]) > 0 and newargspec[0][0] == 'self'
+
+    if need_self:
+        newargspec = (newargspec[0],) + newargspec[1:]
+
+    signature = inspect.formatargspec(formatvalue=lambda val: "", *newargspec)[1:-1]
+    ctx = {'signature': signature, 'tgt_func': 'tgt_func'}
+
+    evaldict = {'tgt_func': wrapper}
+
+    exec _wrapper_template % ctx in evaldict
+
+    wrapper = evaldict['_wrapper_']
+    wrapper.func_defaults = wrapped.func_defaults
+    _update_wrapper(wrapper, wrapped)
+    return wrapper
 
 
 class CallList(Sequence, Sized):
@@ -129,11 +160,10 @@ class RequestsMock(object):
         self.reset()
 
     def activate(self, func):
-        @wraps(func)
         def wrapped(*args, **kwargs):
             with self:
                 return func(*args, **kwargs)
-        return wrapped
+        return update_wrapper(wrapped, func)
 
     def _find_match(self, request):
         for match in self._urls:

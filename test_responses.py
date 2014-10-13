@@ -150,7 +150,7 @@ def test_accept_string_body():
 
 
 def test_callback():
-    body = 'test callback'
+    body = b'test callback'
     status = 400
     headers = {'foo': 'bar'}
     url = 'http://example.com/'
@@ -162,7 +162,7 @@ def test_callback():
     def run():
         responses.add_callback(responses.GET, url, request_callback)
         resp = requests.get(url)
-        assert resp.text == body
+        assert resp.text == "test callback"
         assert resp.status_code == status
         assert 'foo' in resp.headers
         assert resp.headers['foo'] == 'bar'

@@ -1,9 +1,9 @@
 develop:
-	pip install -e . --use-mirrors
+	pip install -e .
 	make install-test-requirements
 
 install-test-requirements:
-	pip install "file://`pwd`#egg=responses[tests]" --use-mirrors
+	pip install "file://`pwd`#egg=responses[tests]"
 
 test: develop lint
 	@echo "Running Python tests"

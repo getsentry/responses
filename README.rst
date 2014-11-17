@@ -48,7 +48,7 @@ Request callback
             return (200, headers, json.dumps(resp_body))
 
         responses.add_callback(
-            responses.GET, 'http://calc.com/sum',
+            responses.POST, 'http://calc.com/sum',
             callback=request_callback,
             content_type='application/json',
         )

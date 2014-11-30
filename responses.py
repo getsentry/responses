@@ -31,7 +31,7 @@ else:
 
 import inspect
 from collections import namedtuple, Sequence, Sized
-from functools import update_wrapper as _update_wrapper
+from functools import update_wrapper
 from requests.exceptions import ConnectionError
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -46,35 +46,33 @@ else:
 Call = namedtuple('Call', ['request', 'response'])
 
 _wrapper_template = """\
-def _wrapper_(%(signature)s):
-    return %(tgt_func)s(%(signature)s)
+def wrapper%(signature)s:
+    with responses:
+        return func%(funcargs)s
 """
 
 
-def update_wrapper(wrapper, wrapped):
-    """Preserves the argspec for a wrapped function so that testing tools such
-    as pytest can continue to use their fixture injection.
+def get_wrapped(func, wrapper_template, evaldict):
+    # Preserve the argspec for the wrapped function so that testing
+    # tools such as pytest can continue to use their fixture injection.
+    args, a, kw, defaults = inspect.getargspec(func)
+    values = args[-len(defaults):] if defaults else None
 
-    :param wrapper: the wrapper function to update
-    :param wrapped: the decorated test function
-    """
-    newargspec = inspect.getargspec(wrapped)
-    need_self = len(newargspec[0]) > 0 and newargspec[0][0] == 'self'
+    signature = inspect.formatargspec(args, a, kw, defaults)
+    is_bound_method = hasattr(func, '__self__')
+    if is_bound_method:
+        args = args[1:]     # Omit 'self'
+    callargs = inspect.formatargspec(args, a, kw, values,
+                                     formatvalue=lambda v: '=' + v)
 
-    if need_self:
-        newargspec = (newargspec[0],) + newargspec[1:]
+    ctx = {'signature': signature, 'funcargs': callargs}
+    six.exec_(wrapper_template % ctx, evaldict)
 
-    signature = inspect.formatargspec(*newargspec)[1:-1]
-    ctx = {'signature': signature, 'tgt_func': 'tgt_func'}
+    wrapper = evaldict['wrapper']
 
-    evaldict = {'tgt_func': wrapper}
-
-    six.exec_(_wrapper_template % ctx, evaldict)
-
-    wrapper = evaldict['_wrapper_']
-    if hasattr(wrapped, 'func_defaults'):
-        wrapper.func_defaults = wrapped.func_defaults
-    _update_wrapper(wrapper, wrapped)
+    update_wrapper(wrapper, func)
+    if is_bound_method:
+        wrapper = wrapper.__get__(func.__self__, type(func.__self__))
     return wrapper
 
 
@@ -162,10 +160,8 @@ class RequestsMock(object):
         self.reset()
 
     def activate(self, func):
-        def wrapped(*args, **kwargs):
-            with self:
-                return func(*args, **kwargs)
-        return update_wrapper(wrapped, func)
+        evaldict = {'responses': self, 'func': func}
+        return get_wrapped(func, _wrapper_template, evaldict)
 
     def _find_match(self, request):
         for match in self._urls:

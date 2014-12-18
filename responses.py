@@ -105,9 +105,10 @@ class RequestsMock(object):
     POST = 'POST'
     PUT = 'PUT'
 
-    def __init__(self):
+    def __init__(self, assert_all_requests_are_fired=True):
         self._calls = CallList()
         self.reset()
+        self.assert_all_requests_are_fired = assert_all_requests_are_fired
 
     def reset(self):
         self._urls = []
@@ -154,6 +155,7 @@ class RequestsMock(object):
 
     def __enter__(self):
         self.start()
+        return self
 
     def __exit__(self, *args):
         self.stop()
@@ -171,9 +173,13 @@ class RequestsMock(object):
             if not self._has_url_match(match, request.url):
                 continue
 
-            return match
-
-        return None
+            break
+        else:
+            return None
+        if self.assert_all_requests_are_fired:
+            # for each found match remove the url from the stack
+            self._urls.remove(match)
+        return match
 
     def _has_url_match(self, match, request_url):
         url = match['url']
@@ -262,10 +268,14 @@ class RequestsMock(object):
 
     def stop(self):
         self._patcher.stop()
+        if self.assert_all_requests_are_fired and self._urls:
+            raise AssertionError(
+                'Not all requests has been executed {0!r}'.format(
+                    [(url['method'], url['url']) for url in self._urls]))
 
 
 # expose default mock namespace
-mock = _default_mock = RequestsMock()
+mock = _default_mock = RequestsMock(assert_all_requests_are_fired=False)
 __all__ = []
 for __attr in (a for a in dir(_default_mock) if not a.startswith('_')):
     __all__.append(__attr)

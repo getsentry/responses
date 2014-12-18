@@ -281,3 +281,20 @@ def test_activate_doesnt_change_signature_for_method():
     assert argspec == getargspec(decorated_test_function)
     assert decorated_test_function(1, 2) == test_case.test_function(1, 2)
     assert decorated_test_function(3) == test_case.test_function(3)
+
+
+def test_assert_all_requests_are_fired():
+    def run():
+        with pytest.raises(AssertionError) as excinfo:
+            with responses.RequestsMock(
+                    assert_all_requests_are_fired=True) as m:
+                m.add(responses.GET, 'http://example.com', body=b'test')
+        assert 'http://example.com' in str(excinfo.value)
+        assert responses.GET in str(excinfo)
+
+        # check that assert_all_requests_are_fired default to True
+        with pytest.raises(AssertionError):
+            with responses.RequestsMock() as m:
+                m.add(responses.GET, 'http://example.com', body=b'test')
+    run()
+    assert_reset()

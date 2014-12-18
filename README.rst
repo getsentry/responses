@@ -103,6 +103,47 @@ A response can also throw an exception as follows.
     # All calls to 'http://twitter.com/api/1/foobar' will throw exception.
 
 
+Responses as a context manager
+------------------------------
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+
+    def test_my_api():
+        with responses.mock:
+            responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
+            body='{}', status=200,
+            content_type='application/json')
+            resp = requests.get('http://twitter.com/api/1/foobar')
+
+            assert resp.status_code == 200
+        # outside the context manager,
+        # from now on requests will perform real http requests.
+        resp = requests.get('http://twitter.com/api/1/foobar')
+        resp.status_code == 404
+
+
+Responses tells you if one expected requests has not been performed
+-------------------------------------------------------------------
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+
+    def test_my_api():
+        with responses.RequestsMock() as requests_mock:
+            requests_mock.add(responses.GET, 'http://twitter.com/api/1/foobar',
+            body='{}', status=200,
+            content_type='application/json')
+
+        AssertionError: Not all requests has been executed [(u'GET', u'http://twitter.com/api/1/foobar')]
+
+
 .. note:: Responses requires Requests >= 1.0
 
 

@@ -83,6 +83,13 @@ class CallList(Sequence, Sized):
     def reset(self):
         self._calls = []
 
+def _ensure_url_default_path(url, match_querystring):
+    if _is_string(url) and url.count('/') == 2:
+        if match_querystring:
+            return url.replace('?', '/?', 1)  
+        else:
+            return url + '/'
+    return url
 
 class RequestsMock(object):
     DELETE = 'DELETE'
@@ -128,6 +135,8 @@ class RequestsMock(object):
 
     def add_callback(self, method, url, callback, match_querystring=False,
                      content_type='text/plain'):
+        # ensure the url has a default path set if the url is a string
+        # url = _ensure_url_default_path(url, match_querystring)
 
         self._urls.append({
             'url': url,
@@ -253,6 +262,23 @@ class RequestsMock(object):
             session.cookies = response.cookies
         except (KeyError, TypeError):
             pass
+
+        if kwargs.get('allow_redirects'):
+            # include redirect resolving logic from requests.sessions.Session
+            resolve_kwargs = {k: v for (k, v) in kwargs.items() if
+                              k in ('stream', 'timeout', 'cert', 'proxies')}
+            # this recurses if response.is_redirect, 
+            # but limited by session.max_redirects
+            gen = session.resolve_redirects(response, request, **resolve_kwargs)
+            history = [resp for resp in gen]
+
+            # Shuffle things around if there's history.
+            if history:
+                # Insert the first (original) request at the start
+                history.insert(0, response)
+                # Get the last request made
+                response = history.pop()
+                response.history = history
 
         self._calls.add(request, response)
 

@@ -321,3 +321,39 @@ def test_assert_all_requests_are_fired():
                 m.add(responses.GET, 'http://example.com', body=b'test')
     run()
     assert_reset()
+
+
+def test_allow_redirects_samehost():
+    redirecting_url = 'http://example.com'
+    final_url_path = '/1'
+    final_url = '{}{}'.format(redirecting_url, final_url_path)
+    url_re = re.compile(r'^http://example.com(/)?(\d+)?$')
+
+    def request_callback(request):
+        # endpoint of chained redirect
+        if request.url.endswith(final_url_path):
+            return 200, (), b'test'
+        # otherwise redirect to an integer path
+        else:
+            if request.url.endswith('/0'):
+                n = 1
+            else:
+                n = 0
+            redirect_headers = {'location': '/{!s}'.format(n)}
+            return 301, redirect_headers, None
+
+    @responses.activate
+    def run():
+        # setup redirect
+        responses.add_callback(responses.GET, url_re, request_callback)
+
+        resp_no_redirects = requests.get(redirecting_url, allow_redirects=False)
+        assert resp_no_redirects.status_code == 301
+
+        resp_yes_redirects = requests.get(redirecting_url, allow_redirects=True)
+        assert len(resp_yes_redirects.history) == 2
+        assert resp_yes_redirects.status_code == 200
+        assert final_url == resp_yes_redirects.url
+
+    run()
+    assert_reset()

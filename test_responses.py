@@ -281,3 +281,27 @@ def test_activate_doesnt_change_signature_for_method():
     assert argspec == getargspec(decorated_test_function)
     assert decorated_test_function(1, 2) == test_case.test_function(1, 2)
     assert decorated_test_function(3) == test_case.test_function(3)
+
+
+def test_response_cookies():
+    body = b'test callback'
+    status = 200
+    headers = {'set-cookie': 'session_id=12345; a=b; c=d'}
+    url = 'http://example.com/'
+
+    def request_callback(request):
+        return (status, headers, body)
+
+    @responses.activate
+    def run():
+        responses.add_callback(responses.GET, url, request_callback)
+        resp = requests.get(url)
+        assert resp.text == "test callback"
+        assert resp.status_code == status
+        assert 'session_id' in resp.cookies
+        assert resp.cookies['session_id'] == '12345'
+        assert resp.cookies['a'] == 'b'
+        assert resp.cookies['c'] == 'd'
+
+    run()
+    assert_reset()

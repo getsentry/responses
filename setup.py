@@ -19,6 +19,7 @@ if 'test' in sys.argv:
 
 install_requires = [
     'requests',
+    'cookies',
     'mock',
     'six',
 ]
@@ -45,7 +46,7 @@ class PyTest(TestCommand):
 
 setup(
     name='responses',
-    version='0.3.0',
+    version='0.3.1',
     author='David Cramer',
     description=(
         'A utility library for mocking out the `requests` Python library.'

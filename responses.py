@@ -255,7 +255,7 @@ class RequestsMock(object):
             response.cookies = cookiejar_from_dict(dict(
                 (v.name, v.value)
                 for _, v
-                in resp_cookies.iteritems()
+                in resp_cookies.items()
             ))
             session.cookies = response.cookies
         except (KeyError, TypeError):

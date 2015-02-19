@@ -87,13 +87,15 @@ class CallList(Sequence, Sized):
     def reset(self):
         self._calls = []
 
+
 def _ensure_url_default_path(url, match_querystring):
     if _is_string(url) and url.count('/') == 2:
         if match_querystring:
-            return url.replace('?', '/?', 1)  
+            return url.replace('?', '/?', 1)
         else:
             return url + '/'
     return url
+
 
 class RequestsMock(object):
     DELETE = 'DELETE'
@@ -261,13 +263,17 @@ class RequestsMock(object):
         except (KeyError, TypeError):
             pass
 
-        if kwargs.get('allow_redirects'):
+        self._calls.add(request, response)
+
+        if kwargs.get('allow_redirects') and response.is_redirect:
             # include redirect resolving logic from requests.sessions.Session
-            resolve_kwargs = {k: v for (k, v) in kwargs.items() if
-                              k in ('stream', 'timeout', 'cert', 'proxies')}
-            # this recurses if response.is_redirect, 
+            keep_kws = ('stream', 'timeout', 'cert', 'proxies')
+            resolve_kwargs = dict([(k, v) for (k, v) in kwargs.items() if
+                                   k in keep_kws])
+            # this recurses if response.is_redirect,
             # but limited by session.max_redirects
-            gen = session.resolve_redirects(response, request, **resolve_kwargs)
+            gen = session.resolve_redirects(response, request,
+                                            **resolve_kwargs)
             history = [resp for resp in gen]
 
             # Shuffle things around if there's history.
@@ -277,8 +283,6 @@ class RequestsMock(object):
                 # Get the last request made
                 response = history.pop()
                 response.history = history
-
-        self._calls.add(request, response)
 
         return response
 

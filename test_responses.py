@@ -222,10 +222,11 @@ def test_custom_adapter():
 
         # Test that the adapter is actually used
         adapter = mock.Mock(spec=DummyAdapter())
+
         session = requests.Session()
         session.mount("http://", adapter)
 
-        resp = session.get(url)
+        resp = session.get(url, allow_redirects=False)
         assert adapter.build_response.called == 1
 
         # Test that the response is still correctly emulated
@@ -326,7 +327,7 @@ def test_assert_all_requests_are_fired():
 def test_allow_redirects_samehost():
     redirecting_url = 'http://example.com'
     final_url_path = '/1'
-    final_url = '{}{}'.format(redirecting_url, final_url_path)
+    final_url = '{0}{1}'.format(redirecting_url, final_url_path)
     url_re = re.compile(r'^http://example.com(/)?(\d+)?$')
 
     def request_callback(request):
@@ -339,27 +340,30 @@ def test_allow_redirects_samehost():
                 n = 1
             else:
                 n = 0
-            redirect_headers = {'location': '/{!s}'.format(n)}
+            redirect_headers = {'location': '/{0!s}'.format(n)}
             return 301, redirect_headers, None
 
     def run():
         # setup redirect
         with responses.mock:
             responses.add_callback(responses.GET, url_re, request_callback)
-            resp_no_redirects = requests.get(redirecting_url, allow_redirects=False)
+            resp_no_redirects = requests.get(redirecting_url,
+                                             allow_redirects=False)
             assert resp_no_redirects.status_code == 301
-            assert len(responses.calls) == 1 # 1x300
-            assert responses.calls[0][1].status_code == 301 # first call status is 301
+            assert len(responses.calls) == 1  # 1x300
+            assert responses.calls[0][1].status_code == 301
         assert_reset()
 
         with responses.mock:
             responses.add_callback(responses.GET, url_re, request_callback)
-            resp_yes_redirects = requests.get(redirecting_url, allow_redirects=True)
-            assert len(responses.calls) == 3 # 2x300 + 1x200
+            resp_yes_redirects = requests.get(redirecting_url,
+                                              allow_redirects=True)
+            assert len(responses.calls) == 3  # 2x300 + 1x200
             assert len(resp_yes_redirects.history) == 2
             assert resp_yes_redirects.status_code == 200
             assert final_url == resp_yes_redirects.url
-            assert [call[1].status_code for call in responses.calls] == [301, 301, 200]
+            status_codes = [call[1].status_code for call in responses.calls]
+            assert status_codes == [301, 301, 200]
         assert_reset()
 
     run()

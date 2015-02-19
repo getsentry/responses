@@ -342,18 +342,25 @@ def test_allow_redirects_samehost():
             redirect_headers = {'location': '/{!s}'.format(n)}
             return 301, redirect_headers, None
 
-    @responses.activate
     def run():
         # setup redirect
-        responses.add_callback(responses.GET, url_re, request_callback)
+        with responses.mock:
+            responses.add_callback(responses.GET, url_re, request_callback)
+            resp_no_redirects = requests.get(redirecting_url, allow_redirects=False)
+            assert resp_no_redirects.status_code == 301
+            assert len(responses.calls) == 1 # 1x300
+            assert responses.calls[0][1].status_code == 301 # first call status is 301
+        assert_reset()
 
-        resp_no_redirects = requests.get(redirecting_url, allow_redirects=False)
-        assert resp_no_redirects.status_code == 301
-
-        resp_yes_redirects = requests.get(redirecting_url, allow_redirects=True)
-        assert len(resp_yes_redirects.history) == 2
-        assert resp_yes_redirects.status_code == 200
-        assert final_url == resp_yes_redirects.url
+        with responses.mock:
+            responses.add_callback(responses.GET, url_re, request_callback)
+            resp_yes_redirects = requests.get(redirecting_url, allow_redirects=True)
+            assert len(responses.calls) == 3 # 2x300 + 1x200
+            assert len(resp_yes_redirects.history) == 2
+            assert resp_yes_redirects.status_code == 200
+            assert final_url == resp_yes_redirects.url
+            assert [call[1].status_code for call in responses.calls] == [301, 301, 200]
+        assert_reset()
 
     run()
     assert_reset()

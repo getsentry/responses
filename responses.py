@@ -40,6 +40,10 @@ def wrapper%(signature)s:
 """
 
 
+def _is_string(s):
+    return isinstance(s, (six.string_types, six.text_type))
+
+
 def get_wrapped(func, wrapper_template, evaldict):
     # Preserve the argspec for the wrapped function so that testing
     # tools such as pytest can continue to use their fixture injection.
@@ -114,9 +118,7 @@ class RequestsMock(object):
             content_type='text/plain'):
 
         # ensure the url has a default path set if the url is a string
-        if self._is_string(url) and url.count('/') == 2:
-            url = url.replace('?', '/?', 1) if match_querystring \
-                else url + '/'
+        url = _ensure_url_default_path(url, match_querystring)
 
         # body must be bytes
         if isinstance(body, six.text_type):
@@ -181,7 +183,7 @@ class RequestsMock(object):
     def _has_url_match(self, match, request_url):
         url = match['url']
 
-        if self._is_string(url):
+        if _is_string(url):
             if match['match_querystring']:
                 return self._has_strict_url_match(url, request_url)
             else:
@@ -203,12 +205,8 @@ class RequestsMock(object):
         other_qsl = sorted(parse_qsl(other_parsed.query))
         return url_qsl == other_qsl
 
-    def _is_string(self, s):
-        return isinstance(s, (six.string_types, six.text_type))
-
     def _on_request(self, session, request, **kwargs):
         match = self._find_match(request)
-
         # TODO(dcramer): find the correct class for this
         if match is None:
             error_msg = 'Connection refused: {0} {1}'.format(request.method,

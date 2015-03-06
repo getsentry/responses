@@ -19,6 +19,7 @@ if 'test' in sys.argv:
 
 install_requires = [
     'requests',
+    'cookies',
     'mock',
     'six',
 ]

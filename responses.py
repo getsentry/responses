@@ -32,6 +32,8 @@ else:
 import inspect
 from collections import namedtuple, Sequence, Sized
 from functools import update_wrapper
+from cookies import Cookies
+from requests.utils import cookiejar_from_dict
 from requests.exceptions import ConnectionError
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -247,6 +249,17 @@ class RequestsMock(object):
         response = adapter.build_response(request, response)
         if not match.get('stream'):
             response.content  # NOQA
+
+        try:
+            resp_cookies = Cookies.from_request(response.headers['set-cookie'])
+            response.cookies = cookiejar_from_dict(dict(
+                (v.name, v.value)
+                for _, v
+                in resp_cookies.items()
+            ))
+            session.cookies = response.cookies
+        except (KeyError, TypeError):
+            pass
 
         self._calls.add(request, response)
 

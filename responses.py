@@ -2,8 +2,25 @@ from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
 
+import inspect
 import re
 import six
+
+from collections import namedtuple, Sequence, Sized
+from functools import update_wrapper
+from cookies import Cookies
+from requests.utils import cookiejar_from_dict
+from requests.exceptions import ConnectionError
+
+try:
+    from requests.packages.urllib3.response import HTTPResponse
+except ImportError:
+    from urllib3.response import HTTPResponse
+
+if six.PY2:
+    from urlparse import urlparse, parse_qsl
+else:
+    from urllib.parse import urlparse, parse_qsl
 
 if six.PY2:
     try:
@@ -12,21 +29,6 @@ if six.PY2:
         from six import StringIO as BufferIO
 else:
     from io import BytesIO as BufferIO
-
-import inspect
-from collections import namedtuple, Sequence, Sized
-from functools import update_wrapper
-from cookies import Cookies
-from requests.utils import cookiejar_from_dict
-from requests.exceptions import ConnectionError
-try:
-    from requests.packages.urllib3.response import HTTPResponse
-except ImportError:
-    from urllib3.response import HTTPResponse
-if six.PY2:
-    from urlparse import urlparse, parse_qsl
-else:
-    from urllib.parse import urlparse, parse_qsl
 
 
 Call = namedtuple('Call', ['request', 'response'])

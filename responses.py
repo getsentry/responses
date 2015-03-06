@@ -202,7 +202,8 @@ class RequestsMock(object):
 
         # TODO(dcramer): find the correct class for this
         if match is None:
-            error_msg = 'Connection refused: {0}'.format(request.url)
+            error_msg = 'Connection refused: {0} {1}'.format(request.method,
+                                                             request.url)
             response = ConnectionError(error_msg)
 
             self._calls.add(request, response)

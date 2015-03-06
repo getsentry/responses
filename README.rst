@@ -6,6 +6,8 @@ Responses
 
 A utility library for mocking out the `requests` Python library.
 
+.. note:: Responses requires Requests >= 1.0
+
 Response body as string
 -----------------------
 
@@ -103,4 +105,43 @@ A response can also throw an exception as follows.
     # All calls to 'http://twitter.com/api/1/foobar' will throw exception.
 
 
-.. note:: Responses requires Requests >= 1.0
+Responses as a context manager
+------------------------------
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+
+    def test_my_api():
+        with responses.RequestsMock() as rsps:
+            rsps.add(responses.GET, 'http://twitter.com/api/1/foobar',
+                     body='{}', status=200,
+                     content_type='application/json')
+            resp = requests.get('http://twitter.com/api/1/foobar')
+
+            assert resp.status_code == 200
+
+        # outside the context manager requests will hit the remote server
+        resp = requests.get('http://twitter.com/api/1/foobar')
+        resp.status_code == 404
+
+
+Assertions on declared responses
+--------------------------------
+
+By default Responses will raise an assertion error if a url was registered but not accessed. This
+can be disabled by passing the ``assert_all_requests_are_fired`` value:
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+
+    def test_my_api():
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+            rsps.add(responses.GET, 'http://twitter.com/api/1/foobar',
+                     body='{}', status=200,
+                     content_type='application/json')

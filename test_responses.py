@@ -302,6 +302,22 @@ def test_response_cookies():
         assert resp.cookies['session_id'] == '12345'
         assert resp.cookies['a'] == 'b'
         assert resp.cookies['c'] == 'd'
+    run()
+    assert_reset()
 
+
+def test_assert_all_requests_are_fired():
+    def run():
+        with pytest.raises(AssertionError) as excinfo:
+            with responses.RequestsMock(
+                    assert_all_requests_are_fired=True) as m:
+                m.add(responses.GET, 'http://example.com', body=b'test')
+        assert 'http://example.com' in str(excinfo.value)
+        assert responses.GET in str(excinfo)
+
+        # check that assert_all_requests_are_fired default to True
+        with pytest.raises(AssertionError):
+            with responses.RequestsMock() as m:
+                m.add(responses.GET, 'http://example.com', body=b'test')
     run()
     assert_reset()

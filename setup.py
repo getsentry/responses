@@ -5,7 +5,8 @@ responses
 
 A utility library for mocking out the `requests` Python library.
 
-:copyright: (c) 2013 Dropbox, Inc.
+:copyright: (c) 2015 David Cramer
+:license: Apache 2.0
 """
 
 from setuptools import setup
@@ -51,6 +52,7 @@ setup(
     description=(
         'A utility library for mocking out the `requests` Python library.'
     ),
+    license='Apache 2.0',
     long_description=open('README.rst').read(),
     py_modules=['responses'],
     zip_safe=False,

@@ -1,8 +1,8 @@
 Responses
 =========
 
-.. image:: https://travis-ci.org/dcramer/responses.png?branch=master
-	:target: https://travis-ci.org/dcramer/responses
+.. image:: https://travis-ci.org/getsentry/responses.png?branch=master
+	:target: https://travis-ci.org/getsentry/responses
 
 A utility library for mocking out the `requests` Python library.
 

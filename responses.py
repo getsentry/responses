@@ -40,6 +40,10 @@ def wrapper%(signature)s:
 """
 
 
+def _is_string(s):
+    return isinstance(s, (six.string_types, six.text_type))
+
+
 def get_wrapped(func, wrapper_template, evaldict):
     # Preserve the argspec for the wrapped function so that testing
     # tools such as pytest can continue to use their fixture injection.
@@ -84,6 +88,15 @@ class CallList(Sequence, Sized):
         self._calls = []
 
 
+def _ensure_url_default_path(url, match_querystring):
+    if _is_string(url) and url.count('/') == 2:
+        if match_querystring:
+            return url.replace('?', '/?', 1)
+        else:
+            return url + '/'
+    return url
+
+
 class RequestsMock(object):
     DELETE = 'DELETE'
     GET = 'GET'
@@ -107,9 +120,7 @@ class RequestsMock(object):
             content_type='text/plain'):
 
         # ensure the url has a default path set if the url is a string
-        if self._is_string(url) and url.count('/') == 2:
-            url = url.replace('?', '/?', 1) if match_querystring \
-                else url + '/'
+        url = _ensure_url_default_path(url, match_querystring)
 
         # body must be bytes
         if isinstance(body, six.text_type):
@@ -128,6 +139,8 @@ class RequestsMock(object):
 
     def add_callback(self, method, url, callback, match_querystring=False,
                      content_type='text/plain'):
+        # ensure the url has a default path set if the url is a string
+        # url = _ensure_url_default_path(url, match_querystring)
 
         self._urls.append({
             'url': url,
@@ -172,7 +185,7 @@ class RequestsMock(object):
     def _has_url_match(self, match, request_url):
         url = match['url']
 
-        if self._is_string(url):
+        if _is_string(url):
             if match['match_querystring']:
                 return self._has_strict_url_match(url, request_url)
             else:
@@ -194,12 +207,8 @@ class RequestsMock(object):
         other_qsl = sorted(parse_qsl(other_parsed.query))
         return url_qsl == other_qsl
 
-    def _is_string(self, s):
-        return isinstance(s, (six.string_types, six.text_type))
-
     def _on_request(self, session, request, **kwargs):
         match = self._find_match(request)
-
         # TODO(dcramer): find the correct class for this
         if match is None:
             error_msg = 'Connection refused: {0} {1}'.format(request.method,
@@ -255,6 +264,25 @@ class RequestsMock(object):
             pass
 
         self._calls.add(request, response)
+
+        if kwargs.get('allow_redirects') and response.is_redirect:
+            # include redirect resolving logic from requests.sessions.Session
+            keep_kws = ('stream', 'timeout', 'cert', 'proxies')
+            resolve_kwargs = dict([(k, v) for (k, v) in kwargs.items() if
+                                   k in keep_kws])
+            # this recurses if response.is_redirect,
+            # but limited by session.max_redirects
+            gen = session.resolve_redirects(response, request,
+                                            **resolve_kwargs)
+            history = [resp for resp in gen]
+
+            # Shuffle things around if there's history.
+            if history:
+                # Insert the first (original) request at the start
+                history.insert(0, response)
+                # Get the last request made
+                response = history.pop()
+                response.history = history
 
         return response
 

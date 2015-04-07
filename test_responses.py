@@ -1,6 +1,7 @@
 from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
+import traceback
 
 import re
 import requests
@@ -337,6 +338,22 @@ def test_assert_all_requests_are_fired():
         with pytest.raises(AssertionError):
             with responses.RequestsMock() as m:
                 m.add(responses.GET, 'http://example.com', body=b'test')
+    run()
+    assert_reset()
+
+
+def test_assert_all_requests_are_fired_does_not_shadow_exceptions():
+    def run():
+        with pytest.raises(AssertionError) as excinfo:
+            with responses.RequestsMock(
+                    assert_all_requests_are_fired=True) as m:
+                m.add(responses.GET, 'http://example.com', body=b'test')
+                raise ValueError('foo')
+        assert 'http://example.com' in str(excinfo.value)
+        assert responses.GET in str(excinfo)
+        assert "raise ValueError('foo')" in ''.join(
+            traceback.format_tb(excinfo.tb))
+
     run()
     assert_reset()
 

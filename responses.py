@@ -123,6 +123,7 @@ class RequestsMock(object):
         self._calls = CallList()
         self.reset()
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
+        self.captured_exception = None
 
     def reset(self):
         self._urls = []
@@ -178,6 +179,7 @@ class RequestsMock(object):
         return self
 
     def __exit__(self, *args):
+        self.captured_exception = args
         self.stop()
         self.reset()
 
@@ -299,9 +301,15 @@ class RequestsMock(object):
     def stop(self):
         self._patcher.stop()
         if self.assert_all_requests_are_fired and self._urls:
-            raise AssertionError(
+            assertion_error = AssertionError(
                 'Not all requests have been executed {0!r}'.format(
                     [(url['method'], url['url']) for url in self._urls]))
+            if self.captured_exception:
+                try:
+                    six.reraise(*self.captured_exception)
+                except Exception as raise_from:
+                    six.raise_from(assertion_error, raise_from)
+            raise assertion_error
 
 
 # expose default mock namespace

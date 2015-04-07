@@ -8,3 +8,4 @@
 /htmlcov
 /dist
 /build
+.tox/

@@ -149,6 +149,20 @@ class RequestsMock(object):
             'stream': stream,
         })
 
+    def allow(self, method, url, match_querystring=False):
+
+        # ensure the url has a default path set if the url is a string
+        if _is_string(url) and url.count('/') == 2:
+            url = url.replace('?', '/?', 1) if match_querystring \
+                else url + '/'
+
+        self._urls.append({
+            'url': url,
+            'method': method,
+            'match_querystring': match_querystring,
+            'allow': True,
+        })
+
     def add_callback(self, method, url, callback, match_querystring=False,
                      content_type='text/plain'):
         # ensure the url has a default path set if the url is a string
@@ -188,11 +202,11 @@ class RequestsMock(object):
 
             break
         else:
-            return None
+            return None, False
         if self.assert_all_requests_are_fired:
             # for each found match remove the url from the stack
             self._urls.remove(match)
-        return match
+        return match, match.get('allow', False)
 
     def _has_url_match(self, match, request_url):
         url = match['url']
@@ -220,7 +234,8 @@ class RequestsMock(object):
         return url_qsl == other_qsl
 
     def _on_request(self, adapter, request, **kwargs):
-        match = self._find_match(request)
+        match, allow = self._find_match(request)
+
         # TODO(dcramer): find the correct class for this
         if match is None:
             error_msg = 'Connection refused: {0} {1}'.format(request.method,
@@ -229,6 +244,10 @@ class RequestsMock(object):
 
             self._calls.add(request, response)
             raise response
+
+        if allow:
+            original = self._patcher.temp_original
+            return original(adapter, request, **kwargs)
 
         if 'body' in match and isinstance(match['body'], Exception):
             self._calls.add(request, match['body'])

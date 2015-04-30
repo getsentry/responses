@@ -115,8 +115,8 @@ Responses as a context manager
 
 
     def test_my_api():
-        with responses.RequestsMock() as rsps:
-            rsps.add(responses.GET, 'http://twitter.com/api/1/foobar',
+        with responses.mock:
+            responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
                      body='{}', status=200,
                      content_type='application/json')
             resp = requests.get('http://twitter.com/api/1/foobar')
@@ -125,7 +125,7 @@ Responses as a context manager
 
         # outside the context manager requests will hit the remote server
         resp = requests.get('http://twitter.com/api/1/foobar')
-        resp.status_code == 404
+        assert resp.status_code == 404
 
 
 Assertions on declared responses

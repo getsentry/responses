@@ -1,4 +1,10 @@
+0.4.0
+-----
+
+- Requests 2.0+ is required
+
 0.3.0
+-----
 
 - Add the ability to mock errors (GH-22)
 - Add responses.mock context manager (GH-36)

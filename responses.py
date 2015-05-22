@@ -219,7 +219,7 @@ class RequestsMock(object):
         other_qsl = sorted(parse_qsl(other_parsed.query))
         return url_qsl == other_qsl
 
-    def _on_request(self, session, request, **kwargs):
+    def _on_request(self, adapter, request, **kwargs):
         match = self._find_match(request)
         # TODO(dcramer): find the correct class for this
         if match is None:
@@ -258,8 +258,6 @@ class RequestsMock(object):
             preload_content=False,
         )
 
-        adapter = session.get_adapter(request.url)
-
         response = adapter.build_response(request, response)
         if not match.get('stream'):
             response.content  # NOQA
@@ -271,39 +269,20 @@ class RequestsMock(object):
                 for _, v
                 in resp_cookies.items()
             ))
-            session.cookies = response.cookies
         except (KeyError, TypeError):
             pass
 
         self._calls.add(request, response)
-
-        if kwargs.get('allow_redirects') and _is_redirect(response):
-            # include redirect resolving logic from requests.sessions.Session
-            keep_kws = ('stream', 'timeout', 'cert', 'proxies')
-            resolve_kwargs = dict([(k, v) for (k, v) in kwargs.items() if
-                                   k in keep_kws])
-            # this recurses if response.is_redirect,
-            # but limited by session.max_redirects
-            gen = session.resolve_redirects(response, request,
-                                            **resolve_kwargs)
-            history = [resp for resp in gen]
-
-            # Shuffle things around if there's history.
-            if history:
-                # Insert the first (original) request at the start
-                history.insert(0, response)
-                # Get the last request made
-                response = history.pop()
-                response.history = history
 
         return response
 
     def start(self):
         import mock
 
-        def unbound_on_send(session, requests, *a, **kwargs):
-            return self._on_request(session, requests, *a, **kwargs)
-        self._patcher = mock.patch('requests.Session.send', unbound_on_send)
+        def unbound_on_send(adapter, request, *a, **kwargs):
+            return self._on_request(adapter, request, *a, **kwargs)
+        self._patcher = mock.patch('requests.adapters.HTTPAdapter.send',
+                                   unbound_on_send)
         self._patcher.start()
 
     def stop(self):

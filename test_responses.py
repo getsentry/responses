@@ -2,7 +2,6 @@ from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
 
-import mock
 import re
 import requests
 import responses
@@ -217,17 +216,19 @@ def test_custom_adapter():
         url = "http://example.com"
         responses.add(responses.GET, url, body=b'test')
 
+        calls = [0]
+
         class DummyAdapter(requests.adapters.HTTPAdapter):
-            pass
+            def send(self, *a, **k):
+                calls[0] += 1
+                return super(DummyAdapter, self).send(*a, **k)
 
         # Test that the adapter is actually used
-        adapter = mock.Mock(spec=DummyAdapter())
-
         session = requests.Session()
-        session.mount("http://", adapter)
+        session.mount("http://", DummyAdapter())
 
         resp = session.get(url, allow_redirects=False)
-        assert adapter.build_response.called == 1
+        assert calls[0] == 1
 
         # Test that the response is still correctly emulated
         session = requests.Session()

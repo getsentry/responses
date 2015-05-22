@@ -2,6 +2,7 @@
 -----
 
 - Requests 2.0+ is required
+- Mocking now happens on the adapter instead of the session
 
 0.3.0
 -----

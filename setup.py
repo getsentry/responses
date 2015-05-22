@@ -19,7 +19,7 @@ if 'test' in sys.argv:
     setup_requires.append('pytest')
 
 install_requires = [
-    'requests',
+    'requests>=2.0',
     'cookies',
     'mock',
     'six',

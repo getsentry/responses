@@ -11,6 +11,7 @@ from functools import update_wrapper
 from cookies import Cookies
 from requests.utils import cookiejar_from_dict
 from requests.exceptions import ConnectionError
+from requests.sessions import REDIRECT_STATI
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -42,6 +43,19 @@ def wrapper%(signature)s:
 
 def _is_string(s):
     return isinstance(s, (six.string_types, six.text_type))
+
+
+def _is_redirect(response):
+    try:
+        # 2.0.0 <= requests <= 2.2
+        return response.is_redirect
+    except AttributeError:
+        # requests > 2.2
+        return (
+            # use request.sessions conditional
+            response.status_code in REDIRECT_STATI and
+            'location' in response.headers
+        )
 
 
 def get_wrapped(func, wrapper_template, evaldict):
@@ -265,7 +279,7 @@ class RequestsMock(object):
 
         self._calls.add(request, response)
 
-        if kwargs.get('allow_redirects') and response.is_redirect:
+        if kwargs.get('allow_redirects') and _is_redirect(response):
             # include redirect resolving logic from requests.sessions.Session
             keep_kws = ('stream', 'timeout', 'cert', 'proxies')
             resolve_kwargs = dict([(k, v) for (k, v) in kwargs.items() if

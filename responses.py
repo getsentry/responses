@@ -242,13 +242,17 @@ class RequestsMock(object):
             status, r_headers, body = match['callback'](request)
             if isinstance(body, six.text_type):
                 body = body.encode('utf-8')
-            body = BufferIO(body)
             headers.update(r_headers)
+            if 'Content-Length' not in headers:
+                headers['Content-Length'] = str(len(body))
+            body = BufferIO(body)
 
         elif 'body' in match:
             if match['adding_headers']:
                 headers.update(match['adding_headers'])
             status = match['status']
+            if 'Content-Length' not in headers:
+                headers['Content-Length'] = str(len(match['body']))
             body = BufferIO(match['body'])
 
         response = HTTPResponse(

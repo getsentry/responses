@@ -289,7 +289,7 @@ class RequestsMock(object):
         self._patcher.stop()
         if self.assert_all_requests_are_fired and self._urls:
             raise AssertionError(
-                'Not all requests has been executed {0!r}'.format(
+                'Not all requests have been executed {0!r}'.format(
                     [(url['method'], url['url']) for url in self._urls]))
 
 

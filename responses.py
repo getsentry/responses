@@ -225,7 +225,8 @@ class RequestsMock(object):
         if match is None:
             error_msg = 'Connection refused: {0} {1}'.format(request.method,
                                                              request.url)
-            response = ConnectionError(error_msg, request=request)
+            response = ConnectionError(error_msg)
+            response.request = request
 
             self._calls.add(request, response)
             raise response

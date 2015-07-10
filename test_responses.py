@@ -53,6 +53,7 @@ def test_connection_error():
         assert len(responses.calls) == 1
         assert responses.calls[0].request.url == 'http://example.com/foo'
         assert type(responses.calls[0].response) is ConnectionError
+        assert responses.calls[0].response.request
 
     run()
     assert_reset()

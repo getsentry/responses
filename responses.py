@@ -101,11 +101,13 @@ class CallList(Sequence, Sized):
 
 
 def _ensure_url_default_path(url, match_querystring):
-    if _is_string(url) and url.count('/') == 2:
-        if match_querystring:
-            return url.replace('?', '/?', 1)
-        else:
-            return url + '/'
+    if _is_string(url):
+        p = urlparse(url)
+        if p.scheme in ("http", "https") and url.count('/') == 2:
+            if match_querystring:
+                return url.replace('?', '/?', 1)
+            else:
+                return url + '/'
     return url
 
 

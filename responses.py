@@ -132,7 +132,8 @@ class RequestsMock(object):
             status=200, adding_headers=None, stream=False,
             content_type='text/plain', json=None):
 
-        # if we were passed a `json` argument, override the body and content_type
+        # if we were passed a `json` argument,
+        # override the body and content_type
         if json:
             body = json_module.dumps(json)
             content_type = 'application/json'

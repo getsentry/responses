@@ -3,6 +3,7 @@ from __future__ import (
 )
 
 import inspect
+import json as json_module
 import re
 import six
 
@@ -129,7 +130,13 @@ class RequestsMock(object):
 
     def add(self, method, url, body='', match_querystring=False,
             status=200, adding_headers=None, stream=False,
-            content_type='text/plain'):
+            content_type='text/plain', json=None):
+
+        # if we were passed a `json` argument,
+        # override the body and content_type
+        if json:
+            body = json_module.dumps(json)
+            content_type = 'application/json'
 
         # ensure the url has a default path set if the url is a string
         url = _ensure_url_default_path(url, match_querystring)

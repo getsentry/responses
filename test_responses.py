@@ -150,6 +150,21 @@ def test_accept_string_body():
     assert_reset()
 
 
+def test_accept_json_body():
+    @responses.activate
+    def run():
+        url = 'http://example.com/'
+        responses.add(
+            responses.GET, url, json={"message": "success"})
+        resp = requests.get(url)
+        assert resp.status_code == 200
+        assert resp.headers['Content-Type'] == 'application/json'
+        assert resp.text == '{"message": "success"}'
+
+    run()
+    assert_reset()
+
+
 def test_throw_connection_error_explicit():
     @responses.activate
     def run():

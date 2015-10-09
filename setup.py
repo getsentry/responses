@@ -9,9 +9,13 @@ A utility library for mocking out the `requests` Python library.
 :license: Apache 2.0
 """
 
+import sys
+import logging
+
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
-import sys
+import pkg_resources
+
 
 setup_requires = []
 
@@ -21,7 +25,6 @@ if 'test' in sys.argv:
 install_requires = [
     'requests>=2.0',
     'cookies',
-    'mock',
     'six',
 ]
 
@@ -31,6 +34,26 @@ tests_require = [
     'pytest-cov',
     'flake8',
 ]
+
+
+extras_require = {
+    ':python_version in "2.6, 2.7, 3.2"': ['mock'],
+    'tests': tests_require,
+}
+
+try:
+    if 'bdist_wheel' not in sys.argv:
+        for key, value in extras_require.items():
+            if key.startswith(':') and pkg_resources.evaluate_marker(key[1:]):
+                install_requires.extend(value)
+except Exception:
+    logging.getLogger(__name__).exception(
+        'Something went wrong calculating platform specific dependencies, so '
+        "you're getting them all!"
+    )
+    for key, value in extras_require.items():
+        if key.startswith(':'):
+            install_requires.extend(value)
 
 
 class PyTest(TestCommand):
@@ -59,9 +82,7 @@ setup(
     py_modules=['responses'],
     zip_safe=False,
     install_requires=install_requires,
-    extras_require={
-        'tests': tests_require,
-    },
+    extras_require=extras_require,
     tests_require=tests_require,
     setup_requires=setup_requires,
     cmdclass={'test': PyTest},

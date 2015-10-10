@@ -52,6 +52,7 @@ setup(
     description=(
         'A utility library for mocking out the `requests` Python library.'
     ),
+    url='https://github.com/getsentry/responses',
     license='Apache 2.0',
     long_description=open('README.rst').read(),
     py_modules=['responses'],

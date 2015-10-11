@@ -285,7 +285,10 @@ class RequestsMock(object):
         return response
 
     def start(self):
-        import mock
+        try:
+            from unittest import mock
+        except ImportError:
+            import mock
 
         def unbound_on_send(adapter, request, *a, **kwargs):
             return self._on_request(adapter, request, *a, **kwargs)

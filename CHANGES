@@ -1,3 +1,10 @@
+0.5.0
+-----
+
+- Allow passing a JSON body to `response.add` (GH-82)
+- Improve ConnectionError emulation (GH-73)
+- Correct assertion in assert_all_requests_are_fired (GH-71)
+
 0.4.0
 -----
 

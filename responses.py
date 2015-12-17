@@ -301,12 +301,12 @@ class RequestsMock(object):
     def stop(self):
         self._patcher.stop()
         if self.assert_all_requests_are_fired and self._urls:
-            assertion_error = AssertionError(
-                'Not all requests have been executed {0!r}'.format(
-                    [(url['method'], url['url']) for url in self._urls]))
             if self.captured_exception[0]:
                 six.reraise(*self.captured_exception)
-            raise assertion_error
+            else:
+                raise AssertionError('Not all requests have been executed {0!r}'.format(
+                    [(url['method'], url['url']) for url in self._urls]
+                ))
 
 
 # expose default mock namespace

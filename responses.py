@@ -304,11 +304,16 @@ class RequestsMock(object):
             assertion_error = AssertionError(
                 'Not all requests have been executed {0!r}'.format(
                     [(url['method'], url['url']) for url in self._urls]))
-            if self.captured_exception:
+            if self.captured_exception[0]:
                 try:
                     six.reraise(*self.captured_exception)
                 except Exception as raise_from:
-                    six.raise_from(assertion_error, raise_from)
+                    if six.PY2:
+                        # Python2 doesn't support exceptions chaining, so 
+                        # we'll just re-raise the original exception
+                        raise
+                    else:
+                        six.raise_from(assertion_error, raise_from)
             raise assertion_error
 
 

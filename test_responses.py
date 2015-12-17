@@ -7,6 +7,7 @@ import re
 import requests
 import responses
 import pytest
+import six
 
 from inspect import getargspec
 from requests.exceptions import ConnectionError, HTTPError
@@ -344,15 +345,26 @@ def test_assert_all_requests_are_fired():
 
 def test_assert_all_requests_are_fired_does_not_shadow_exceptions():
     def run():
-        with pytest.raises(AssertionError) as excinfo:
-            with responses.RequestsMock(
-                    assert_all_requests_are_fired=True) as m:
-                m.add(responses.GET, 'http://example.com', body=b'test')
-                raise ValueError('foo')
-        assert 'http://example.com' in str(excinfo.value)
-        assert responses.GET in str(excinfo)
-        assert "raise ValueError('foo')" in ''.join(
-            traceback.format_tb(excinfo.tb))
+        if six.PY2:
+            # Python 2 doesn't support exceptions chaining, so in that case 
+            # just the original ValueError exception should be raised
+            with pytest.raises(ValueError) as excinfo:
+                with responses.RequestsMock(
+                        assert_all_requests_are_fired=True) as m:
+                    m.add(responses.GET, 'http://example.com', body=b'test')
+                    raise ValueError('foo')
+                assert "raise ValueError('foo')" in ''.join(
+                traceback.format_tb(excinfo.tb))
+        else:
+            with pytest.raises(AssertionError) as excinfo:
+                with responses.RequestsMock(
+                        assert_all_requests_are_fired=True) as m:
+                    m.add(responses.GET, 'http://example.com', body=b'test')
+                    raise ValueError('foo')
+            assert 'http://example.com' in str(excinfo.value)
+            assert responses.GET in str(excinfo)
+            assert "raise ValueError('foo')" in ''.join(
+                traceback.format_tb(excinfo.tb))
 
     run()
     assert_reset()

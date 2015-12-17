@@ -350,19 +350,24 @@ def test_assert_all_requests_are_fired_does_not_shadow_exceptions():
                 m.add(responses.GET, 'http://example.com', body=b'test')
                 raise ValueError('foo')
             assert "raise ValueError('foo')" in ''.join(
-            traceback.format_tb(excinfo.tb))
+                traceback.format_tb(excinfo.tb)
+            )
 
     run()
     assert_reset()
 
+
 def test_assert_context_manager_does_not_shadow_exceptions():
     def run():
         with pytest.raises(ValueError) as excinfo:
-            with responses.RequestsMock(assert_all_requests_are_fired=False) as m:
+            with responses.RequestsMock(
+                assert_all_requests_are_fired=False
+            ) as m:
                 m.add(responses.GET, 'http://example.com', body=b'test')
                 raise ValueError('foo')
             assert "raise ValueError('foo')" in ''.join(
-            traceback.format_tb(excinfo.tb))
+                traceback.format_tb(excinfo.tb)
+            )
     run()
     assert_reset()
 

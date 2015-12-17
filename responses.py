@@ -304,9 +304,11 @@ class RequestsMock(object):
             if self.captured_exception[0]:
                 six.reraise(*self.captured_exception)
             else:
-                raise AssertionError('Not all requests have been executed {0!r}'.format(
-                    [(url['method'], url['url']) for url in self._urls]
-                ))
+                raise AssertionError(
+                    'Not all requests have been executed {0!r}'.format(
+                        [(url['method'], url['url']) for url in self._urls]
+                    )
+                )
 
 
 # expose default mock namespace

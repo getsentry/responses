@@ -7,7 +7,6 @@ import re
 import requests
 import responses
 import pytest
-import six
 
 from inspect import getargspec
 from requests.exceptions import ConnectionError, HTTPError

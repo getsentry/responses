@@ -119,10 +119,12 @@ class RequestsMock(object):
     POST = 'POST'
     PUT = 'PUT'
 
-    def __init__(self, assert_all_requests_are_fired=True):
+    def __init__(self, assert_all_requests_are_fired=True,
+                 allow_external_requests=False):
         self._calls = CallList()
         self.reset()
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
+        self.allow_external_requests = allow_external_requests
 
     def reset(self):
         self._urls = []
@@ -230,6 +232,9 @@ class RequestsMock(object):
         match = self._find_match(request)
         # TODO(dcramer): find the correct class for this
         if match is None:
+            if self.allow_external_requests:
+                return self._patcher.temp_original(adapter, request, **kwargs)
+
             error_msg = 'Connection refused: {0} {1}'.format(request.method,
                                                              request.url)
             response = ConnectionError(error_msg)

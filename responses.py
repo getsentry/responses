@@ -305,15 +305,7 @@ class RequestsMock(object):
                 'Not all requests have been executed {0!r}'.format(
                     [(url['method'], url['url']) for url in self._urls]))
             if self.captured_exception[0]:
-                try:
-                    six.reraise(*self.captured_exception)
-                except Exception as raise_from:
-                    if six.PY2:
-                        # Python2 doesn't support exceptions chaining, so 
-                        # we'll just re-raise the original exception
-                        raise
-                    else:
-                        six.raise_from(assertion_error, raise_from)
+                six.reraise(*self.captured_exception)
             raise assertion_error
 
 

@@ -130,7 +130,8 @@ class RequestsMock(object):
 
     def add(self, method, url, body='', match_querystring=False,
             status=200, adding_headers=None, stream=False,
-            content_type='text/plain', json=None):
+            content_type='text/plain', json=None, request_body=None,
+            match_request_body=False):
 
         # if we were passed a `json` argument,
         # override the body and content_type
@@ -154,10 +155,12 @@ class RequestsMock(object):
             'status': status,
             'adding_headers': adding_headers,
             'stream': stream,
+            'request_body': request_body,
+            'match_request_body': match_request_body,
         })
 
     def add_callback(self, method, url, callback, match_querystring=False,
-                     content_type='text/plain'):
+                     content_type='text/plain', match_request_body=False):
         # ensure the url has a default path set if the url is a string
         # url = _ensure_url_default_path(url, match_querystring)
 
@@ -167,6 +170,7 @@ class RequestsMock(object):
             'callback': callback,
             'content_type': content_type,
             'match_querystring': match_querystring,
+            'match_request_body': match_request_body,
         })
 
     @property
@@ -191,6 +195,9 @@ class RequestsMock(object):
                 continue
 
             if not self._has_url_match(match, request.url):
+                continue
+
+            if not self._has_request_body_match(match, request.body):
                 continue
 
             break
@@ -225,6 +232,13 @@ class RequestsMock(object):
         url_qsl = sorted(parse_qsl(url_parsed.query))
         other_qsl = sorted(parse_qsl(other_parsed.query))
         return url_qsl == other_qsl
+
+    def _has_request_body_match(self, match, request_body):
+        if match['match_request_body']:
+            match_body = match['request_body']
+            return match_body == request_body
+        else:
+            return True
 
     def _on_request(self, adapter, request, **kwargs):
         match = self._find_match(request)

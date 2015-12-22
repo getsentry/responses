@@ -385,3 +385,76 @@ def test_allow_redirects_samehost():
 
     run()
     assert_reset()
+
+
+def test_request_body_post():
+    @responses.activate
+    def run():
+        url = 'http://example.com'
+        response_body = 'response_body'
+        request_body = 'request_body'
+        responses.add(
+            responses.POST, url, body=response_body,
+            request_body=request_body, match_request_body=True)
+        resp = requests.post(url, data=request_body)
+        assert_response(resp, response_body)
+
+    run()
+    assert_reset()
+
+
+def test_request_body_get():
+    @responses.activate
+    def run():
+        url = 'http://example.com'
+        response_body = 'response_body'
+        request_body = 'request_body'
+        responses.add(
+            responses.GET, url, body=response_body,
+            request_body=request_body, match_request_body=True)
+        resp = requests.get(url, data=request_body)
+        assert_response(resp, response_body)
+
+    run()
+    assert_reset()
+
+
+def test_request_body_multiple():
+    @responses.activate
+    def run():
+        url = 'http://example.com'
+        response_a_body = 'response_a_body'
+        request_a_body = 'request_a_body'
+        response_b_body = 'response_b_body'
+        request_b_body = 'request_b_body'
+        responses.add(
+            responses.POST, url, body=response_a_body,
+            request_body=request_a_body, match_request_body=True)
+        responses.add(
+            responses.POST, url, body=response_b_body,
+            request_body=request_b_body, match_request_body=True)
+        resp = requests.post(url, data=request_a_body)
+        assert_response(resp, response_a_body)
+        resp = requests.post(url, data=request_b_body)
+        assert_response(resp, response_b_body)
+
+    run()
+    assert_reset()
+
+
+def test_request_body_error():
+    @responses.activate
+    def run():
+        url = 'http://example.com'
+        response_body = 'response_body'
+        request_body = 'request_body'
+        responses.add(
+            responses.POST, url, body=response_body, request_body=request_body,
+            match_request_body=True)
+        with pytest.raises(ConnectionError):
+            requests.post(url)
+        with pytest.raises(ConnectionError):
+            requests.post(url, data='foo')
+
+    run()
+    assert_reset()

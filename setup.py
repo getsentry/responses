@@ -79,7 +79,7 @@ setup(
     url='https://github.com/getsentry/responses',
     license='Apache 2.0',
     long_description=open('README.rst').read(),
-    py_modules=['responses'],
+    py_modules=['responses', 'test_responses'],
     zip_safe=False,
     install_requires=install_requires,
     extras_require=extras_require,

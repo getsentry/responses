@@ -16,9 +16,9 @@ def assert_reset():
     assert len(responses.calls) == 0
 
 
-def assert_response(resp, body=None):
+def assert_response(resp, body=None, content_type='text/plain'):
     assert resp.status_code == 200
-    assert resp.headers['Content-Type'] == 'text/plain'
+    assert resp.headers['Content-Type'] == content_type
     assert resp.text == body
 
 
@@ -153,13 +153,18 @@ def test_accept_string_body():
 def test_accept_json_body():
     @responses.activate
     def run():
+        content_type = 'application/json'
+
         url = 'http://example.com/'
         responses.add(
             responses.GET, url, json={"message": "success"})
         resp = requests.get(url)
-        assert resp.status_code == 200
-        assert resp.headers['Content-Type'] == 'application/json'
-        assert resp.text == '{"message": "success"}'
+        assert_response(resp, '{"message": "success"}', content_type)
+
+        url = 'http://example.com/1/'
+        responses.add(responses.GET, url, json=[])
+        resp = requests.get(url)
+        assert_response(resp, '[]', content_type)
 
     run()
     assert_reset()

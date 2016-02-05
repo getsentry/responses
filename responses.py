@@ -119,11 +119,11 @@ class RequestsMock(object):
     POST = 'POST'
     PUT = 'PUT'
 
-    def __init__(self, multi_response=True, assert_all_requests_are_fired=True):
+    def __init__(self, multi_response=False, assert_all_requests_are_fired=True):
         self._calls = CallList()
         self.reset()
-        self.assert_all_requests_are_fired = multi_response
-        self.multi_response = multi_response
+        self.assert_all_requests_are_fired = assert_all_requests_are_fired
+        self.multi_response = assert_all_requests_are_fired or multi_response
 
     def reset(self):
         self._urls = []

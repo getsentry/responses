@@ -261,6 +261,27 @@ def test_custom_adapter():
     run()
 
 
+def test_multiple_responses():
+    def run():
+        with responses.RequestsMock(multi_response=True) as req_mock:
+            req_mock.add(responses.GET, 'http://example.com', body=b'foo')
+            req_mock.add(responses.GET, 'http://example.com', body=b'bar')
+            resp = requests.get('http://example.com')
+            assert_response(resp, 'foo')
+            assert len(req_mock.calls) == 1
+            assert req_mock.calls[0].request.url == 'http://example.com/'
+            assert req_mock.calls[0].response.content == b'foo'
+
+            resp = requests.get('http://example.com')
+            assert_response(resp, 'bar')
+            assert len(req_mock.calls) == 2
+            assert req_mock.calls[1].request.url == 'http://example.com/'
+            assert req_mock.calls[1].response.content == b'bar'
+
+    run()
+    assert_reset()
+
+
 def test_responses_as_context_manager():
     def run():
         with responses.mock:
@@ -337,6 +358,12 @@ def test_assert_all_requests_are_fired():
                 m.add(responses.GET, 'http://example.com', body=b'test')
         assert 'http://example.com' in str(excinfo.value)
         assert responses.GET in str(excinfo)
+
+        # Should not raise an exception because all requests were fired
+        with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
+            m.add(responses.GET, 'http://example.com', body=b'foo')
+            resp = requests.get('http://example.com')
+            assert_response(resp, 'foo')
 
         # check that assert_all_requests_are_fired default to True
         with pytest.raises(AssertionError):

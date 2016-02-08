@@ -151,8 +151,9 @@ Responses as a context manager
 Assertions on declared responses
 --------------------------------
 
-By default Responses will raise an assertion error if a url was registered but not accessed. This
-can be disabled by passing the ``assert_all_requests_are_fired`` value:
+When used as a context manager, Responses will, by default, raise an assertion
+error if a url was registered but not accessed. This can be disabled by passing
+the ``assert_all_requests_are_fired`` value:
 
 .. code-block:: python
 

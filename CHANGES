@@ -1,3 +1,8 @@
+Unreleased
+----------
+
+- Allow empty list/dict as json object (GH-100)
+
 0.5.1
 -----
 

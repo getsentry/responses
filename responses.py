@@ -155,6 +155,7 @@ class RequestsMock(object):
             'adding_headers': adding_headers,
             'stream': stream,
         })
+        return self._urls[-1]
 
     def add_callback(self, method, url, callback, match_querystring=False,
                      content_type='text/plain'):
@@ -168,6 +169,7 @@ class RequestsMock(object):
             'content_type': content_type,
             'match_querystring': match_querystring,
         })
+        return self._urls[-1]
 
     @property
     def calls(self):

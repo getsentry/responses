@@ -13,6 +13,7 @@ from cookies import Cookies
 from requests.utils import cookiejar_from_dict
 from requests.exceptions import ConnectionError
 from requests.sessions import REDIRECT_STATI
+from requests.compat import urlencode
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -130,13 +131,19 @@ class RequestsMock(object):
 
     def add(self, method, url, body='', match_querystring=False,
             status=200, adding_headers=None, stream=False,
-            content_type='text/plain', json=None):
+            content_type='text/plain', json=None, query_params=None):
 
         # if we were passed a `json` argument,
         # override the body and content_type
         if json is not None:
             body = json_module.dumps(json)
             content_type = 'application/json'
+
+        # if we are passed a query_params dict, create the query
+        # string and append to the url
+        if query_params:
+          query_string = self._build_query(query_params)
+          url = "{0}?{1}".format(url, query_string)
 
         # ensure the url has a default path set if the url is a string
         url = _ensure_url_default_path(url, match_querystring)
@@ -283,6 +290,18 @@ class RequestsMock(object):
         self._calls.add(request, response)
 
         return response
+
+    def _build_query(self, query_params):
+      result = []
+      for k, vs in query_params.iteritems():
+        if isinstance(vs, basestring) or not hasattr(vs, '__iter__'):
+          vs = [vs]
+        for v in vs:
+          if v is not None:
+            result.append(
+              (k.encode('utf-8') if isinstance(k, str) else k,
+              v.encode('utf-8') if isinstance(v, str) else v))
+      return urlencode(result, doseq=True)
 
     def start(self):
         try:

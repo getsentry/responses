@@ -50,6 +50,29 @@ You can also specify a JSON object instead of a body string.
         assert responses.calls[0].request.url == 'http://twitter.com/api/1/foobar'
         assert responses.calls[0].response.text == '{"error": "not found"}'
 
+Expected query params can be provided as a dict and verified in the call:
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+    @responses.activate
+    def test_my_api():
+        query_params = {"test": 2, "foo": "baz", "name": ["boaty", "mcboatface"]}
+        responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
+                      json={"error": "not found"}, status=404,
+                      match_querystring=True, query_params=query_params)
+
+        resp = requests.get('http://twitter.com/api/1/foobar', params=query_params)
+
+        assert resp.json() == {"error": "not found"}
+
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.url == 'http://twitter.com/api/1/foobar?test=2&foo=baz&name=boaty&name=mcboatface'
+        assert responses.calls[0].response.text == '{"error": "not found"}'
+
+
 Request callback
 ----------------
 

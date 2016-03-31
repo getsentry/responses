@@ -10,7 +10,7 @@ import six
 from collections import namedtuple, Sequence, Sized
 from functools import update_wrapper
 from cookies import Cookies
-from requests.utils import cookiejar_from_dict
+from requests.utils import cookiejar_from_dict, to_key_val_list
 from requests.exceptions import ConnectionError
 from requests.sessions import REDIRECT_STATI
 from requests.compat import urlencode, basestring
@@ -293,7 +293,7 @@ class RequestsMock(object):
 
     def _build_query(self, query_params):
         result = []
-        for k, vs in query_params.iteritems():
+        for k, vs in to_key_val_list(query_params):
             if isinstance(vs, basestring) or not hasattr(vs, '__iter__'):
                 vs = [vs]
             for v in vs:

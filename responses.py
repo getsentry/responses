@@ -300,7 +300,8 @@ class RequestsMock(object):
                 if v is not None:
                     result.append(
                         (k.encode('utf-8') if isinstance(k, str) else k,
-                        v.encode('utf-8') if isinstance(v, str) else v))
+                            v.encode('utf-8') if isinstance(v, str) else v)
+                    )
         return urlencode(result, doseq=True)
 
     def start(self):

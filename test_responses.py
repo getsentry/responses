@@ -79,10 +79,12 @@ def test_match_querystring_with_params():
     @responses.activate
     def run():
         url = 'http://example.com'
-        query_params = {"test": 2, "foo": "baz", "name": ["boaty", "mcboatface"]}
+        query_params = {"test": 2, "foo": "baz",
+            "name": ["boaty", "mcboatface"]}
         responses.add(
             responses.GET, url,
-            match_querystring=True, query_params=query_params, body=b'test')
+            match_querystring=True, query_params=query_params,
+            body=b'test')
         resp = requests.get('http://example.com?test=2&foo=baz&name=boaty&name=mcboatface')
         assert_response(resp, 'test')
         resp = requests.get('http://example.com?foo=baz&test=2&name=mcboatface&name=boaty')

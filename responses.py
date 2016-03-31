@@ -142,8 +142,8 @@ class RequestsMock(object):
         # if we are passed a query_params dict, create the query
         # string and append to the url
         if query_params:
-          query_string = self._build_query(query_params)
-          url = "{0}?{1}".format(url, query_string)
+            query_string = self._build_query(query_params)
+            url = "{0}?{1}".format(url, query_string)
 
         # ensure the url has a default path set if the url is a string
         url = _ensure_url_default_path(url, match_querystring)
@@ -292,16 +292,16 @@ class RequestsMock(object):
         return response
 
     def _build_query(self, query_params):
-      result = []
-      for k, vs in query_params.iteritems():
-        if isinstance(vs, basestring) or not hasattr(vs, '__iter__'):
-          vs = [vs]
-        for v in vs:
-          if v is not None:
-            result.append(
-              (k.encode('utf-8') if isinstance(k, str) else k,
-              v.encode('utf-8') if isinstance(v, str) else v))
-      return urlencode(result, doseq=True)
+        result = []
+        for k, vs in query_params.iteritems():
+            if isinstance(vs, basestring) or not hasattr(vs, '__iter__'):
+                vs = [vs]
+            for v in vs:
+                if v is not None:
+                    result.append(
+                        (k.encode('utf-8') if isinstance(k, str) else k,
+                        v.encode('utf-8') if isinstance(v, str) else v))
+        return urlencode(result, doseq=True)
 
     def start(self):
         try:

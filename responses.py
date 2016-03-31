@@ -13,7 +13,7 @@ from cookies import Cookies
 from requests.utils import cookiejar_from_dict
 from requests.exceptions import ConnectionError
 from requests.sessions import REDIRECT_STATI
-from requests.compat import urlencode
+from requests.compat import urlencode, basestring
 
 try:
     from requests.packages.urllib3.response import HTTPResponse

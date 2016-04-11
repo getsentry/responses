@@ -137,6 +137,101 @@ def test_match_querystring_error_regex():
     assert_reset()
 
 
+def test_match_fragmentidentifier():
+    @responses.activate
+    def run():
+        url = 'http://example.com#test=1&foo=bar'
+        responses.add(
+            responses.GET, url,
+            match_fragmentidentifier=True, body=b'test')
+        resp = requests.get('http://example.com#test=1&foo=bar')
+        assert_response(resp, 'test')
+        resp = requests.get('http://example.com#foo=bar&test=1')
+        assert_response(resp, 'test')
+
+    run()
+    assert_reset()
+
+
+def test_match_fragmentidentifier_error():
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET, 'http://example.com/#test=1',
+            match_fragmentidentifier=True)
+
+        with pytest.raises(ConnectionError):
+            requests.get('http://example.com/foo/#test=2')
+
+    run()
+    assert_reset()
+
+
+def test_match_fragmentidentifier_regex():
+    @responses.activate
+    def run():
+        """Note that `match_fragmentidentifier` value shouldn't matter when passing a
+        regular expression"""
+
+        responses.add(
+            responses.GET, re.compile(r'http://example\.com/foo/#test=1'),
+            body='test1', match_fragmentidentifier=True)
+
+        resp = requests.get('http://example.com/foo/#test=1')
+        assert_response(resp, 'test1')
+
+        responses.add(
+            responses.GET, re.compile(r'http://example\.com/foo/#test=2'),
+            body='test2', match_fragmentidentifier=False)
+
+        resp = requests.get('http://example.com/foo/#test=2')
+        assert_response(resp, 'test2')
+
+    run()
+    assert_reset()
+
+
+def test_match_fragmentidentifier_error_regex():
+    @responses.activate
+    def run():
+        """Note that `match_fragmentidentifier` value shouldn't matter when passing a
+        regular expression"""
+
+        responses.add(
+            responses.GET, re.compile(r'http://example\.com/foo/#test=1'),
+            match_fragmentidentifier=True)
+
+        with pytest.raises(ConnectionError):
+            requests.get('http://example.com/foo/#test=3')
+
+        responses.add(
+            responses.GET, re.compile(r'http://example\.com/foo/#test=2'),
+            match_fragmentidentifier=False)
+
+        with pytest.raises(ConnectionError):
+            requests.get('http://example.com/foo/#test=4')
+
+    run()
+    assert_reset()
+
+
+def test_match_querystring_and_fragmentidentifier():
+    @responses.activate
+    def run():
+        url = 'http://example.com?ab=xy&zed=qwe#test=1&foo=bar'
+        responses.add(
+            responses.GET, url,
+            match_querystring=True,
+            match_fragmentidentifier=True, body=b'test')
+        resp = requests.get('http://example.com?ab=xy&zed=qwe#test=1&foo=bar')
+        assert_response(resp, 'test')
+        resp = requests.get('http://example.com?zed=qwe&ab=xy#foo=bar&test=1')
+        assert_response(resp, 'test')
+
+    run()
+    assert_reset()
+
+
 def test_accept_string_body():
     @responses.activate
     def run():

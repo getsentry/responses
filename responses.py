@@ -20,9 +20,9 @@ except ImportError:
     from urllib3.response import HTTPResponse
 
 if six.PY2:
-    from urlparse import urlparse, parse_qsl
+    from urlparse import urlparse, parse_qsl, urlunparse
 else:
-    from urllib.parse import urlparse, parse_qsl
+    from urllib.parse import urlparse, parse_qsl, urlunparse
 
 if six.PY2:
     try:
@@ -103,10 +103,9 @@ class CallList(Sequence, Sized):
 
 def _ensure_url_default_path(url, match_querystring):
     if _is_string(url) and url.count('/') == 2:
-        if match_querystring:
-            return url.replace('?', '/?', 1)
-        else:
-            return url + '/'
+        parsed_url = urlparse(url)
+        path = parsed_url.path or '/'
+        return urlunparse(urlparse(url)[:2] + (path,) + urlparse(url)[3:])
     return url
 
 
@@ -130,7 +129,8 @@ class RequestsMock(object):
 
     def add(self, method, url, body='', match_querystring=False,
             status=200, adding_headers=None, stream=False,
-            content_type='text/plain', json=None):
+            content_type='text/plain', json=None,
+            match_fragmentidentifier=False):
 
         # if we were passed a `json` argument,
         # override the body and content_type
@@ -151,13 +151,15 @@ class RequestsMock(object):
             'body': body,
             'content_type': content_type,
             'match_querystring': match_querystring,
+            'match_fragmentidentifier': match_fragmentidentifier,
             'status': status,
             'adding_headers': adding_headers,
             'stream': stream,
         })
 
     def add_callback(self, method, url, callback, match_querystring=False,
-                     content_type='text/plain'):
+                     content_type='text/plain',
+                     match_fragmentidentifier=False):
         # ensure the url has a default path set if the url is a string
         # url = _ensure_url_default_path(url, match_querystring)
 
@@ -167,6 +169,7 @@ class RequestsMock(object):
             'callback': callback,
             'content_type': content_type,
             'match_querystring': match_querystring,
+            'match_fragmentidentifier': match_fragmentidentifier,
         })
 
     @property
@@ -205,26 +208,35 @@ class RequestsMock(object):
         url = match['url']
 
         if _is_string(url):
-            if match['match_querystring']:
-                return self._has_strict_url_match(url, request_url)
-            else:
-                url_without_qs = request_url.split('?', 1)[0]
-                return url == url_without_qs
+            return self._match_url(url, request_url,
+                                   match['match_querystring'],
+                                   match['match_fragmentidentifier'])
         elif isinstance(url, re._pattern_type) and url.match(request_url):
             return True
         else:
             return False
 
-    def _has_strict_url_match(self, url, other):
+    def _match_url(self, url, other, match_querystring,
+                   match_fragmentidentifier):
         url_parsed = urlparse(url)
         other_parsed = urlparse(other)
 
         if url_parsed[:3] != other_parsed[:3]:
             return False
 
-        url_qsl = sorted(parse_qsl(url_parsed.query))
-        other_qsl = sorted(parse_qsl(other_parsed.query))
-        return url_qsl == other_qsl
+        if match_querystring:
+            url_qsl = sorted(parse_qsl(url_parsed.query))
+            other_qsl = sorted(parse_qsl(other_parsed.query))
+            if url_qsl != other_qsl:
+                return False
+
+        if match_fragmentidentifier:
+            url_qsl = sorted(parse_qsl(url_parsed.fragment))
+            other_qsl = sorted(parse_qsl(other_parsed.fragment))
+            if url_qsl != other_qsl:
+                return False
+
+        return True
 
     def _on_request(self, adapter, request, **kwargs):
         match = self._find_match(request)

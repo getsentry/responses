@@ -159,7 +159,7 @@ class RequestsMock(object):
     def add_callback(self, method, url, callback, match_querystring=False,
                      content_type='text/plain'):
         # ensure the url has a default path set if the url is a string
-        # url = _ensure_url_default_path(url, match_querystring)
+        url = _ensure_url_default_path(url, match_querystring)
 
         self._urls.append({
             'url': url,

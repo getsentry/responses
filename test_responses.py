@@ -329,6 +329,33 @@ def test_response_cookies():
     assert_reset()
 
 
+def test_session_cookies():
+    body = b'test callback'
+    status = 200
+    headers = {'set-cookie': 'session_id=12345; a=b; c=d'}
+    url = 'http://example.com/'
+
+    def request_callback(request):
+        return (status, headers, body)
+
+    @responses.activate
+    def run():
+        responses.add_callback(responses.GET, url, request_callback)
+        session = requests.Session()
+        resp = session.get(url)
+        assert resp.text == "test callback"
+        assert resp.status_code == status
+        assert 'session_id' in resp.cookies
+        assert resp.cookies['session_id'] == '12345'
+        assert resp.cookies['a'] == 'b'
+        assert resp.cookies['c'] == 'd'
+        assert session.cookies['session_id'] == '12345'
+        assert session.cookies['a'] == 'b'
+        assert session.cookies['c'] == 'd'
+    run()
+    assert_reset()
+
+
 def test_assert_all_requests_are_fired():
     def run():
         with pytest.raises(AssertionError) as excinfo:

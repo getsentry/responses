@@ -20,6 +20,11 @@ except ImportError:
     from urllib3.response import HTTPResponse
 
 if six.PY2:
+    from requests.packages.urllib3._collections import HTTPHeaderDict
+else:
+    from http.client import HTTPMessage
+
+if six.PY2:
     from urlparse import urlparse, parse_qsl
 else:
     from urllib.parse import urlparse, parse_qsl
@@ -40,6 +45,33 @@ def wrapper%(signature)s:
     with responses:
         return func%(funcargs)s
 """
+
+
+class _OriginalResponse(object):
+    def __init__(self, headers):
+        if six.PY2:
+            self.msg = HTTPHeaderDict()
+            if 'set-cookie' in headers:
+                cookies = Cookies.from_request(headers.pop('set-cookie'))
+                for _, v in cookies.items():
+                    self.msg.add('set-cookie', '='.join([v.name, v.value]))
+            for k, v in headers.items():
+                self.msg[k] = v
+        else:
+            self.msg = HTTPMessage()
+            if 'set-cookie' in headers:
+                cookies = Cookies.from_request(headers.pop('set-cookie'))
+                for _, v in cookies.items():
+                    self.msg.add_header('set-cookie',
+                                        '='.join([v.name, v.value]))
+            for k, v in headers.items():
+                self.msg[k] = v
+
+    def close(self):
+        pass
+
+    def isclosed(self):
+        return True
 
 
 def _is_string(s):
@@ -264,6 +296,7 @@ class RequestsMock(object):
             body=body,
             headers=headers,
             preload_content=False,
+            original_response=_OriginalResponse(headers)
         )
 
         response = adapter.build_response(request, response)

@@ -20,7 +20,7 @@ except ImportError:
     from urllib3.response import HTTPResponse
 
 if six.PY2:
-    from requests.packages.urllib3._collections import HTTPHeaderDict
+    from httplib import HTTPMessage
 else:
     from http.client import HTTPMessage
 
@@ -49,14 +49,16 @@ def wrapper%(signature)s:
 
 class _OriginalResponse(object):
     def __init__(self, headers):
+        headers = headers.copy()
         if six.PY2:
-            self.msg = HTTPHeaderDict()
-            if 'set-cookie' in headers:
-                cookies = Cookies.from_request(headers.pop('set-cookie'))
-                for _, v in cookies.items():
-                    self.msg.add('set-cookie', '='.join([v.name, v.value]))
-            for k, v in headers.items():
-                self.msg[k] = v
+            cookies = headers.pop('set-cookie', None)
+            msg = [': '.join([k, v]) for k, v in headers.items()]
+            if cookies:
+                cookies = Cookies.from_request(cookies)
+                msg.extend(['Set-Cookie: {}={}'.format(v.name, v.value)
+                            for _, v in cookies.items()])
+            msg = '\n'.join(msg)
+            self.msg = HTTPMessage(BufferIO(msg))
         else:
             self.msg = HTTPMessage()
             if 'set-cookie' in headers:

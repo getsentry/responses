@@ -55,7 +55,7 @@ class _OriginalResponse(object):
             msg = [': '.join([k, v]) for k, v in headers.items()]
             if cookies:
                 cookies = Cookies.from_request(cookies)
-                msg.extend(['Set-Cookie: {}={}'.format(v.name, v.value)
+                msg.extend(['Set-Cookie: {0}={1}'.format(v.name, v.value)
                             for _, v in cookies.items()])
             msg = '\n'.join(msg)
             self.msg = HTTPMessage(BufferIO(msg))

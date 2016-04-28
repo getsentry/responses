@@ -166,3 +166,27 @@ the ``assert_all_requests_are_fired`` value:
             rsps.add(responses.GET, 'http://twitter.com/api/1/foobar',
                      body='{}', status=200,
                      content_type='application/json')
+
+
+Matching query strings
+----------------------
+
+When mocking a URL that contains a query string, pass `match_querystring=True` to `responses.add()`.
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+    @responses.activate
+    def test_my_api():
+        responses.add(responses.GET, 'http://twitter.com/api/1/foobar?baz=true',
+                      json={"error": "not found"}, status=404, match_querystring=True)
+
+        resp = requests.get('http://twitter.com/api/1/foobar?baz=true')
+
+        assert resp.json() == {"error": "not found"}
+
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.url == 'http://twitter.com/api/1/foobar'
+        assert responses.calls[0].response.text == '{"error": "not found"}'

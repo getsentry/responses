@@ -106,7 +106,7 @@ you can also supply a compiled regular expression.
                   content_type='application/json')
 
     # You can do the following
-    url_re = re.compile(r'https?://twitter.com/api/\d+/foobar')
+    url_re = re.compile(r'https?://twitter\.com/api/\d+/foobar')
     responses.add(responses.GET, url_re,
                   body='{"error": "not found"}', status=404,
                   content_type='application/json')

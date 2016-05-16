@@ -390,3 +390,30 @@ def test_allow_redirects_samehost():
 
     run()
     assert_reset()
+
+
+def test_allow_external_requests():
+    def run():
+        with responses.RequestsMock(
+                allow_external_requests=False) as m:
+            m.add(responses.GET, 'http://example.com', body=b'test')
+
+            resp = requests.get('http://example.com')
+            assert resp.content == b'test'
+
+            with pytest.raises(ConnectionError):
+                requests.get('http://google.com')
+
+        with responses.RequestsMock(
+                allow_external_requests=True) as m:
+            m.add(responses.GET, 'http://example.com', body=b'test')
+
+            resp = requests.get('http://example.com')
+            assert resp.content == b'test'
+
+            # needs an active connection
+            resp = requests.get('http://google.com')
+            assert resp.status_code == 200
+
+    run()
+    assert_reset()

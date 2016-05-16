@@ -166,3 +166,30 @@ the ``assert_all_requests_are_fired`` value:
             rsps.add(responses.GET, 'http://twitter.com/api/1/foobar',
                      body='{}', status=200,
                      content_type='application/json')
+
+
+Allowing non mocked requests
+--------------------------------
+
+By default Responses will raise an exception if an url not mocked is called. This behavior can
+be changed by passing the ``allow_external_requests`` value:
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+
+    def test_my_api():
+        with responses.RequestsMock(allow_external_requests=True) as rsps:
+            rsps.add(responses.GET, 'http://twitter.com/api/1/foobar',
+                     body='{}', status=200,
+                     content_type='application/json')
+
+            # use the mocked route
+            resp = requests.get('http://twitter.com/api/1/foobar')
+            assert resp.status_code == 200
+
+            # will hit the remote server
+            resp = requests.get('http//twitter.com/')
+            assert resp.status_code == 200

@@ -130,7 +130,7 @@ class RequestsMock(object):
 
     def add(self, method, url, body='', match_querystring=False,
             status=200, adding_headers=None, stream=False,
-            content_type='text/plain', json=None):
+            content_type='text/plain', json=None, headers=None):
 
         # if we were passed a `json` argument,
         # override the body and content_type
@@ -149,6 +149,7 @@ class RequestsMock(object):
             'url': url,
             'method': method,
             'body': body,
+            'headers': headers,
             'content_type': content_type,
             'match_querystring': match_querystring,
             'status': status,
@@ -187,6 +188,11 @@ class RequestsMock(object):
 
     def _find_match(self, request):
         for match in self._urls:
+            headers = match.get('headers')
+            if headers is not None and any(request.headers.get(h) != v
+                                           for h, v in headers.items()):
+                continue
+
             if request.method != match['method']:
                 continue
 

@@ -59,6 +59,31 @@ def test_connection_error():
     assert_reset()
 
 
+def test_match_headers_negative():
+    @responses.activate
+    def run():
+        url = 'http://example.com'
+        headers = {'Test header': 'Value'}
+        responses.add(responses.GET, url, headers=headers)
+        with pytest.raises(ConnectionError):
+            requests.get('http://example.com')
+
+    run()
+    assert_reset()
+
+
+def test_match_headers_positive():
+    @responses.activate
+    def run():
+        url = 'http://example.com'
+        headers = {'Test header': 'Value'}
+        responses.add(responses.GET, url, headers=headers)
+        requests.get('http://example.com', headers=headers)
+
+    run()
+    assert_reset()
+
+
 def test_match_querystring():
     @responses.activate
     def run():

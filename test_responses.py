@@ -440,7 +440,7 @@ def test_request_timeout_expired():
     def run():
         responses.add(responses.GET, url, timeout=response_timeout)
         with pytest.raises(ConnectTimeout):
-            resp = requests.get(url, timeout=request_timeout)
+            requests.get(url, timeout=request_timeout)
 
     run()
     assert_reset()

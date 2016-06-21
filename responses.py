@@ -12,8 +12,13 @@ from collections import namedtuple, Sequence, Sized
 from functools import update_wrapper
 from cookies import Cookies
 from requests.utils import cookiejar_from_dict
-from requests.exceptions import ConnectionError, ConnectTimeout
+from requests.exceptions import ConnectionError
 from requests.sessions import REDIRECT_STATI
+
+try:
+    from requests.exceptions import ConnectTimeout
+except ImportError:
+    from requests.exceptions import Timeout as ConnectTimeout
 
 try:
     from requests.packages.urllib3.response import HTTPResponse

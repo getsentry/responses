@@ -9,7 +9,12 @@ import responses
 import pytest
 
 from inspect import getargspec
-from requests.exceptions import ConnectionError, HTTPError, ConnectTimeout
+from requests.exceptions import ConnectionError, HTTPError
+
+try:
+    from requests.exceptions import ConnectTimeout
+except ImportError:
+    from requests.exceptions import Timeout as ConnectTimeout
 
 
 def assert_reset():

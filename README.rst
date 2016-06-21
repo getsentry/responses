@@ -148,6 +148,46 @@ Responses as a context manager
         resp.status_code == 404
 
 
+Timeout for request and response
+--------------------------------
+
+Sometimes it is useful to have an actual delay imitating network latency, so
+you can add ``timeout`` keyword argument to return a response with delay.
+
+.. code-block::python
+
+    import responses
+    import requests
+
+
+    def test_api_with_delay():
+        with responses.RequestsMock() as rsps:
+            rsps.add(responses.GET, 'http://twitter.com/api/1/foobar',
+                     body='{}', status=200,
+                     content_type='application/json', timeout=2)
+            # blocking call that will return after 2 seconds
+            resp = requests.get('http://twitter.com/api/1/foobar')
+
+You can hit a connection timeout exception if ``timeout`` argument is present
+for request.
+
+.. code-block::python
+
+    import responses
+    import requests
+
+
+    def test_connection_timeout():
+        with responses.RequestsMock() as rsps:
+            rsps.add(responses.GET, 'http://twitter.com/api/1/foobar',
+                     body='{}', status=200,
+                     content_type='application/json', timeout=2)
+            try:
+                resp = requests.get('http://twitter.com/api/1/foobar',
+                                    timeout=1)
+            except requests.exceptions.ConnectTimeout as e:
+                print('Connection timed out')
+
 Assertions on declared responses
 --------------------------------
 
@@ -166,3 +206,4 @@ the ``assert_all_requests_are_fired`` value:
             rsps.add(responses.GET, 'http://twitter.com/api/1/foobar',
                      body='{}', status=200,
                      content_type='application/json')
+

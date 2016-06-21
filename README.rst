@@ -154,7 +154,7 @@ Timeout for request and response
 Sometimes it is useful to have an actual delay imitating network latency, so
 you can add ``timeout`` keyword argument to return a response with delay.
 
-.. code-block::python
+.. code-block:: python
 
     import responses
     import requests
@@ -171,7 +171,7 @@ you can add ``timeout`` keyword argument to return a response with delay.
 You can hit a connection timeout exception if ``timeout`` argument is present
 for request.
 
-.. code-block::python
+.. code-block:: python
 
     import responses
     import requests

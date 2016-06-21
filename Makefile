@@ -14,3 +14,6 @@ lint:
 	@echo "Linting Python files"
 	PYFLAKES_NODOCTEST=1 flake8 .
 	@echo ""
+
+run-tests:
+	py.test -sv .

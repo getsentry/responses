@@ -3,12 +3,13 @@ from __future__ import (
 )
 
 import re
+import time
 import requests
 import responses
 import pytest
 
 from inspect import getargspec
-from requests.exceptions import ConnectionError, HTTPError
+from requests.exceptions import ConnectionError, HTTPError, ConnectTimeout
 
 
 def assert_reset():
@@ -387,6 +388,59 @@ def test_allow_redirects_samehost():
             status_codes = [call[1].status_code for call in responses.calls]
             assert status_codes == [301, 301, 200]
         assert_reset()
+
+    run()
+    assert_reset()
+
+
+def test_response_timeout():
+    body = b'test'
+    status = 200
+    url = 'http://example.com/'
+    timeout = 0.1  # timeout in seconds
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, url, body=body, timeout=timeout)
+        begin = time.time()
+        resp = requests.get(url)
+        end = time.time()
+        assert end - begin >= timeout  # some additional delay may took place
+        assert resp.text == 'test'
+        assert resp.status_code == status
+
+    run()
+    assert_reset()
+
+
+def test_request_timeout():
+    status = 200
+    url = 'http://example.com/'
+    timeout = 0.1  # timeout in seconds
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, url, timeout=timeout)
+        begin = time.time()
+        resp = requests.get(url, timeout=timeout)
+        end = time.time()
+        assert end - begin >= timeout
+        assert resp.status_code == status
+
+    run()
+    assert_reset()
+
+
+def test_request_timeout_expired():
+    url = 'http://example.com/'
+    response_timeout = 0.2
+    request_timeout = 0.1
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, url, timeout=response_timeout)
+        with pytest.raises(ConnectTimeout):
+            resp = requests.get(url, timeout=request_timeout)
 
     run()
     assert_reset()

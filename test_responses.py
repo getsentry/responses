@@ -391,6 +391,7 @@ def test_allow_redirects_samehost():
     run()
     assert_reset()
 
+
 def test_use_stream_twice_to_double_raw_io():
     @responses.activate
     def run():

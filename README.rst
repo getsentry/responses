@@ -2,7 +2,7 @@ Responses
 =========
 
 .. image:: https://travis-ci.org/getsentry/responses.png?branch=master
-	:target: https://travis-ci.org/getsentry/responses
+    :target: https://travis-ci.org/getsentry/responses
 
 A utility library for mocking out the `requests` Python library.
 
@@ -147,6 +147,23 @@ Responses as a context manager
         resp = requests.get('http://twitter.com/api/1/foobar')
         resp.status_code == 404
 
+Responses as a pytest fixture
+-----------------------------
+
+.. code-block:: python
+
+    @pytest.yield_fixture
+    def mocked_responses():
+        with responses.RequestsMock() as rsps:
+            yield rsps
+
+    def test_api(mocked_responses):
+        mocked_responses.add(
+            responses.GET, 'http://twitter.com/api/1/foobar',
+            body='{}', status=200,
+            content_type='application/json')
+        resp = requests.get('http://twitter.com/api/1/foobar')
+        assert resp.status_code == 200
 
 Assertions on declared responses
 --------------------------------

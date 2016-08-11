@@ -134,6 +134,26 @@ class BaseResponse(object):
         self.url = _ensure_url_default_path(url)
         self.call_count = 0
 
+    def __eq__(self, other):
+        if not isinstance(other, BaseResponse):
+            return False
+
+        if self.method != other.method:
+            return False
+
+        # Can't simply do a equality check on the objects directly here since __eq__ isn't
+        # implemented for regex. It might seem to work as regex is using a cache to return
+        # the same regex instances, but it doesn't in all cases.
+        self_url = self.url.pattern if isinstance(
+            self.url, re._pattern_type) else self.url
+        other_url = other.url.pattern if isinstance(
+            other.url, re._pattern_type) else other.url
+
+        return self_url == other_url
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def _url_matches_strict(self, url, other):
         url_parsed = urlparse(url)
         other_parsed = urlparse(other)
@@ -349,10 +369,48 @@ class RequestsMock(object):
         if adding_headers is not None:
             kwargs.setdefault('headers', adding_headers)
 
-        if method_or_response:
-            kwargs['method'] = method_or_response
+        self._matches.append(
+            Response(method=method_or_response, url=url, body=body, **kwargs))
 
-        self._matches.append(Response(url=url, body=body, **kwargs))
+    def remove(self, method_or_response=None, url=None):
+        """
+        Removes a response previously added using ``add()``, identified
+        either by a response object inheriting ``BaseResponse`` or
+        ``method`` and ``url``. Removes all matching responses.
+
+        >>> response.add(responses.GET, 'http://example.org')
+        >>> response.remove(responses.GET, 'http://example.org')
+        """
+        if isinstance(method_or_response, BaseResponse):
+            response = method_or_response
+        else:
+            response = BaseResponse(method=method_or_response, url=url)
+
+        while response in self._matches:
+            self._matches.remove(response)
+
+    def replace(self,
+                method_or_response=None,
+                url=None,
+                body='',
+                *args,
+                **kwargs):
+        """
+        Replaces a response previously added using ``add()``. The signature
+        is identical to ``add()``. The response is identified using ``method``
+        and ``url``, and the first matching response is replaced.
+
+        >>> responses.add(responses.GET, 'http://example.org', json={'data': 1})
+        >>> responses.replace(responses.GET, 'http://example.org', json={'data': 2})
+        """
+        if isinstance(method_or_response, BaseResponse):
+            response = method_or_response
+        else:
+            response = Response(
+                method=method_or_response, url=url, body=body, **kwargs)
+
+        index = self._matches.index(response)
+        self._matches[index] = response
 
     def add_callback(self,
                      method,

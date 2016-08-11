@@ -7,6 +7,7 @@ import re
 import requests
 import responses
 import pytest
+from responses import BaseResponse, Response
 
 from inspect import getargspec
 from requests.exceptions import ConnectionError, HTTPError
@@ -64,8 +65,108 @@ def test_response_with_instance():
         assert len(responses.calls) == 2
         assert responses.calls[1].request.url == 'http://example.com/?foo=bar'
 
+
+@pytest.mark.parametrize('original,replacement',
+                         [('http://example.com/two',
+                           'http://example.com/two'), (Response(
+                               method=responses.GET,
+                               url='http://example.com/two'), Response(
+                                   method=responses.GET,
+                                   url='http://example.com/two',
+                                   body='testtwo')),
+                          (re.compile(r'http://example\.com/two'),
+                           re.compile(r'http://example\.com/two'))])
+def test_replace(original, replacement):
+    @responses.activate
+    def run():
+        responses.add(responses.GET, 'http://example.com/one', body='test1')
+
+        if isinstance(original, BaseResponse):
+            responses.add(original)
+        else:
+            responses.add(responses.GET, original, body='test2')
+
+        responses.add(responses.GET, 'http://example.com/three', body='test3')
+        responses.add(
+            responses.GET,
+            re.compile(r'http://example\.com/four'),
+            body='test3')
+
+        if isinstance(replacement, BaseResponse):
+            responses.replace(replacement)
+        else:
+            responses.replace(responses.GET, replacement, body='testtwo')
+
+        resp = requests.get('http://example.com/two')
+        assert_response(resp, 'testtwo')
+
     run()
     assert_reset()
+
+
+@pytest.mark.parametrize('original,replacement', [
+    ('http://example.com/one', re.compile(r'http://example\.com/one')),
+    (re.compile(r'http://example\.com/one'), 'http://example.com/one'),
+])
+def test_replace_error(original, replacement):
+    @responses.activate
+    def run():
+        responses.add(responses.GET, original)
+        with pytest.raises(ValueError):
+            responses.replace(responses.GET, replacement)
+
+    run()
+    assert_reset()
+
+
+def test_remove():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, 'http://example.com/zero')
+        responses.add(responses.GET, 'http://example.com/one')
+        responses.add(responses.GET, 'http://example.com/two')
+        responses.add(responses.GET, re.compile(r'http://example\.com/three'))
+        responses.add(responses.GET, re.compile(r'http://example\.com/four'))
+        re.purge()
+        responses.remove(responses.GET, 'http://example.com/two')
+        responses.remove(
+            Response(method=responses.GET, url='http://example.com/zero'))
+        responses.remove(responses.GET,
+                         re.compile(r'http://example\.com/four'))
+
+        with pytest.raises(ConnectionError):
+            requests.get('http://example.com/zero')
+        requests.get('http://example.com/one')
+        with pytest.raises(ConnectionError):
+            requests.get('http://example.com/two')
+        requests.get('http://example.com/three')
+        with pytest.raises(ConnectionError):
+            requests.get('http://example.com/four')
+
+    run()
+    assert_reset()
+
+
+@pytest.mark.parametrize('args1,kwargs1,args2,kwargs2,expected', [
+    ((responses.GET, 'a'), {}, (responses.GET, 'a'), {}, True),
+    ((responses.GET, 'a'), {}, (responses.GET, 'b'), {}, False),
+    ((responses.GET, 'a'), {}, (responses.POST, 'a'), {}, False),
+    ((responses.GET, 'a'), {
+        'match_querystring': True
+    }, (responses.GET, 'a'), {}, True),
+])
+def test_response_equality(args1, kwargs1, args2, kwargs2, expected):
+    o1 = BaseResponse(*args1, **kwargs1)
+    o2 = BaseResponse(*args2, **kwargs2)
+    assert (o1 == o2) is expected
+    assert (o1 != o2) is not expected
+
+
+def test_response_equality_different_objects():
+    o1 = BaseResponse(method=responses.GET, url='a')
+    o2 = 'str'
+    assert (o1 == o2) is False
+    assert (o1 != o2) is True
 
 
 def test_connection_error():

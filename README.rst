@@ -242,3 +242,21 @@ single `response` object.
 		assert resp.text == "test"
 		assert hasattr(resp, 'callback_processed')
 		assert resp.callback_processed is True
+
+
+Passing thru real requests
+--------------------------
+
+In some cases you may wish to allow for certain requests to pass thru responses
+and hit a real server. This can be done with the 'passthru' methods:
+
+.. code-block:: python
+
+    import responses
+
+    @responses.activate
+    def test_my_api():
+        responses.add_passthru('https://percy.io')
+
+This will allow any requests matching that prefix, that is otherwise not registered
+as a mock response, to passthru using the standard behavior.

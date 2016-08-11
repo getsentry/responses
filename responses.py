@@ -1,19 +1,20 @@
 from __future__ import (absolute_import, print_function, division,
                         unicode_literals)
 
+import _io
 import inspect
 import json as json_module
+import logging
 import re
-
-import _io
 import six
 
 from collections import namedtuple, Sequence, Sized
 from functools import update_wrapper
 from cookies import Cookies
-from requests.utils import cookiejar_from_dict
+from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 from requests.sessions import REDIRECT_STATI
+from requests.utils import cookiejar_from_dict
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -37,11 +38,15 @@ UNSET = object()
 
 Call = namedtuple('Call', ['request', 'response'])
 
+_real_send = HTTPAdapter.send
+
 _wrapper_template = """\
 def wrapper%(signature)s:
     with responses:
         return func%(funcargs)s
 """
+
+logger = logging.getLogger('responses')
 
 
 def _is_string(s):
@@ -310,11 +315,13 @@ class RequestsMock(object):
 
     def __init__(self,
                  assert_all_requests_are_fired=True,
-                 response_callback=None):
+                 response_callback=None,
+                 passthru_prefixes=()):
         self._calls = CallList()
         self.reset()
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
         self.response_callback = response_callback
+        self.passthru_prefixes = tuple(passthru_prefixes)
 
     def reset(self):
         self._matches = []
@@ -371,6 +378,17 @@ class RequestsMock(object):
 
         self._matches.append(
             Response(method=method_or_response, url=url, body=body, **kwargs))
+
+    def add_passthru(self, prefix):
+        """
+        Register a URL prefix to passthru any non-matching mock requests to.
+
+        For example, to allow any request to 'https://example.com', but require
+        mocks for the remainder, you would add the prefix as so:
+
+        >>> responses.add_passthru('https://example.com')
+        """
+        self.passthru_prefixes += (prefix, )
 
     def remove(self, method_or_response=None, url=None):
         """
@@ -465,6 +483,13 @@ class RequestsMock(object):
         resp_callback = self.response_callback
 
         if match is None:
+            if request.url.startswith(self.passthru_prefixes):
+                logger.info(
+                    'request.allowed-passthru', extra={
+                        'url': request.url,
+                    })
+                return _real_send(adapter, request)
+
             error_msg = 'Connection refused: {0} {1}'.format(
                 request.method, request.url)
             response = ConnectionError(error_msg)

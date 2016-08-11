@@ -128,33 +128,17 @@ class RequestsMock(object):
         self._urls = []
         self._calls.reset()
 
-    def add(self, method, url, body='', match_querystring=False,
-            status=200, adding_headers=None, stream=False,
-            content_type='text/plain', json=None):
+    def add(self, *args, **kwargs):
+        entry = self._build_entry(*args, **kwargs)
+        self._urls.append(entry)
 
-        # if we were passed a `json` argument,
-        # override the body and content_type
-        if json is not None:
-            body = json_module.dumps(json)
-            content_type = 'application/json'
-
-        # ensure the url has a default path set if the url is a string
-        url = _ensure_url_default_path(url, match_querystring)
-
-        # body must be bytes
-        if isinstance(body, six.text_type):
-            body = body.encode('utf-8')
-
-        self._urls.append({
-            'url': url,
-            'method': method,
-            'body': body,
-            'content_type': content_type,
-            'match_querystring': match_querystring,
-            'status': status,
-            'adding_headers': adding_headers,
-            'stream': stream,
-        })
+    def replace(self, method, url, *args, **kwargs):
+        entry = self._find_match(method, url, exact_match=True)
+        if not entry:
+            raise Exception('Found no existing entry to replace')
+        index = self._urls.index(entry)
+        entry = self._build_entry(method, url, *args, **kwargs)
+        self._urls[index] = entry
 
     def add_callback(self, method, url, callback, match_querystring=False,
                      content_type='text/plain'):
@@ -185,24 +169,50 @@ class RequestsMock(object):
         evaldict = {'responses': self, 'func': func}
         return get_wrapped(func, _wrapper_template, evaldict)
 
-    def _find_match(self, request):
+    def _build_entry(self, method, url, body='', match_querystring=False,
+                     status=200, adding_headers=None, stream=False,
+                     content_type='text/plain', json=None):
+        # if we were passed a `json` argument,
+        # override the body and content_type
+        if json is not None:
+            body = json_module.dumps(json)
+            content_type = 'application/json'
+
+        # ensure the url has a default path set if the url is a string
+        url = _ensure_url_default_path(url, match_querystring)
+
+        # body must be bytes
+        if isinstance(body, six.text_type):
+            body = body.encode('utf-8')
+
+        return {
+            'url': url,
+            'method': method,
+            'body': body,
+            'content_type': content_type,
+            'match_querystring': match_querystring,
+            'status': status,
+            'adding_headers': adding_headers,
+            'stream': stream,
+        }
+
+    def _find_match(self, method, url, exact_match=False):
         for match in self._urls:
-            if request.method != match['method']:
+            if method != match['method']:
                 continue
 
-            if not self._has_url_match(match, request.url):
+            if not self._has_url_match(match, url, exact_match=exact_match):
                 continue
 
-            break
+            return match
         else:
             return None
-        if self.assert_all_requests_are_fired:
-            # for each found match remove the url from the stack
-            self._urls.remove(match)
-        return match
 
-    def _has_url_match(self, match, request_url):
+    def _has_url_match(self, match, request_url, exact_match=False):
         url = match['url']
+
+        if exact_match:
+            return url == request_url
 
         if _is_string(url):
             if match['match_querystring']:
@@ -227,7 +237,7 @@ class RequestsMock(object):
         return url_qsl == other_qsl
 
     def _on_request(self, adapter, request, **kwargs):
-        match = self._find_match(request)
+        match = self._find_match(request.method, request.url)
         # TODO(dcramer): find the correct class for this
         if match is None:
             error_msg = 'Connection refused: {0} {1}'.format(request.method,
@@ -237,6 +247,10 @@ class RequestsMock(object):
 
             self._calls.add(request, response)
             raise response
+
+        if self.assert_all_requests_are_fired:
+            # for each found match remove the url from the stack
+            self._urls.remove(match)
 
         if 'body' in match and isinstance(match['body'], Exception):
             self._calls.add(request, match['body'])

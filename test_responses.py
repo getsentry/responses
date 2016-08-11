@@ -42,6 +42,44 @@ def test_response():
     assert_reset()
 
 
+@pytest.mark.parametrize('original,replacement', [
+    ('http://example.com/two', 'http://example.com/two'),
+    (
+        re.compile('http://example.com/two'),
+        re.compile('http://example.com/two'),
+    )
+])
+def test_replace(original, replacement):
+    @responses.activate
+    def run():
+        responses.add(responses.GET, 'http://example.com/one', body='test1')
+        responses.add(responses.GET, original, body='test2')
+        responses.add(responses.GET, 'http://example.com/three', body='test3')
+
+        responses.replace(responses.GET, replacement, body='testtwo')
+
+        resp = requests.get('http://example.com/two')
+        assert_response(resp, 'testtwo')
+
+    run()
+    assert_reset()
+
+
+@pytest.mark.parametrize('original,replacement', [
+    ('http://example.com/one', re.compile('http://example.com/one')),
+    (re.compile('http://example.com/one'), 'http://example.com/one'),
+])
+def test_replace_error(original, replacement):
+    @responses.activate
+    def run():
+        responses.add(responses.GET, original)
+        with pytest.raises(Exception):
+            responses.replace(responses.GET, replacement)
+
+    run()
+    assert_reset()
+
+
 def test_connection_error():
     @responses.activate
     def run():

@@ -45,8 +45,8 @@ def test_response():
 @pytest.mark.parametrize('original,replacement', [
     ('http://example.com/two', 'http://example.com/two'),
     (
-        re.compile('http://example.com/two'),
-        re.compile('http://example.com/two'),
+        re.compile(r'http://example\.com/two'),
+        re.compile(r'http://example\.com/two'),
     )
 ])
 def test_replace(original, replacement):
@@ -55,6 +55,11 @@ def test_replace(original, replacement):
         responses.add(responses.GET, 'http://example.com/one', body='test1')
         responses.add(responses.GET, original, body='test2')
         responses.add(responses.GET, 'http://example.com/three', body='test3')
+        responses.add(
+            responses.GET,
+            re.compile(r'http://example\.com/four'),
+            body='test3',
+        )
 
         responses.replace(responses.GET, replacement, body='testtwo')
 
@@ -66,15 +71,40 @@ def test_replace(original, replacement):
 
 
 @pytest.mark.parametrize('original,replacement', [
-    ('http://example.com/one', re.compile('http://example.com/one')),
-    (re.compile('http://example.com/one'), 'http://example.com/one'),
+    ('http://example.com/one', re.compile(r'http://example\.com/one')),
+    (re.compile(r'http://example\.com/one'), 'http://example.com/one'),
 ])
 def test_replace_error(original, replacement):
     @responses.activate
     def run():
         responses.add(responses.GET, original)
-        with pytest.raises(Exception):
+        with pytest.raises(AssertionError):
             responses.replace(responses.GET, replacement)
+
+    run()
+    assert_reset()
+
+
+def test_remove():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, 'http://example.com/one')
+        responses.add(responses.GET, 'http://example.com/two')
+        responses.add(responses.GET, re.compile(r'http://example\.com/three'))
+        responses.add(responses.GET, re.compile(r'http://example\.com/four'))
+
+        responses.remove(responses.GET, 'http://example.com/two')
+        responses.remove(
+            responses.GET,
+            re.compile(r'http://example\.com/four')
+        )
+
+        requests.get('http://example.com/one')
+        with pytest.raises(ConnectionError):
+            requests.get('http://example.com/two')
+        requests.get('http://example.com/three')
+        with pytest.raises(ConnectionError):
+            requests.get('http://example.com/four')
 
     run()
     assert_reset()

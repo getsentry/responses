@@ -134,11 +134,16 @@ class RequestsMock(object):
 
     def replace(self, method, url, *args, **kwargs):
         entry = self._find_match(method, url, exact_match=True)
-        if not entry:
-            raise Exception('Found no existing entry to replace')
+        assert entry, 'Found no existing entry to replace'
         index = self._urls.index(entry)
         entry = self._build_entry(method, url, *args, **kwargs)
         self._urls[index] = entry
+
+    def remove(self, method, url):
+        entry = self._find_match(method, url, exact_match=True)
+        if not entry:
+            return
+        self._urls.remove(entry)
 
     def add_callback(self, method, url, callback, match_querystring=False,
                      content_type='text/plain'):

@@ -64,7 +64,7 @@ Request callback
     def test_calc_api():
 
         def request_callback(request):
-            payload = json.loads(request.body)
+            payload = json.loads(request.body.decode('utf-8'))
             resp_body = {'value': sum(payload['numbers'])}
             headers = {'request-id': '728d329e-0e86-11e4-a748-0c84dc037c13'}
             return (200, headers, json.dumps(resp_body))

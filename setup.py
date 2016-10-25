@@ -37,7 +37,7 @@ tests_require = [
 
 
 extras_require = {
-    ':python_version in "2.6, 2.7, 3.2"': ['mock'],
+    ':python_version in "2.7, 3.2"': ['mock'],
     'tests': tests_require,
 }
 

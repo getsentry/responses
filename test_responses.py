@@ -342,6 +342,13 @@ def test_assert_all_requests_are_fired():
         with pytest.raises(AssertionError):
             with responses.RequestsMock() as m:
                 m.add(responses.GET, 'http://example.com', body=b'test')
+
+        # check that assert_all_requests_are_fired doesn't swallow exceptions
+        with pytest.raises(ValueError):
+            with responses.RequestsMock() as m:
+                m.add(responses.GET, 'http://example.com', body=b'test')
+                raise ValueError()
+
     run()
     assert_reset()
 

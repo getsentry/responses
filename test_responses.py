@@ -329,11 +329,79 @@ def test_response_cookies():
     assert_reset()
 
 
+def test_remove_url_when_fired():
+    body = b'test'
+    status = 200
+    url = 'http://example.com.invalid/'
+
+    def run():
+        # Check that URL's can be queried multiple times when
+        # not requesting them to be removed after having fired
+        with responses.RequestsMock(
+                assert_all_requests_are_fired=True,
+                remove_url_when_fired=False) as m:
+            m.add(responses.GET, url, body=body)
+            resp = requests.get(url)
+            assert resp.status_code == status
+            assert resp.text == body
+            resp = requests.get(url)
+            assert resp.status_code == status
+            assert resp.text == body
+
+        # Check that it raises an exception when remove_url_when_fired is not
+        # set and requesting the same URL twice
+        with responses.RequestsMock(
+                assert_all_requests_are_fired=True,
+                remove_url_when_fired=True) as m:
+            m.add(responses.GET, url, body=body)
+            resp = requests.get(url)
+            assert resp.status_code == status
+            assert resp.text == body
+
+            with pytest.raises(ConnectionError):
+                resp = requests.get(url)
+
+        # Test default behavior with assert_all_requests_are_fired enabled;
+        # should remove URL's after firing
+        with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
+            m.add(responses.GET, url, body=body)
+            resp = requests.get(url)
+            assert resp.status_code == status
+            assert resp.text == body
+
+            with pytest.raises(ConnectionError):
+                resp = requests.get(url)
+
+        # Test default behavior without assert_all_requests_are_fired enabled;
+        # should not remove URL's after firing
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as m:
+            m.add(responses.GET, url, body=body)
+            resp = requests.get(url)
+            assert resp.status_code == status
+            assert resp.text == body
+            resp = requests.get(url)
+            assert resp.status_code == status
+            assert resp.text == body
+
+    run()
+    assert_reset()
+
+
 def test_assert_all_requests_are_fired():
     def run():
         with pytest.raises(AssertionError) as excinfo:
             with responses.RequestsMock(
                     assert_all_requests_are_fired=True) as m:
+                m.add(responses.GET, 'http://example.com', body=b'test')
+        assert 'http://example.com' in str(excinfo.value)
+        assert responses.GET in str(excinfo)
+
+        # check that assets_all_requests_are_fired works when
+        # remove_url_when_fired is not set
+        with pytest.raises(AssertionError) as excinfo:
+            with responses.RequestsMock(
+                    assert_all_requests_are_fired=True,
+                    remove_url_when_fired=False) as m:
                 m.add(responses.GET, 'http://example.com', body=b'test')
         assert 'http://example.com' in str(excinfo.value)
         assert responses.GET in str(excinfo)

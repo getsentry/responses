@@ -119,10 +119,15 @@ class RequestsMock(object):
     POST = 'POST'
     PUT = 'PUT'
 
-    def __init__(self, assert_all_requests_are_fired=True):
+    def __init__(self, assert_all_requests_are_fired=True, remove_url_when_fired=None):
         self._calls = CallList()
         self.reset()
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
+        if assert_all_requests_are_fired and remove_url_when_fired is None:
+            # This is the standard behavior before remove_url_when_fired was added.
+            remove_url_when_fired = True
+
+        self.remove_url_when_fired = remove_url_when_fired or False
 
     def reset(self):
         self._urls = []
@@ -189,6 +194,9 @@ class RequestsMock(object):
 
     def _find_match(self, request):
         for match in self._urls:
+            if match.get('removed') is True:
+                continue
+
             if request.method != match['method']:
                 continue
 
@@ -198,9 +206,13 @@ class RequestsMock(object):
             break
         else:
             return None
+
         if self.assert_all_requests_are_fired:
-            # for each found match remove the url from the stack
-            self._urls.remove(match)
+            match['fired'] = True
+
+        if self.remove_url_when_fired:
+            match['removed'] = True
+
         return match
 
     def _has_url_match(self, match, request_url):
@@ -300,10 +312,13 @@ class RequestsMock(object):
 
     def stop(self, allow_assert=True):
         self._patcher.stop()
-        if allow_assert and self.assert_all_requests_are_fired and self._urls:
-            raise AssertionError(
-                'Not all requests have been executed {0!r}'.format(
-                    [(url['method'], url['url']) for url in self._urls]))
+        if allow_assert and self.assert_all_requests_are_fired:
+            not_fired = [match for match in self._urls if match.get('fired') is not True]
+
+            if not_fired:
+                raise AssertionError(
+                    'Not all requests have been executed {0!r}'.format(
+                        [(url['method'], url['url']) for url in self._urls if not url.get('fired')]))
 
 
 # expose default mock namespace

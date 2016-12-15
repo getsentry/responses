@@ -18,6 +18,7 @@ def assert_reset():
 
 def assert_response(resp, body=None, content_type='text/plain'):
     assert resp.status_code == 200
+    assert resp.reason == 'OK'
     assert resp.headers['Content-Type'] == content_type
     assert resp.text == body
 
@@ -190,6 +191,7 @@ def test_throw_connection_error_explicit():
 def test_callback():
     body = b'test callback'
     status = 400
+    reason = 'Bad Request'
     headers = {'foo': 'bar'}
     url = 'http://example.com/'
 
@@ -202,6 +204,7 @@ def test_callback():
         resp = requests.get(url)
         assert resp.text == "test callback"
         assert resp.status_code == status
+        assert resp.reason == reason
         assert 'foo' in resp.headers
         assert resp.headers['foo'] == 'bar'
 

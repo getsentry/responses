@@ -263,6 +263,7 @@ class RequestsMock(object):
 
         response = HTTPResponse(
             status=status,
+            reason=six.moves.http_client.responses[status],
             body=body,
             headers=headers,
             preload_content=False,

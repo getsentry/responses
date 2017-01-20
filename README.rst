@@ -1,7 +1,7 @@
 Responses
 =========
 
-.. image:: https://travis-ci.org/getsentry/responses.png?branch=master
+.. image:: https://travis-ci.org/getsentry/responses.svg?branch=master
 	:target: https://travis-ci.org/getsentry/responses
 
 A utility library for mocking out the `requests` Python library.

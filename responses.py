@@ -244,9 +244,9 @@ class RequestsMock(object):
             self._calls.add(request, match['body'])
             raise match['body']
 
-        headers = {
-            'Content-Type': match['content_type'],
-        }
+        headers = {}
+        if match['content_type'] is not None:
+            headers['Content-Type'] = match['content_type']
 
         if 'callback' in match:  # use callback
             status, r_headers, body = match['callback'](request)

@@ -50,6 +50,13 @@ You can also specify a JSON object instead of a body string.
         assert responses.calls[0].request.url == 'http://twitter.com/api/1/foobar'
         assert responses.calls[0].response.text == '{"error": "not found"}'
 
+Other parameters for ```responses.add()```
+
+* ```match_querystring``` (defaults to ```False```): set this to ```True``` if you want a url with query paramters to match
+* ```adding_headers``` (defaults to ```None```): include http headers in response
+* ```stream``` (defaults to ```False```)
+* ```content_type``` (defaults to ```'text/plain'```): associate response with alternative ```content_type```
+
 Request callback
 ----------------
 

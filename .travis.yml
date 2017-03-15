@@ -1,7 +1,6 @@
 language: python
 sudo: false
 python:
-  - "2.6"
   - "2.7"
   - "3.3"
   - "3.4"
@@ -27,5 +26,5 @@ install:
   - "pip install ${REQUESTS}"
   - make develop
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION != 2.6 ]]; then make lint; fi
+  - make lint
   - py.test . --cov responses --cov-report term-missing

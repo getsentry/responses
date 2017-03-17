@@ -156,6 +156,15 @@ class RequestsMock(object):
             'stream': stream,
         })
 
+    def remove(self, method, url, all_instances=True):
+        for mocked_url in self._urls:
+            if mocked_url['method'] == method and mocked_url['url'] == url:
+                self._urls.remove(mocked_url)
+                # responses allows for multiple registrations of the same
+                # URL/method pair so we must not break here
+        # Should we raise or return anything to let it know if we succeed
+        # (or failed) in removing the mock?
+
     def add_callback(self, method, url, callback, match_querystring=False,
                      content_type='text/plain'):
         # ensure the url has a default path set if the url is a string

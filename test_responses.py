@@ -441,3 +441,36 @@ def test_allow_redirects_samehost():
 
     run()
     assert_reset()
+
+
+def test_allow_remove_mocked_url():
+    @responses.activate
+    def run():
+        url = 'http://example.com/'
+        # Adds a new response for POST
+        responses.add(
+            responses.POST,
+            url,
+            json={'foo': 'bar'},
+            status=201
+        )
+        # A new response for the same URL but for GET
+        responses.add(
+            responses.GET,
+            url,
+            json={'foo': 'baz'},
+            status=200
+        )
+        # Removes the URL for POST (because I might want to replace its
+        # response for something else
+        responses.remove(responses.POST, url)
+        # It should be possible to make a GET request
+        resp = requests.get(url)
+        assert resp.json()['foo'] == 'baz'
+
+        # But a POST request should not be possible
+        with pytest.raises(ConnectionError):
+            resp = requests.post(url)
+
+    run()
+    assert_reset()

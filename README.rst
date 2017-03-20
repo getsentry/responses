@@ -125,6 +125,22 @@ A response can also throw an exception as follows.
     # All calls to 'http://twitter.com/api/1/foobar' will throw exception.
 
 
+Allow responses to perform real http-request
+--------------------------------------------
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+
+    @responses.activate
+    def test_my_api():
+        responses.allow(responses.GET, 'https://twitter.com/api/1/foobar')
+        response = requests.get('https://twitter.com/api/1/foobar')
+        assert response.status_code == 404
+
+
 Responses as a context manager
 ------------------------------
 

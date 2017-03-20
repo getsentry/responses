@@ -2,10 +2,12 @@ from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
 
+import random
 import re
 import requests
 import responses
 import pytest
+import string
 
 from inspect import getargspec
 from requests.exceptions import ConnectionError, HTTPError
@@ -438,6 +440,25 @@ def test_allow_redirects_samehost():
             status_codes = [call[1].status_code for call in responses.calls]
             assert status_codes == [301, 301, 200]
         assert_reset()
+
+
+def test_allow_feature(monkeypatch):
+
+    @responses.activate
+    def run():
+        called = []
+
+        def capture_all(self, request, *args, **kw):
+            called.append(request)
+
+        monkeypatch.setattr(requests.Session, 'send', capture_all)
+
+        # hopefully this domain name doesn't exists
+        fake_url = 'http://{0}.com/'.format(''.join(
+            random.choice(string.digits) for i in range(60)))
+        responses.allow(responses.GET, fake_url)
+        requests.get(fake_url)
+        assert called[0].url == fake_url
 
     run()
     assert_reset()

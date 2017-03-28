@@ -154,6 +154,7 @@ class RequestsMock(object):
             'status': status,
             'adding_headers': adding_headers,
             'stream': stream,
+            'call_count': 0,
         })
 
     def add_callback(self, method, url, callback, match_querystring=False,
@@ -167,6 +168,7 @@ class RequestsMock(object):
             'callback': callback,
             'content_type': content_type,
             'match_querystring': match_querystring,
+            'call_count': 0,
         })
 
     @property
@@ -198,9 +200,7 @@ class RequestsMock(object):
             break
         else:
             return None
-        if self.assert_all_requests_are_fired:
-            # for each found match remove the url from the stack
-            self._urls.remove(match)
+
         return match
 
     def _has_url_match(self, match, request_url):
@@ -283,6 +283,7 @@ class RequestsMock(object):
         except (KeyError, TypeError):
             pass
 
+        match['call_count'] += 1
         self._calls.add(request, response)
 
         return response
@@ -301,10 +302,14 @@ class RequestsMock(object):
 
     def stop(self, allow_assert=True):
         self._patcher.stop()
-        if allow_assert and self.assert_all_requests_are_fired and self._urls:
-            raise AssertionError(
-                'Not all requests have been executed {0!r}'.format(
-                    [(url['method'], url['url']) for url in self._urls]))
+        if allow_assert and self.assert_all_requests_are_fired:
+            not_called = [url for url in self._urls if url['call_count'] == 0]
+            if not_called:
+                raise AssertionError(
+                    'Not all requests have been executed {0!r}'.format(
+                        [(url['method'], url['url']) for url in not_called]
+                    )
+                )
 
 
 # expose default mock namespace

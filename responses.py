@@ -185,9 +185,11 @@ class RequestsMock(object):
         self.start()
         return self
 
-    def __exit__(self, *args):
-        self.stop()
+    def __exit__(self, type, value, traceback):
+        success = type is None
+        self.stop(allow_assert=success)
         self.reset()
+        return success
 
     def activate(self, func):
         evaldict = {'responses': self, 'func': func}
@@ -250,9 +252,9 @@ class RequestsMock(object):
             self._calls.add(request, match['body'])
             raise match['body']
 
-        headers = {
-            'Content-Type': match['content_type'],
-        }
+        headers = {}
+        if match['content_type'] is not None:
+            headers['Content-Type'] = match['content_type']
 
         if 'callback' in match:  # use callback
             status, r_headers, body = match['callback'](request)
@@ -269,6 +271,7 @@ class RequestsMock(object):
 
         response = HTTPResponse(
             status=status,
+            reason=six.moves.http_client.responses[status],
             body=body,
             headers=headers,
             preload_content=False,
@@ -313,9 +316,9 @@ class RequestsMock(object):
                                    unbound_on_send)
         self._patcher.start()
 
-    def stop(self):
+    def stop(self, allow_assert=True):
         self._patcher.stop()
-        if self.assert_all_requests_are_fired and self._urls:
+        if allow_assert and self.assert_all_requests_are_fired and self._urls:
             raise AssertionError(
                 'Not all requests have been executed {0!r}'.format(
                     [(url['method'], url['url']) for url in self._urls]))

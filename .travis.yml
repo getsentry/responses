@@ -6,6 +6,10 @@ python:
   - "3.3"
   - "3.4"
   - "3.5"
+  - "3.6"
+  - "3.6-dev"
+  - "3.7-dev"
+  - "nightly"
 cache:
   directories:
     - .pip_download_cache
@@ -23,5 +27,5 @@ install:
   - "pip install ${REQUESTS}"
   - make develop
 script:
-  - make lint
+  - if [[ $TRAVIS_PYTHON_VERSION != 2.6 ]]; then make lint; fi
   - py.test . --cov responses --cov-report term-missing

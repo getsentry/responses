@@ -24,7 +24,11 @@ def assert_reset():
 
 def assert_response(resp, body=None, content_type='text/plain'):
     assert resp.status_code == 200
-    assert resp.headers['Content-Type'] == content_type
+    assert resp.reason == 'OK'
+    if content_type is not None:
+        assert resp.headers['Content-Type'] == content_type
+    else:
+        assert 'Content-Type' not in resp.headers
     assert resp.text == body
 
 
@@ -176,6 +180,19 @@ def test_accept_json_body():
     assert_reset()
 
 
+def test_no_content_type():
+    @responses.activate
+    def run():
+        url = 'http://example.com/'
+        responses.add(
+            responses.GET, url, body='test', content_type=None)
+        resp = requests.get(url)
+        assert_response(resp, 'test', content_type=None)
+
+    run()
+    assert_reset()
+
+
 def test_throw_connection_error_explicit():
     @responses.activate
     def run():
@@ -196,6 +213,7 @@ def test_throw_connection_error_explicit():
 def test_callback():
     body = b'test callback'
     status = 400
+    reason = 'Bad Request'
     headers = {'foo': 'bar'}
     url = 'http://example.com/'
 
@@ -208,8 +226,34 @@ def test_callback():
         resp = requests.get(url)
         assert resp.text == "test callback"
         assert resp.status_code == status
+        assert resp.reason == reason
         assert 'foo' in resp.headers
         assert resp.headers['foo'] == 'bar'
+
+    run()
+    assert_reset()
+
+
+def test_callback_no_content_type():
+    body = b'test callback'
+    status = 400
+    reason = 'Bad Request'
+    headers = {'foo': 'bar'}
+    url = 'http://example.com/'
+
+    def request_callback(request):
+        return (status, headers, body)
+
+    @responses.activate
+    def run():
+        responses.add_callback(
+            responses.GET, url, request_callback, content_type=None)
+        resp = requests.get(url)
+        assert resp.text == "test callback"
+        assert resp.status_code == status
+        assert resp.reason == reason
+        assert 'foo' in resp.headers
+        assert 'Content-Type' not in resp.headers
 
     run()
     assert_reset()
@@ -348,6 +392,13 @@ def test_assert_all_requests_are_fired():
         with pytest.raises(AssertionError):
             with responses.RequestsMock() as m:
                 m.add(responses.GET, 'http://example.com', body=b'test')
+
+        # check that assert_all_requests_are_fired doesn't swallow exceptions
+        with pytest.raises(ValueError):
+            with responses.RequestsMock() as m:
+                m.add(responses.GET, 'http://example.com', body=b'test')
+                raise ValueError()
+
     run()
     assert_reset()
 

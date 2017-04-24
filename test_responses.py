@@ -3,7 +3,6 @@ from __future__ import (
 )
 
 import re
-import time
 import requests
 import responses
 import pytest
@@ -463,14 +462,14 @@ def test_response_timeout():
     @responses.activate
     def run():
         responses.add(responses.GET, url, body=body, timeout=timeout)
-        begin = time.time()
         resp = requests.get(url)
-        end = time.time()
-        assert end - begin >= timeout  # some additional delay may took place
         assert resp.text == 'test'
         assert resp.status_code == status
 
-    run()
+    with mock.patch('responses.time.sleep') as sleep_mock:
+        run()
+        sleep_mock.assert_called_once_with(timeout)
+
     assert_reset()
 
 

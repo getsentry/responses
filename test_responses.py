@@ -12,6 +12,11 @@ from inspect import getargspec
 from requests.exceptions import ConnectionError, HTTPError
 
 try:
+    from unittest import mock
+except ImportError:
+    import mock
+
+try:
     from requests.exceptions import ConnectTimeout
 except ImportError:
     from requests.exceptions import Timeout as ConnectTimeout
@@ -477,13 +482,13 @@ def test_request_timeout():
     @responses.activate
     def run():
         responses.add(responses.GET, url, timeout=timeout)
-        begin = time.time()
         resp = requests.get(url, timeout=timeout)
-        end = time.time()
-        assert end - begin >= timeout
         assert resp.status_code == status
 
-    run()
+    with mock.patch('responses.time.sleep') as sleep_mock:
+        run()
+        sleep_mock.assert_called_once_with(timeout)
+
     assert_reset()
 
 

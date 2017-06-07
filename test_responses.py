@@ -441,3 +441,25 @@ def test_allow_redirects_samehost():
 
     run()
     assert_reset()
+
+
+def test_passthrough():
+    url = 'http://example.com/'
+
+    def run():
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as r1:
+            r1.add(responses.GET, url, body=b'test')
+
+            with responses.RequestsMock():
+                with pytest.raises(ConnectionError):
+                    requests.get(url)
+
+            with responses.RequestsMock(pass_through=True):
+                resp = requests.get(url)
+                assert_response(resp, 'test')
+                assert len(r1.calls) == 1
+                assert r1.calls[0].request.url == url
+                assert r1.calls[0].response.content == b'test'
+
+    run()
+    assert_reset()

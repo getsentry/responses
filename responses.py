@@ -118,11 +118,14 @@ class RequestsMock(object):
     PATCH = 'PATCH'
     POST = 'POST'
     PUT = 'PUT'
+    response_callback = None
 
-    def __init__(self, assert_all_requests_are_fired=True):
+    def __init__(self, assert_all_requests_are_fired=True,
+                 response_callback=None):
         self._calls = CallList()
         self.reset()
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
+        self.response_callback = response_callback
 
     def reset(self):
         self._urls = []
@@ -230,6 +233,7 @@ class RequestsMock(object):
 
     def _on_request(self, adapter, request, **kwargs):
         match = self._find_match(request)
+        resp_callback = self.response_callback
         # TODO(dcramer): find the correct class for this
         if match is None:
             error_msg = 'Connection refused: {0} {1}'.format(request.method,
@@ -238,6 +242,7 @@ class RequestsMock(object):
             response.request = request
 
             self._calls.add(request, response)
+            response = resp_callback(response) if resp_callback else response
             raise response
 
         if 'body' in match and isinstance(match['body'], Exception):
@@ -283,6 +288,7 @@ class RequestsMock(object):
         except (KeyError, TypeError):
             pass
 
+        response = resp_callback(response) if resp_callback else response
         self._calls.add(request, response)
 
         return response

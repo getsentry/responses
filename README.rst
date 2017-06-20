@@ -188,3 +188,31 @@ You can also use ``assert_all_requests_are_fired`` to add multiple responses for
             assert resp.status_code == 500
             resp = requests.get('http://twitter.com/api/1/foobar')
             assert resp.status_code == 200
+
+Using a callback to modify the response
+---------------------------------------
+
+If you use customized processing in `requests` via subclassing/mixins, or if you
+have library tools that interact with `requests` at a low level, you may need
+to add extended processing to the mocked Response object to fully simlulate the
+environment for your tests.  A `response_callback` can be used, which will be
+wrapped by the library before being returned to the caller.  The callback
+accepts a `response` as it's single argument, and is expected to return a 
+single `response` object.
+
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+	def response_callback(resp):
+		resp.callback_processed = True
+		return resp
+
+	with responses.RequestsMock(response_callback=response_callback) as m:
+		m.add(responses.GET, 'http://example.com', body=b'test')
+		resp = requests.get('http://example.com')
+		assert resp.text == "test"
+		assert hasattr(resp, 'callback_processed')
+		assert resp.callback_processed is True

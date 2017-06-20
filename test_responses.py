@@ -373,6 +373,22 @@ def test_response_cookies():
     assert_reset()
 
 
+def test_response_callback():
+    """adds a callback to decorate the response, then checks it"""
+    def run():
+        def response_callback(resp):
+            resp._is_mocked = True
+            return resp
+        with responses.RequestsMock(response_callback=response_callback) as m:
+            m.add(responses.GET, 'http://example.com', body=b'test')
+            resp = requests.get('http://example.com')
+            assert resp.text == "test"
+            assert hasattr(resp, '_is_mocked')
+            assert resp._is_mocked is True
+    run()
+    assert_reset()
+
+
 def test_assert_all_requests_are_fired():
     def run():
         with pytest.raises(AssertionError) as excinfo:

@@ -1,5 +1,5 @@
-Unreleased
-----------
+0.6.0
+-----
 
 - Allow empty list/dict as json object (GH-100).
 - Added `response_callback`.

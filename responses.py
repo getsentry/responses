@@ -34,6 +34,7 @@ if six.PY2:
 else:
     from io import BytesIO as BufferIO
 
+UNSET = object()
 
 Call = namedtuple('Call', ['request', 'response'])
 
@@ -192,9 +193,20 @@ class BaseResponse(object):
 
 
 class Response(BaseResponse):
-    def __init__(self, method, url, body='',
+    def __init__(self, method, url, body='', json=None,
             status=200, headers=None, stream=False,
-            content_type='text/plain', **kwargs):
+            content_type=UNSET, **kwargs):
+        # if we were passed a `json` argument,
+        # override the body and content_type
+        if json is not None:
+            assert not body
+            body = json_module.dumps(json)
+            if content_type is UNSET:
+                content_type = 'application/json'
+
+        if content_type is UNSET:
+            content_type = 'text/plain'
+
         # body must be bytes
         if isinstance(body, six.text_type):
             body = body.encode('utf-8')
@@ -271,7 +283,7 @@ class RequestsMock(object):
         self._matches = []
         self._calls.reset()
 
-    def add(self, method_or_response=None, url=None, body='', json=None, *args, **kwargs):
+    def add(self, method_or_response=None, url=None, body='', *args, **kwargs):
         """
         A basic request:
 
@@ -313,13 +325,6 @@ class RequestsMock(object):
 
         if method_or_response:
             kwargs['method'] = method_or_response
-
-        # if we were passed a `json` argument,
-        # override the body and content_type
-        if json is not None:
-            assert not body
-            body = json_module.dumps(json)
-            kwargs.setdefault('content_type', 'application/json')
 
         self._matches.append(Response(url=url, body=body, **kwargs))
 

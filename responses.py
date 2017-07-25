@@ -45,7 +45,7 @@ def wrapper%(signature)s:
 
 
 def _is_string(s):
-    return isinstance(s, (six.string_types, six.text_type))
+    return isinstance(s, six.string_types)
 
 
 def _is_redirect(response):
@@ -142,7 +142,20 @@ class BaseResponse(object):
 
         url_qsl = sorted(parse_qsl(url_parsed.query))
         other_qsl = sorted(parse_qsl(other_parsed.query))
-        return url_qsl == other_qsl
+        for (a_k, a_v), (b_k, b_v) in zip(url_qsl, other_qsl):
+            if not isinstance(a_k, six.text_type):
+                a_k = a_k.decode('utf-8')
+            if not isinstance(b_k, six.text_type):
+                b_k = b_k.decode('utf-8')
+            if a_k != b_k:
+                return False
+            if not isinstance(a_v, six.text_type):
+                a_v = a_v.decode('utf-8')
+            if not isinstance(b_v, six.text_type):
+                b_v = b_v.decode('utf-8')
+            if a_v != b_v:
+                return False
+        return True
 
     def _url_matches(self, url, other, match_querystring=False):
         if _is_string(url):

@@ -273,9 +273,39 @@ class RequestsMock(object):
 
     def add(self, method_or_response=None, url=None, body='', json=None, *args, **kwargs):
         """
+        A basic request:
+
         >>> responses.add(responses.GET, 'http://example.com')
 
+        You can also directly pass an object which implements the
+        ``BaseResponse`` interface:
+
         >>> responses.add(Response(...))
+
+        A JSON payload:
+
+        >>> responses.add(
+        >>>     method='GET',
+        >>>     url='http://example.com',
+        >>>     json={'foo': 'bar'},
+        >>> )
+
+        Custom headers:
+
+        >>> responses.add(
+        >>>     method='GET',
+        >>>     url='http://example.com',
+        >>>     headers={'X-Header': 'foo'},
+        >>> )
+
+
+        Strict query string matching:
+
+        >>> responses.add(
+        >>>     method='GET',
+        >>>     url='http://example.com?foo=bar',
+        >>>     match_querystring=True
+        >>> )
         """
         if isinstance(method_or_response, BaseResponse):
             self._matches.append(method_or_response)

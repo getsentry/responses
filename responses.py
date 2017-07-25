@@ -128,6 +128,7 @@ class BaseResponse(object):
         self.match_querystring = match_querystring
         # ensure the url has a default path set if the url is a string
         self.url = _ensure_url_default_path(url, match_querystring)
+        self.call_count = 0
 
     def _url_matches_strict(self, url, other):
         url_parsed = urlparse(url)
@@ -378,10 +379,6 @@ class RequestsMock(object):
         else:
             return None
 
-        if self.assert_all_requests_are_fired:
-            # for each found match remove the url from the stack
-            self._matches.remove(match)
-
         return match
 
     def _on_request(self, adapter, request, **kwargs):
@@ -418,6 +415,7 @@ class RequestsMock(object):
             pass
 
         response = resp_callback(response) if resp_callback else response
+        match.call_count += 1
         self._calls.add(request, response)
         return response
 
@@ -436,10 +434,15 @@ class RequestsMock(object):
 
     def stop(self, allow_assert=True):
         self._patcher.stop()
-        if allow_assert and self.assert_all_requests_are_fired and self._matches:
+        if not self.assert_all_requests_are_fired:
+            return
+        if not allow_assert:
+            return
+        not_called = [m for m in self._matches if m.call_count == 0]
+        if not_called:
             raise AssertionError(
                 'Not all requests have been executed {0!r}'.format([(
-                    match.method, match.url) for match in self._matches]))
+                    match.method, match.url) for match in not_called]))
 
 
 # expose default mock namespace

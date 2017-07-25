@@ -448,6 +448,13 @@ def test_assert_all_requests_are_fired():
                 m.add(responses.GET, 'http://example.com', body=b'test')
                 raise ValueError()
 
+        # check that assert_all_requests_are_fired=True doesn't remove urls
+        with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
+            m.add(responses.GET, 'http://example.com', body=b'test')
+            assert len(m._matches) == 1
+            requests.get('http://example.com')
+            assert len(m._matches) == 1
+
     run()
     assert_reset()
 

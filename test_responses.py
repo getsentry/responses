@@ -1,3 +1,5 @@
+# coding: utf-8
+
 from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
@@ -487,6 +489,21 @@ def test_allow_redirects_samehost():
             status_codes = [call[1].status_code for call in responses.calls]
             assert status_codes == [301, 301, 200]
         assert_reset()
+
+    run()
+    assert_reset()
+
+
+def test_handles_chinese_url():
+    url = u'http://example.com/test?type=2&ie=utf8&query=汉字'
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, url, body='test', match_querystring=True)
+
+        resp = requests.get(url)
+
+        assert_response(resp, 'test')
 
     run()
     assert_reset()

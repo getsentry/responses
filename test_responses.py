@@ -1,8 +1,7 @@
 # coding: utf-8
 
-from __future__ import (
-    absolute_import, print_function, division, unicode_literals
-)
+from __future__ import (absolute_import, print_function, division,
+                        unicode_literals)
 
 import re
 import requests
@@ -51,10 +50,10 @@ def test_response():
 def test_response_with_instance():
     @responses.activate
     def run():
-        responses.add(responses.Response(
-            method=responses.GET,
-            url='http://example.com',
-        ))
+        responses.add(
+            responses.Response(
+                method=responses.GET,
+                url='http://example.com', ))
         resp = requests.get('http://example.com')
         assert_response(resp, '')
         assert len(responses.calls) == 1
@@ -90,9 +89,7 @@ def test_match_querystring():
     @responses.activate
     def run():
         url = 'http://example.com?test=1&foo=bar'
-        responses.add(
-            responses.GET, url,
-            match_querystring=True, body=b'test')
+        responses.add(responses.GET, url, match_querystring=True, body=b'test')
         resp = requests.get('http://example.com?test=1&foo=bar')
         assert_response(resp, 'test')
         resp = requests.get('http://example.com?foo=bar&test=1')
@@ -106,7 +103,8 @@ def test_match_querystring_error():
     @responses.activate
     def run():
         responses.add(
-            responses.GET, 'http://example.com/?test=1',
+            responses.GET,
+            'http://example.com/?test=1',
             match_querystring=True)
 
         with pytest.raises(ConnectionError):
@@ -123,15 +121,19 @@ def test_match_querystring_regex():
         regular expression"""
 
         responses.add(
-            responses.GET, re.compile(r'http://example\.com/foo/\?test=1'),
-            body='test1', match_querystring=True)
+            responses.GET,
+            re.compile(r'http://example\.com/foo/\?test=1'),
+            body='test1',
+            match_querystring=True)
 
         resp = requests.get('http://example.com/foo/?test=1')
         assert_response(resp, 'test1')
 
         responses.add(
-            responses.GET, re.compile(r'http://example\.com/foo/\?test=2'),
-            body='test2', match_querystring=False)
+            responses.GET,
+            re.compile(r'http://example\.com/foo/\?test=2'),
+            body='test2',
+            match_querystring=False)
 
         resp = requests.get('http://example.com/foo/?test=2')
         assert_response(resp, 'test2')
@@ -147,14 +149,16 @@ def test_match_querystring_error_regex():
         regular expression"""
 
         responses.add(
-            responses.GET, re.compile(r'http://example\.com/foo/\?test=1'),
+            responses.GET,
+            re.compile(r'http://example\.com/foo/\?test=1'),
             match_querystring=True)
 
         with pytest.raises(ConnectionError):
             requests.get('http://example.com/foo/?test=3')
 
         responses.add(
-            responses.GET, re.compile(r'http://example\.com/foo/\?test=2'),
+            responses.GET,
+            re.compile(r'http://example\.com/foo/\?test=2'),
             match_querystring=False)
 
         with pytest.raises(ConnectionError):
@@ -168,8 +172,7 @@ def test_accept_string_body():
     @responses.activate
     def run():
         url = 'http://example.com/'
-        responses.add(
-            responses.GET, url, body='test')
+        responses.add(responses.GET, url, body='test')
         resp = requests.get(url)
         assert_response(resp, 'test')
 
@@ -183,8 +186,7 @@ def test_accept_json_body():
         content_type = 'application/json'
 
         url = 'http://example.com/'
-        responses.add(
-            responses.GET, url, json={"message": "success"})
+        responses.add(responses.GET, url, json={"message": "success"})
         resp = requests.get(url)
         assert_response(resp, '{"message": "success"}', content_type)
 
@@ -201,8 +203,7 @@ def test_no_content_type():
     @responses.activate
     def run():
         url = 'http://example.com/'
-        responses.add(
-            responses.GET, url, body='test', content_type=None)
+        responses.add(responses.GET, url, body='test', content_type=None)
         resp = requests.get(url)
         assert_response(resp, 'test', content_type=None)
 
@@ -215,8 +216,7 @@ def test_throw_connection_error_explicit():
     def run():
         url = 'http://example.com'
         exception = HTTPError('HTTP Error')
-        responses.add(
-            responses.GET, url, exception)
+        responses.add(responses.GET, url, exception)
 
         with pytest.raises(HTTPError) as HE:
             requests.get(url)
@@ -361,7 +361,6 @@ def test_activate_doesnt_change_signature():
 
 def test_activate_doesnt_change_signature_for_method():
     class TestCase(object):
-
         def test_function(self, a, b=None):
             return (self, a, b)
 
@@ -392,33 +391,38 @@ def test_response_cookies():
         assert resp.cookies['session_id'] == '12345'
         assert resp.cookies['a'] == 'b'
         assert resp.cookies['c'] == 'd'
+
     run()
     assert_reset()
 
 
 def test_response_callback():
     """adds a callback to decorate the response, then checks it"""
+
     def run():
         def response_callback(resp):
             resp._is_mocked = True
             return resp
+
         with responses.RequestsMock(response_callback=response_callback) as m:
             m.add(responses.GET, 'http://example.com', body=b'test')
             resp = requests.get('http://example.com')
             assert resp.text == "test"
             assert hasattr(resp, '_is_mocked')
             assert resp._is_mocked is True
+
     run()
     assert_reset()
 
 
 def test_response_filebody():
     """ Adds the possibility to use actual (binary) files as responses """
+
     def run():
         with responses.RequestsMock() as m:
             with open('README.rst', 'rb') as out:
-                m.add(responses.GET, 'http://example.com', body=out,
-                      stream=True)
+                m.add(
+                    responses.GET, 'http://example.com', body=out, stream=True)
                 resp = requests.get('http://example.com')
             with open('README.rst', 'r') as out:
                 assert resp.text == out.read()
@@ -471,8 +475,8 @@ def test_allow_redirects_samehost():
         # setup redirect
         with responses.mock:
             responses.add_callback(responses.GET, url_re, request_callback)
-            resp_no_redirects = requests.get(redirecting_url,
-                                             allow_redirects=False)
+            resp_no_redirects = requests.get(
+                redirecting_url, allow_redirects=False)
             assert resp_no_redirects.status_code == 301
             assert len(responses.calls) == 1  # 1x300
             assert responses.calls[0][1].status_code == 301
@@ -480,8 +484,8 @@ def test_allow_redirects_samehost():
 
         with responses.mock:
             responses.add_callback(responses.GET, url_re, request_callback)
-            resp_yes_redirects = requests.get(redirecting_url,
-                                              allow_redirects=True)
+            resp_yes_redirects = requests.get(
+                redirecting_url, allow_redirects=True)
             assert len(responses.calls) == 3  # 2x300 + 1x200
             assert len(resp_yes_redirects.history) == 2
             assert resp_yes_redirects.status_code == 200

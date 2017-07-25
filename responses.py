@@ -120,6 +120,123 @@ def _handle_body(body):
     return BufferIO(body)
 
 
+class BaseResponse(object):
+    content_type = None
+    headers = None
+
+    def __init__(self, method, url, match_querystring=False):
+        self.method = method
+        self.match_querystring = match_querystring
+        # ensure the url has a default path set if the url is a string
+        self.url = _ensure_url_default_path(url, match_querystring)
+
+    def matches(self, request):
+        return False
+
+    def _url_matches_strict(self, url, other):
+        url_parsed = urlparse(url)
+        other_parsed = urlparse(other)
+
+        if url_parsed[:3] != other_parsed[:3]:
+            return False
+
+        url_qsl = sorted(parse_qsl(url_parsed.query))
+        other_qsl = sorted(parse_qsl(other_parsed.query))
+        return url_qsl == other_qsl
+
+    def _url_matches(self, url, other, match_querystring=False):
+        if _is_string(url):
+            if match_querystring:
+                return self._url_matches_strict(url, other)
+            else:
+                url_without_qs = url.split('?', 1)[0]
+                other_without_qs = other.split('?', 1)[0]
+                return url_without_qs == other_without_qs
+        elif isinstance(url, re._pattern_type) and url.match(other):
+            return True
+        else:
+            return False
+
+    def get_headers(self):
+        headers = {}
+        if self.content_type is not None:
+            headers['Content-Type'] = self.content_type
+        if self.headers:
+            headers.update(self.headers)
+        return headers
+
+    def get_response(self, request):
+        raise NotImplementedError
+
+    def matches(self, request):
+        if request.method != self.method:
+            return False
+
+        if not self._url_matches(self.url, request.url, self.match_querystring):
+            return False
+
+        return True
+
+
+class Response(BaseResponse):
+    def __init__(self, method, url, body='',
+            status=200, headers=None, stream=False,
+            content_type='text/plain', **kwargs):
+        # body must be bytes
+        if isinstance(body, six.text_type):
+            body = body.encode('utf-8')
+
+        self.body = body
+        self.status = status
+        self.headers = headers
+        self.stream = stream
+        self.content_type = content_type
+        super(Response, self).__init__(method, url, **kwargs)
+
+    def get_response(self, request):
+        if self.body and isinstance(self.body, Exception):
+            raise self.body
+
+        headers = self.get_headers()
+        status = self.status
+        body = _handle_body(self.body)
+
+        return HTTPResponse(
+            status=status,
+            reason=six.moves.http_client.responses[status],
+            body=body,
+            headers=headers,
+            preload_content=False,
+        )
+
+
+class CallbackResponse(BaseResponse):
+    def __init__(self, method, url, callback, stream=False, content_type='text/plain', **kwargs):
+        self.callback = callback
+        self.stream = stream
+        self.content_type = content_type
+        super(CallbackResponse, self).__init__(method, url, **kwargs)
+
+    def get_response(self, request):
+        headers = self.get_headers()
+
+        result = self.callback(request)
+        if isinstance(result, Exception):
+            raise result
+
+        status, r_headers, body = result
+        body = _handle_body(body)
+        headers.update(r_headers)
+
+        return HTTPResponse(
+            status=status,
+            reason=six.moves.http_client.responses[status],
+            body=body,
+            headers=headers,
+            preload_content=False,
+        )
+
+
 class RequestsMock(object):
     DELETE = 'DELETE'
     GET = 'GET'
@@ -138,49 +255,43 @@ class RequestsMock(object):
         self.response_callback = response_callback
 
     def reset(self):
-        self._urls = []
+        self._matches = []
         self._calls.reset()
 
-    def add(self, method, url, body='', match_querystring=False,
-            status=200, adding_headers=None, stream=False,
-            content_type='text/plain', json=None):
+    def add(self, method_or_response=None, url=None, body='', json=None, *args, **kwargs):
+        """
+        >>> responses.add(responses.GET, 'http://example.com')
+
+        >>> responses.add(Response(...))
+        """
+        if isinstance(method_or_response, BaseResponse):
+            self._matches.append(method_or_response)
+            return
+
+        if method_or_response:
+            kwargs['method'] = method_or_response
 
         # if we were passed a `json` argument,
         # override the body and content_type
         if json is not None:
+            assert not body
             body = json_module.dumps(json)
-            content_type = 'application/json'
+            kwargs.setdefault('content_type', 'application/json')
 
-        # ensure the url has a default path set if the url is a string
-        url = _ensure_url_default_path(url, match_querystring)
-
-        # body must be bytes
-        if isinstance(body, six.text_type):
-            body = body.encode('utf-8')
-
-        self._urls.append({
-            'url': url,
-            'method': method,
-            'body': body,
-            'content_type': content_type,
-            'match_querystring': match_querystring,
-            'status': status,
-            'adding_headers': adding_headers,
-            'stream': stream,
-        })
+        self._matches.append(Response(url=url, body=body, **kwargs))
 
     def add_callback(self, method, url, callback, match_querystring=False,
                      content_type='text/plain'):
         # ensure the url has a default path set if the url is a string
         # url = _ensure_url_default_path(url, match_querystring)
 
-        self._urls.append({
-            'url': url,
-            'method': method,
-            'callback': callback,
-            'content_type': content_type,
-            'match_querystring': match_querystring,
-        })
+        self._matches.append(CallbackResponse(
+            url=url,
+            method=method,
+            callback=callback,
+            content_type=content_type,
+            match_querystring=match_querystring,
+        ))
 
     @property
     def calls(self):
@@ -201,50 +312,22 @@ class RequestsMock(object):
         return get_wrapped(func, _wrapper_template, evaldict)
 
     def _find_match(self, request):
-        for match in self._urls:
-            if request.method != match['method']:
-                continue
-
-            if not self._has_url_match(match, request.url):
-                continue
-
-            break
+        for match in self._matches:
+            if match.matches(request):
+                break
         else:
             return None
+
         if self.assert_all_requests_are_fired:
             # for each found match remove the url from the stack
-            self._urls.remove(match)
+            self._matches.remove(match)
+
         return match
-
-    def _has_url_match(self, match, request_url):
-        url = match['url']
-
-        if _is_string(url):
-            if match['match_querystring']:
-                return self._has_strict_url_match(url, request_url)
-            else:
-                url_without_qs = request_url.split('?', 1)[0]
-                return url == url_without_qs
-        elif isinstance(url, re._pattern_type) and url.match(request_url):
-            return True
-        else:
-            return False
-
-    def _has_strict_url_match(self, url, other):
-        url_parsed = urlparse(url)
-        other_parsed = urlparse(other)
-
-        if url_parsed[:3] != other_parsed[:3]:
-            return False
-
-        url_qsl = sorted(parse_qsl(url_parsed.query))
-        other_qsl = sorted(parse_qsl(other_parsed.query))
-        return url_qsl == other_qsl
 
     def _on_request(self, adapter, request, **kwargs):
         match = self._find_match(request)
         resp_callback = self.response_callback
-        # TODO(dcramer): find the correct class for this
+
         if match is None:
             error_msg = 'Connection refused: {0} {1}'.format(request.method,
                                                              request.url)
@@ -255,35 +338,17 @@ class RequestsMock(object):
             response = resp_callback(response) if resp_callback else response
             raise response
 
-        if 'body' in match and isinstance(match['body'], Exception):
-            self._calls.add(request, match['body'])
-            raise match['body']
+        try:
+            response = adapter.build_response(
+                request,
+                match.get_response(request),
+            )
+        except Exception as response:
+            self._calls.add(request, response)
+            response = resp_callback(response) if resp_callback else response
+            raise
 
-        headers = {}
-        if match['content_type'] is not None:
-            headers['Content-Type'] = match['content_type']
-
-        if 'callback' in match:  # use callback
-            status, r_headers, body = match['callback'](request)
-            body = _handle_body(body)
-            headers.update(r_headers)
-
-        elif 'body' in match:
-            if match['adding_headers']:
-                headers.update(match['adding_headers'])
-            status = match['status']
-            body = _handle_body(match['body'])
-
-        response = HTTPResponse(
-            status=status,
-            reason=six.moves.http_client.responses[status],
-            body=body,
-            headers=headers,
-            preload_content=False,
-        )
-
-        response = adapter.build_response(request, response)
-        if not match.get('stream'):
+        if not match.stream:
             response.content  # NOQA
 
         try:
@@ -298,7 +363,6 @@ class RequestsMock(object):
 
         response = resp_callback(response) if resp_callback else response
         self._calls.add(request, response)
-
         return response
 
     def start(self):
@@ -315,15 +379,15 @@ class RequestsMock(object):
 
     def stop(self, allow_assert=True):
         self._patcher.stop()
-        if allow_assert and self.assert_all_requests_are_fired and self._urls:
+        if allow_assert and self.assert_all_requests_are_fired and self._matches:
             raise AssertionError(
                 'Not all requests have been executed {0!r}'.format(
-                    [(url['method'], url['url']) for url in self._urls]))
+                    [(match.method, match.url) for match in self._matches]))
 
 
 # expose default mock namespace
 mock = _default_mock = RequestsMock(assert_all_requests_are_fired=False)
-__all__ = []
+__all__ = ['CallbackResponse', 'Response', 'RequestsMock']
 for __attr in (a for a in dir(_default_mock) if not a.startswith('_')):
     __all__.append(__attr)
     globals()[__attr] = getattr(_default_mock, __attr)

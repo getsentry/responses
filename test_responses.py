@@ -12,7 +12,7 @@ from requests.exceptions import ConnectionError, HTTPError
 
 
 def assert_reset():
-    assert len(responses._default_mock._urls) == 0
+    assert len(responses._default_mock._matches) == 0
     assert len(responses.calls) == 0
 
 
@@ -41,6 +41,27 @@ def test_response():
         assert len(responses.calls) == 2
         assert responses.calls[1].request.url == 'http://example.com/?foo=bar'
         assert responses.calls[1].response.content == b'test'
+
+    run()
+    assert_reset()
+
+
+def test_response_with_instance():
+    @responses.activate
+    def run():
+        responses.add(responses.Response(
+            method=responses.GET,
+            url='http://example.com',
+        ))
+        resp = requests.get('http://example.com')
+        assert_response(resp, '')
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.url == 'http://example.com/'
+
+        resp = requests.get('http://example.com?foo=bar')
+        assert_response(resp, '')
+        assert len(responses.calls) == 2
+        assert responses.calls[1].request.url == 'http://example.com/?foo=bar'
 
     run()
     assert_reset()

@@ -16,7 +16,6 @@ from setuptools import setup
 from setuptools.command.test import test as TestCommand
 import pkg_resources
 
-
 setup_requires = []
 
 if 'test' in sys.argv:
@@ -35,7 +34,6 @@ tests_require = [
     'flake8',
 ]
 
-
 extras_require = {
     ':python_version in "2.6, 2.7, 3.2"': ['mock'],
     'tests': tests_require,
@@ -49,8 +47,7 @@ try:
 except Exception:
     logging.getLogger(__name__).exception(
         'Something went wrong calculating platform specific dependencies, so '
-        "you're getting them all!"
-    )
+        "you're getting them all!")
     for key, value in extras_require.items():
         if key.startswith(':'):
             install_requires.extend(value)
@@ -74,8 +71,7 @@ setup(
     version='0.6.0',
     author='David Cramer',
     description=(
-        'A utility library for mocking out the `requests` Python library.'
-    ),
+        'A utility library for mocking out the `requests` Python library.'),
     url='https://github.com/getsentry/responses',
     license='Apache 2.0',
     long_description=open('README.rst').read(),
@@ -92,7 +88,5 @@ setup(
         'Intended Audience :: System Administrators',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 3',
-        'Topic :: Software Development'
-    ],
-)
+        'Programming Language :: Python :: 3', 'Topic :: Software Development'
+    ], )

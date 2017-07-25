@@ -1,6 +1,5 @@
-from __future__ import (
-    absolute_import, print_function, division, unicode_literals
-)
+from __future__ import (absolute_import, print_function, division,
+                        unicode_literals)
 
 import inspect
 import json as json_module
@@ -58,8 +57,7 @@ def _is_redirect(response):
         return (
             # use request.sessions conditional
             response.status_code in REDIRECT_STATI and
-            'location' in response.headers
-        )
+            'location' in response.headers)
 
 
 def get_wrapped(func, wrapper_template, evaldict):
@@ -70,7 +68,7 @@ def get_wrapped(func, wrapper_template, evaldict):
     signature = inspect.formatargspec(args, a, kw, defaults)
     is_bound_method = hasattr(func, '__self__')
     if is_bound_method:
-        args = args[1:]     # Omit 'self'
+        args = args[1:]  # Omit 'self'
     callargs = inspect.formatargspec(args, a, kw, None)
 
     ctx = {'signature': signature, 'funcargs': callargs}
@@ -183,16 +181,24 @@ class BaseResponse(object):
         if request.method != self.method:
             return False
 
-        if not self._url_matches(self.url, request.url, self.match_querystring):
+        if not self._url_matches(self.url, request.url,
+                                 self.match_querystring):
             return False
 
         return True
 
 
 class Response(BaseResponse):
-    def __init__(self, method, url, body='', json=None,
-                 status=200, headers=None, stream=False,
-                 content_type=UNSET, **kwargs):
+    def __init__(self,
+                 method,
+                 url,
+                 body='',
+                 json=None,
+                 status=200,
+                 headers=None,
+                 stream=False,
+                 content_type=UNSET,
+                 **kwargs):
         # if we were passed a `json` argument,
         # override the body and content_type
         if json is not None:
@@ -228,12 +234,17 @@ class Response(BaseResponse):
             reason=six.moves.http_client.responses[status],
             body=body,
             headers=headers,
-            preload_content=False,
-        )
+            preload_content=False, )
 
 
 class CallbackResponse(BaseResponse):
-    def __init__(self, method, url, callback, stream=False, content_type='text/plain', **kwargs):
+    def __init__(self,
+                 method,
+                 url,
+                 callback,
+                 stream=False,
+                 content_type='text/plain',
+                 **kwargs):
         self.callback = callback
         self.stream = stream
         self.content_type = content_type
@@ -255,8 +266,7 @@ class CallbackResponse(BaseResponse):
             reason=six.moves.http_client.responses[status],
             body=body,
             headers=headers,
-            preload_content=False,
-        )
+            preload_content=False, )
 
 
 class RequestsMock(object):
@@ -269,7 +279,8 @@ class RequestsMock(object):
     PUT = 'PUT'
     response_callback = None
 
-    def __init__(self, assert_all_requests_are_fired=True,
+    def __init__(self,
+                 assert_all_requests_are_fired=True,
                  response_callback=None):
         self._calls = CallList()
         self.reset()
@@ -325,18 +336,22 @@ class RequestsMock(object):
 
         self._matches.append(Response(url=url, body=body, **kwargs))
 
-    def add_callback(self, method, url, callback, match_querystring=False,
+    def add_callback(self,
+                     method,
+                     url,
+                     callback,
+                     match_querystring=False,
                      content_type='text/plain'):
         # ensure the url has a default path set if the url is a string
         # url = _ensure_url_default_path(url, match_querystring)
 
-        self._matches.append(CallbackResponse(
-            url=url,
-            method=method,
-            callback=callback,
-            content_type=content_type,
-            match_querystring=match_querystring,
-        ))
+        self._matches.append(
+            CallbackResponse(
+                url=url,
+                method=method,
+                callback=callback,
+                content_type=content_type,
+                match_querystring=match_querystring, ))
 
     @property
     def calls(self):
@@ -374,8 +389,8 @@ class RequestsMock(object):
         resp_callback = self.response_callback
 
         if match is None:
-            error_msg = 'Connection refused: {0} {1}'.format(request.method,
-                                                             request.url)
+            error_msg = 'Connection refused: {0} {1}'.format(
+                request.method, request.url)
             response = ConnectionError(error_msg)
             response.request = request
 
@@ -386,8 +401,7 @@ class RequestsMock(object):
         try:
             response = adapter.build_response(
                 request,
-                match.get_response(request),
-            )
+                match.get_response(request), )
         except Exception as response:
             self._calls.add(request, response)
             response = resp_callback(response) if resp_callback else response
@@ -398,11 +412,8 @@ class RequestsMock(object):
 
         try:
             resp_cookies = Cookies.from_request(response.headers['set-cookie'])
-            response.cookies = cookiejar_from_dict(dict(
-                (v.name, v.value)
-                for _, v
-                in resp_cookies.items()
-            ))
+            response.cookies = cookiejar_from_dict(
+                dict((v.name, v.value) for _, v in resp_cookies.items()))
         except (KeyError, TypeError):
             pass
 
@@ -418,6 +429,7 @@ class RequestsMock(object):
 
         def unbound_on_send(adapter, request, *a, **kwargs):
             return self._on_request(adapter, request, *a, **kwargs)
+
         self._patcher = mock.patch('requests.adapters.HTTPAdapter.send',
                                    unbound_on_send)
         self._patcher.start()
@@ -426,8 +438,8 @@ class RequestsMock(object):
         self._patcher.stop()
         if allow_assert and self.assert_all_requests_are_fired and self._matches:
             raise AssertionError(
-                'Not all requests have been executed {0!r}'.format(
-                    [(match.method, match.url) for match in self._matches]))
+                'Not all requests have been executed {0!r}'.format([(
+                    match.method, match.url) for match in self._matches]))
 
 
 # expose default mock namespace

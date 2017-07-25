@@ -131,9 +131,6 @@ class BaseResponse(object):
         # ensure the url has a default path set if the url is a string
         self.url = _ensure_url_default_path(url, match_querystring)
 
-    def matches(self, request):
-        return False
-
     def _url_matches_strict(self, url, other):
         url_parsed = urlparse(url)
         other_parsed = urlparse(other)
@@ -194,8 +191,8 @@ class BaseResponse(object):
 
 class Response(BaseResponse):
     def __init__(self, method, url, body='', json=None,
-            status=200, headers=None, stream=False,
-            content_type=UNSET, **kwargs):
+                 status=200, headers=None, stream=False,
+                 content_type=UNSET, **kwargs):
         # if we were passed a `json` argument,
         # override the body and content_type
         if json is not None:

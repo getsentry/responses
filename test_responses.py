@@ -10,6 +10,16 @@ import pytest
 from inspect import getargspec
 from requests.exceptions import ConnectionError, HTTPError
 
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
+try:
+    from requests.exceptions import ConnectTimeout
+except ImportError:
+    from requests.exceptions import Timeout as ConnectTimeout
+
 
 def assert_reset():
     assert len(responses._default_mock._urls) == 0
@@ -466,6 +476,59 @@ def test_allow_redirects_samehost():
             status_codes = [call[1].status_code for call in responses.calls]
             assert status_codes == [301, 301, 200]
         assert_reset()
+
+    run()
+    assert_reset()
+
+
+def test_response_timeout():
+    body = b'test'
+    status = 200
+    url = 'http://example.com/'
+    timeout = 0.1  # timeout in seconds
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, url, body=body, timeout=timeout)
+        resp = requests.get(url)
+        assert resp.text == 'test'
+        assert resp.status_code == status
+
+    with mock.patch('responses.time.sleep') as sleep_mock:
+        run()
+        sleep_mock.assert_called_once_with(timeout)
+
+    assert_reset()
+
+
+def test_request_timeout():
+    status = 200
+    url = 'http://example.com/'
+    timeout = 0.1  # timeout in seconds
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, url, timeout=timeout)
+        resp = requests.get(url, timeout=timeout)
+        assert resp.status_code == status
+
+    with mock.patch('responses.time.sleep') as sleep_mock:
+        run()
+        sleep_mock.assert_called_once_with(timeout)
+
+    assert_reset()
+
+
+def test_request_timeout_expired():
+    url = 'http://example.com/'
+    response_timeout = 0.2
+    request_timeout = 0.1
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, url, timeout=response_timeout)
+        with pytest.raises(ConnectTimeout):
+            requests.get(url, timeout=request_timeout)
 
     run()
     assert_reset()

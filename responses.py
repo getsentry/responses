@@ -2,6 +2,7 @@ from __future__ import (
     absolute_import, print_function, division, unicode_literals
 )
 
+import time
 import inspect
 import json as json_module
 import re
@@ -15,6 +16,11 @@ from cookies import Cookies
 from requests.utils import cookiejar_from_dict
 from requests.exceptions import ConnectionError
 from requests.sessions import REDIRECT_STATI
+
+try:
+    from requests.exceptions import ConnectTimeout
+except ImportError:
+    from requests.exceptions import Timeout as ConnectTimeout
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -143,7 +149,7 @@ class RequestsMock(object):
 
     def add(self, method, url, body='', match_querystring=False,
             status=200, adding_headers=None, stream=False,
-            content_type='text/plain', json=None):
+            content_type='text/plain', json=None, timeout=None):
 
         # if we were passed a `json` argument,
         # override the body and content_type
@@ -167,10 +173,11 @@ class RequestsMock(object):
             'status': status,
             'adding_headers': adding_headers,
             'stream': stream,
+            'timeout': timeout,
         })
 
     def add_callback(self, method, url, callback, match_querystring=False,
-                     content_type='text/plain'):
+                     content_type='text/plain', timeout=None):
         # ensure the url has a default path set if the url is a string
         # url = _ensure_url_default_path(url, match_querystring)
 
@@ -180,6 +187,7 @@ class RequestsMock(object):
             'callback': callback,
             'content_type': content_type,
             'match_querystring': match_querystring,
+            'timeout': timeout,
         })
 
     @property
@@ -298,6 +306,15 @@ class RequestsMock(object):
 
         response = resp_callback(response) if resp_callback else response
         self._calls.add(request, response)
+
+        request_timeout = kwargs.get('timeout')
+        response_timeout = match.get('timeout')
+        if request_timeout is not None and response_timeout is not None:
+            if request_timeout < response_timeout:
+                raise ConnectTimeout()
+
+        if response_timeout:
+            time.sleep(response_timeout)
 
         return response
 

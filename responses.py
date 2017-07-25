@@ -5,6 +5,8 @@ from __future__ import (
 import inspect
 import json as json_module
 import re
+
+import _io
 import six
 
 from collections import namedtuple, Sequence, Sized
@@ -108,6 +110,14 @@ def _ensure_url_default_path(url, match_querystring):
         else:
             return url + '/'
     return url
+
+
+def _handle_body(body):
+    if isinstance(body, six.text_type):
+        body = body.encode('utf-8')
+    if isinstance(body, _io.BufferedReader):
+        return body
+    return BufferIO(body)
 
 
 class RequestsMock(object):
@@ -255,16 +265,14 @@ class RequestsMock(object):
 
         if 'callback' in match:  # use callback
             status, r_headers, body = match['callback'](request)
-            if isinstance(body, six.text_type):
-                body = body.encode('utf-8')
-            body = BufferIO(body)
+            body = _handle_body(body)
             headers.update(r_headers)
 
         elif 'body' in match:
             if match['adding_headers']:
                 headers.update(match['adding_headers'])
             status = match['status']
-            body = BufferIO(match['body'])
+            body = _handle_body(match['body'])
 
         response = HTTPResponse(
             status=status,

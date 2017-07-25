@@ -8,50 +8,113 @@ A utility library for mocking out the `requests` Python library.
 
 .. note:: Responses requires Requests >= 2.0
 
-Response body as string
------------------------
+Basics
+------
 
-.. code-block:: python
+The core of ``responses`` comes from registering mock responses:
 
-    import responses
-    import requests
+```python
+import responses
 
-    @responses.activate
-    def test_my_api():
-        responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
-                      body='{"error": "not found"}', status=404,
-                      content_type='application/json')
+@responses.activate
+def test_simple():
+    responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
+                  json={'error': 'not found'}, status=404)
 
-        resp = requests.get('http://twitter.com/api/1/foobar')
+    resp = requests.get('http://twitter.com/api/1/foobar')
 
-        assert resp.json() == {"error": "not found"}
+    assert resp.json() == {"error": "not found"}
 
-        assert len(responses.calls) == 1
-        assert responses.calls[0].request.url == 'http://twitter.com/api/1/foobar'
-        assert responses.calls[0].response.text == '{"error": "not found"}'
+    assert len(responses.calls) == 1
+    assert responses.calls[0].request.url == 'http://twitter.com/api/1/foobar'
+    assert responses.calls[0].response.text == '{"error": "not found"}'
+```
 
-You can also specify a JSON object instead of a body string.
+If you attempt to fetch a url which doesn't hit a match, ``responses`` will raise
+a ``ConnectionError``:
 
-.. code-block:: python
+```python
+import responses
 
-    import responses
-    import requests
+from requests.exceptions import ConnectionError
 
-    @responses.activate
-    def test_my_api():
-        responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
-                      json={"error": "not found"}, status=404)
+@responses.activate
+def test_simple():
+    with pytest.raises(ConnectionError):
+        requests.get('http://twitter.com/api/1/foobar')
+```
 
-        resp = requests.get('http://twitter.com/api/1/foobar')
+Lastly, you can pass an ``Exception`` as the body to trigger an error on the request:
 
-        assert resp.json() == {"error": "not found"}
+```python
+import responses
 
-        assert len(responses.calls) == 1
-        assert responses.calls[0].request.url == 'http://twitter.com/api/1/foobar'
-        assert responses.calls[0].response.text == '{"error": "not found"}'
+@responses.activate
+def test_simple():
+    responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
+                  body=Exception('...'))
+    with pytest.raises(Exception):
+        requests.get('http://twitter.com/api/1/foobar')
+```
 
-Request callback
-----------------
+
+Response Parameters
+-------------------
+
+Responses are automatically registered via params on ``add``, but can also be
+passed directly:
+
+
+```python
+import responses
+
+responses.add(
+    responses.Response(
+        method='GET',
+        url='http://example.com',
+    ),
+)
+```
+
+
+The following attributes can be passed to a Response mock:
+
+method (``str``)
+  The HTTP method (GET, POST, etc).
+
+url (``str`` or compiled regular expression)
+  The full resource URL.
+
+match_querystring (``bool``)
+  Disabled by default. Include the query string when matching requests.
+
+body (``str`` or ``BufferedReader``)
+  The response body.
+
+json
+  A python object representing the JSON response body. Automatically configures
+  the appropriate Content-Type.
+
+status (``int``)
+  The HTTP status code.
+
+content_type (``content_type``)
+  Defaults to ``text/plain``.
+
+headers (``dict``)
+  Response headers.
+
+stream (``bool``)
+  Disabled by default. Indicates the response should use the streaming API.
+
+
+
+
+Dynamic Responses
+-----------------
+
+You can utilize callbacks to provide dynamic responses. The callback must return
+a tuple of (``status``, ``headers``, ``body``).
 
 .. code-block:: python
 
@@ -90,39 +153,6 @@ Request callback
             responses.calls[0].response.headers['request-id'] ==
             '728d329e-0e86-11e4-a748-0c84dc037c13'
         )
-
-Instead of passing a string URL into `responses.add` or `responses.add_callback`
-you can also supply a compiled regular expression.
-
-.. code-block:: python
-
-    import re
-    import responses
-    import requests
-
-    # Instead of
-    responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
-                  body='{"error": "not found"}', status=404,
-                  content_type='application/json')
-
-    # You can do the following
-    url_re = re.compile(r'https?://twitter\.com/api/\d+/foobar')
-    responses.add(responses.GET, url_re,
-                  body='{"error": "not found"}', status=404,
-                  content_type='application/json')
-
-A response can also throw an exception as follows.
-
-.. code-block:: python
-
-    import responses
-    import requests
-    from requests.exceptions import HTTPError
-
-    exception = HTTPError('Something went wrong')
-    responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
-                  body=exception)
-    # All calls to 'http://twitter.com/api/1/foobar' will throw exception.
 
 
 Responses as a context manager
@@ -197,7 +227,7 @@ have library tools that interact with `requests` at a low level, you may need
 to add extended processing to the mocked Response object to fully simlulate the
 environment for your tests.  A `response_callback` can be used, which will be
 wrapped by the library before being returned to the caller.  The callback
-accepts a `response` as it's single argument, and is expected to return a 
+accepts a `response` as it's single argument, and is expected to return a
 single `response` object.
 
 

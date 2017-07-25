@@ -389,6 +389,18 @@ def test_response_callback():
     assert_reset()
 
 
+def test_response_filebody():
+    """ Adds the possibility to use actual (binary) files as responses """
+    def run():
+        with responses.RequestsMock() as m:
+            with open('README.rst', 'rb') as out:
+                m.add(responses.GET, 'http://example.com', body=out,
+                      stream=True)
+                resp = requests.get('http://example.com')
+            with open('README.rst', 'r') as out:
+                assert resp.text == out.read()
+
+
 def test_assert_all_requests_are_fired():
     def run():
         with pytest.raises(AssertionError) as excinfo:

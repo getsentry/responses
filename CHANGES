@@ -1,8 +1,14 @@
 Unreleased
 ----------
 
-- Allow empty list/dict as json object (GH-100)
-- Added `response_callback`
+- Allow empty list/dict as json object (GH-100).
+- Added `response_callback`.
+- Added ``Response`` interfaces.
+- Fixed unicode characters in querystring (GH-153).
+- Added support for streaming IO buffers (GH-154).
+- Added support for empty (unset) Content-Type (GH-139).
+- Added reason to mocked responses (GH-132).
+- ``yapf`` autoformatting now enforced on codebase.
 
 0.5.1
 -----

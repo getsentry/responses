@@ -13,50 +13,49 @@ Basics
 
 The core of ``responses`` comes from registering mock responses:
 
-```python
-import responses
+.. code-block:: python
 
-@responses.activate
-def test_simple():
-    responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
-                  json={'error': 'not found'}, status=404)
+    import responses
 
-    resp = requests.get('http://twitter.com/api/1/foobar')
+    @responses.activate
+    def test_simple():
+        responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
+                      json={'error': 'not found'}, status=404)
 
-    assert resp.json() == {"error": "not found"}
+        resp = requests.get('http://twitter.com/api/1/foobar')
 
-    assert len(responses.calls) == 1
-    assert responses.calls[0].request.url == 'http://twitter.com/api/1/foobar'
-    assert responses.calls[0].response.text == '{"error": "not found"}'
-```
+        assert resp.json() == {"error": "not found"}
+
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.url == 'http://twitter.com/api/1/foobar'
+        assert responses.calls[0].response.text == '{"error": "not found"}'
 
 If you attempt to fetch a url which doesn't hit a match, ``responses`` will raise
 a ``ConnectionError``:
 
-```python
-import responses
+.. code-block:: python
 
-from requests.exceptions import ConnectionError
+    import responses
 
-@responses.activate
-def test_simple():
-    with pytest.raises(ConnectionError):
-        requests.get('http://twitter.com/api/1/foobar')
-```
+    from requests.exceptions import ConnectionError
+
+    @responses.activate
+    def test_simple():
+        with pytest.raises(ConnectionError):
+            requests.get('http://twitter.com/api/1/foobar')
 
 Lastly, you can pass an ``Exception`` as the body to trigger an error on the request:
 
-```python
-import responses
+.. code-block:: python
 
-@responses.activate
-def test_simple():
-    responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
-                  body=Exception('...'))
-    with pytest.raises(Exception):
-        requests.get('http://twitter.com/api/1/foobar')
-```
+    import responses
 
+    @responses.activate
+    def test_simple():
+        responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
+                      body=Exception('...'))
+        with pytest.raises(Exception):
+            requests.get('http://twitter.com/api/1/foobar')
 
 Response Parameters
 -------------------
@@ -64,18 +63,16 @@ Response Parameters
 Responses are automatically registered via params on ``add``, but can also be
 passed directly:
 
+.. code-block:: python
 
-```python
-import responses
+    import responses
 
-responses.add(
-    responses.Response(
-        method='GET',
-        url='http://example.com',
-    ),
-)
-```
-
+    responses.add(
+        responses.Response(
+            method='GET',
+            url='http://example.com',
+        ),
+    )
 
 The following attributes can be passed to a Response mock:
 

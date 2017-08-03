@@ -6,7 +6,7 @@ Responses
 
 A utility library for mocking out the `requests` Python library.
 
-.. note:: Responses requires Requests >= 2.0
+.. note:: Responses requires Python 2.7 or newer, and requests >= 2.0
 
 Basics
 ------

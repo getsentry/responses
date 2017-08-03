@@ -1,4 +1,6 @@
-develop: setup-git
+develop: setup-git install-deps
+
+install-deps:
 	pip install -e "file://`pwd`#egg=responses[tests]"
 
 setup-git:

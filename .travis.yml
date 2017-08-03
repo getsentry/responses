@@ -25,7 +25,7 @@ matrix:
     - env: 'REQUESTS="-e git+git://github.com/kennethreitz/requests.git#egg=requests"'
 install:
   - "pip install ${REQUESTS}"
-  - make
+  - make install-deps
 script:
   - if [[ $TRAVIS_PYTHON_VERSION != 2.6 ]]; then make lint; fi
   - py.test . --cov responses --cov-report term-missing

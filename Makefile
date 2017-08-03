@@ -2,7 +2,7 @@ develop: setup-git
 	pip install -e "file://`pwd`#egg=responses[tests]"
 
 setup-git:
-	pip install pre-commit==0.15.0
+	pip install pre-commit==0.16.0
 	pre-commit install
 	git config branch.autosetuprebase always
 

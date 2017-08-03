@@ -518,3 +518,37 @@ def test_handles_chinese_url():
 
     run()
     assert_reset()
+
+
+def test_headers():
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            'http://example.com',
+            body='',
+            headers={
+                'X-Test': 'foo',
+            })
+        resp = requests.get('http://example.com')
+        assert resp.headers['X-Test'] == 'foo'
+
+    run()
+    assert_reset()
+
+
+def test_legacy_adding_headers():
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            'http://example.com',
+            body='',
+            adding_headers={
+                'X-Test': 'foo',
+            })
+        resp = requests.get('http://example.com')
+        assert resp.headers['X-Test'] == 'foo'
+
+    run()
+    assert_reset()

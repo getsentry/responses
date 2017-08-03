@@ -292,7 +292,13 @@ class RequestsMock(object):
         self._matches = []
         self._calls.reset()
 
-    def add(self, method_or_response=None, url=None, body='', *args, **kwargs):
+    def add(self,
+            method_or_response=None,
+            url=None,
+            body='',
+            adding_headers=None,
+            *args,
+            **kwargs):
         """
         A basic request:
 
@@ -331,6 +337,9 @@ class RequestsMock(object):
         if isinstance(method_or_response, BaseResponse):
             self._matches.append(method_or_response)
             return
+
+        if adding_headers is not None:
+            kwargs.setdefault('headers', adding_headers)
 
         if method_or_response:
             kwargs['method'] = method_or_response

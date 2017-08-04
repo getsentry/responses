@@ -409,6 +409,7 @@ class RequestsMock(object):
                 request,
                 match.get_response(request), )
         except Exception as response:
+            match.call_count += 1
             self._calls.add(request, response)
             response = resp_callback(response) if resp_callback else response
             raise

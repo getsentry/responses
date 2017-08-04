@@ -455,6 +455,14 @@ def test_assert_all_requests_are_fired():
             requests.get('http://example.com')
             assert len(m._matches) == 1
 
+        # check that assert_all_requests_are_fired=True counts mocked errors
+        with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
+            m.add(responses.GET, 'http://example.com', body=Exception())
+            assert len(m._matches) == 1
+            with pytest.raises(Exception):
+                requests.get('http://example.com')
+            assert len(m._matches) == 1
+
     run()
     assert_reset()
 

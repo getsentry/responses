@@ -211,6 +211,19 @@ def test_no_content_type():
     assert_reset()
 
 
+def test_arbitrary_status_code():
+    @responses.activate
+    def run():
+        url = 'http://example.com/'
+        responses.add(responses.GET, url, body='test', status=418)
+        resp = requests.get(url)
+        assert resp.status_code == 418
+        assert resp.reason is None
+
+    run()
+    assert_reset()
+
+
 def test_throw_connection_error_explicit():
     @responses.activate
     def run():

@@ -232,7 +232,7 @@ class Response(BaseResponse):
 
         return HTTPResponse(
             status=status,
-            reason=six.moves.http_client.responses[status],
+            reason=six.moves.http_client.responses.get(status),
             body=body,
             headers=headers,
             preload_content=False, )
@@ -264,7 +264,7 @@ class CallbackResponse(BaseResponse):
 
         return HTTPResponse(
             status=status,
-            reason=six.moves.http_client.responses[status],
+            reason=six.moves.http_client.responses.get(status),
             body=body,
             headers=headers,
             preload_content=False, )

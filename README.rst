@@ -196,25 +196,24 @@ the ``assert_all_requests_are_fired`` value:
 
 Multiple Responses
 ------------------
-You can also use ``assert_all_requests_are_fired`` to add multiple responses for the same url:
+You can also add multiple responses for the same url:
 
 .. code-block:: python
 
     import responses
     import requests
 
-
+    @responses.activate
     def test_my_api():
-        with responses.RequestsMock(assert_all_requests_are_fired=True) as rsps:
-            rsps.add(responses.GET, 'http://twitter.com/api/1/foobar', status=500)
-            rsps.add(responses.GET, 'http://twitter.com/api/1/foobar',
-                     body='{}', status=200,
-                     content_type='application/json')
+        responses.add(responses.GET, 'http://twitter.com/api/1/foobar', status=500)
+        responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
+                      body='{}', status=200,
+                      content_type='application/json')
 
-            resp = requests.get('http://twitter.com/api/1/foobar')
-            assert resp.status_code == 500
-            resp = requests.get('http://twitter.com/api/1/foobar')
-            assert resp.status_code == 200
+        resp = requests.get('http://twitter.com/api/1/foobar')
+        assert resp.status_code == 500
+        resp = requests.get('http://twitter.com/api/1/foobar')
+        assert resp.status_code == 200
 
 Using a callback to modify the response
 ---------------------------------------

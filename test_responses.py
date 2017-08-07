@@ -552,3 +552,18 @@ def test_legacy_adding_headers():
 
     run()
     assert_reset()
+
+
+def test_multiple_responses():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, 'http://example.com', body='test')
+        responses.add(responses.GET, 'http://example.com', body='rest')
+
+        resp = requests.get('http://example.com')
+        assert_response(resp, 'test')
+        resp = requests.get('http://example.com')
+        assert_response(resp, 'rest')
+
+    run()
+    assert_reset()

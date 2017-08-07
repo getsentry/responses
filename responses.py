@@ -387,7 +387,9 @@ class RequestsMock(object):
                 break
         else:
             return None
-
+        # shift matches
+        self._matches = self._matches[1:]
+        self._matches.append(match)
         return match
 
     def _on_request(self, adapter, request, **kwargs):

@@ -23,6 +23,7 @@ matrix:
   allow_failures:
     - env: 'REQUESTS="-e git+git://github.com/kennethreitz/requests.git#egg=requests"'
 install:
+  - pip install codecov
   - "pip install ${REQUESTS}"
   - make install-deps
 script:

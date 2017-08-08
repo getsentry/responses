@@ -139,6 +139,10 @@ class BaseResponse(object):
 
         url_qsl = sorted(parse_qsl(url_parsed.query))
         other_qsl = sorted(parse_qsl(other_parsed.query))
+
+        if len(url_qsl) != len(other_qsl):
+            return False
+
         for (a_k, a_v), (b_k, b_v) in zip(url_qsl, other_qsl):
             if not isinstance(a_k, six.text_type):
                 a_k = a_k.decode('utf-8')

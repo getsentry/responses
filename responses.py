@@ -386,13 +386,13 @@ class RequestsMock(object):
         return get_wrapped(func, _wrapper_template, evaldict)
 
     def _find_match(self, request):
-        for match in self._matches:
+        for i, match in enumerate(self._matches):
             if match.matches(request):
                 break
         else:
             return None
-        # shift matches
-        self._matches = self._matches[1:]
+        # move match to the end
+        self._matches = self._matches[0:i] + self._matches[i+1:]
         self._matches.append(match)
         return match
 

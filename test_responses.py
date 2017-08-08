@@ -109,6 +109,8 @@ def test_match_empty_querystring():
         assert_response(resp, 'test')
         resp = requests.get('http://example.com/')
         assert_response(resp, 'test')
+        with pytest.raises(ConnectionError):
+            requests.get('http://example.com?query=foo')
 
     run()
     assert_reset()

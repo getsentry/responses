@@ -1,3 +1,11 @@
+0.6.2
+-----
+
+- Fixed call counting with exceptions (GH-163).
+- Fixed behavior with arbitrary status codes (GH-164).
+- Fixed handling of multiple responses with the same match (GH-165).
+- Fixed default path behavior with ``match_querystring`` (GH-166).
+
 0.6.1
 -----
 

@@ -104,7 +104,11 @@ def test_match_querystring():
 def test_match_empty_querystring():
     @responses.activate
     def run():
-        responses.add(responses.GET, 'http://example.com', body=b'test', match_querystring=True)
+        responses.add(
+            responses.GET,
+            'http://example.com',
+            body=b'test',
+            match_querystring=True)
         resp = requests.get('http://example.com')
         assert_response(resp, 'test')
         resp = requests.get('http://example.com/')
@@ -602,6 +606,21 @@ def test_multiple_responses():
         assert_response(resp, 'test')
         resp = requests.get('http://example.com')
         assert_response(resp, 'rest')
+
+    run()
+    assert_reset()
+
+
+def test_multiple_urls():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, 'http://example.com/one', body='one')
+        responses.add(responses.GET, 'http://example.com/two', body='two')
+
+        resp = requests.get('http://example.com/two')
+        assert_response(resp, 'two')
+        resp = requests.get('http://example.com/one')
+        assert_response(resp, 'one')
 
     run()
     assert_reset()

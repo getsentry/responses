@@ -1,3 +1,9 @@
+0.7.0
+-----
+
+- Responses will now be rotated until the final match is hit, and
+  then persist using that response (GH-171).
+
 0.6.2
 -----
 

@@ -21,9 +21,9 @@ except ImportError:
     from urllib3.response import HTTPResponse
 
 if six.PY2:
-    from urlparse import urlparse, parse_qsl
+    from urlparse import urlparse, parse_qsl, urlsplit, urlunsplit
 else:
-    from urllib.parse import urlparse, parse_qsl
+    from urllib.parse import urlparse, parse_qsl, urlsplit, urlunsplit
 
 if six.PY2:
     try:
@@ -102,12 +102,12 @@ class CallList(Sequence, Sized):
         self._calls = []
 
 
-def _ensure_url_default_path(url, match_querystring):
-    if _is_string(url) and url.count('/') == 2:
-        if match_querystring:
-            return url.replace('?', '/?', 1)
-        else:
-            return url + '/'
+def _ensure_url_default_path(url):
+    if _is_string(url):
+        url_parts = list(urlsplit(url))
+        if url_parts[2] == '':
+            url_parts[2] = '/'
+        url = urlunsplit(url_parts)
     return url
 
 
@@ -127,7 +127,7 @@ class BaseResponse(object):
         self.method = method
         self.match_querystring = match_querystring
         # ensure the url has a default path set if the url is a string
-        self.url = _ensure_url_default_path(url, match_querystring)
+        self.url = _ensure_url_default_path(url)
         self.call_count = 0
 
     def _url_matches_strict(self, url, other):

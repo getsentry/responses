@@ -605,3 +605,18 @@ def test_multiple_responses():
 
     run()
     assert_reset()
+
+
+def test_multiple_responses_unordered():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, 'http://example.com/foo', body='first')
+        responses.add(responses.GET, 'http://example.com/bar', body='second')
+
+        resp = requests.get('http://example.com/bar')
+        assert_response(resp, 'second')
+        resp = requests.get('http://example.com/foo')
+        assert_response(resp, 'first')
+
+    run()
+    assert_reset()

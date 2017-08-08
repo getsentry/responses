@@ -94,6 +94,21 @@ def test_match_querystring():
         assert_response(resp, 'test')
         resp = requests.get('http://example.com?foo=bar&test=1')
         assert_response(resp, 'test')
+        resp = requests.get('http://example.com/?foo=bar&test=1')
+        assert_response(resp, 'test')
+
+    run()
+    assert_reset()
+
+
+def test_match_empty_querystring():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, 'http://example.com', body=b'test', match_querystring=True)
+        resp = requests.get('http://example.com')
+        assert_response(resp, 'test')
+        resp = requests.get('http://example.com/')
+        assert_response(resp, 'test')
 
     run()
     assert_reset()

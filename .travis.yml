@@ -28,3 +28,5 @@ install:
 script:
   - make lint
   - py.test . --cov responses --cov-report term-missing
+after_success:
+  - codecov -e REQUESTS -e TRAVIS_PYTHON_VERSION

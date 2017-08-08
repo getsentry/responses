@@ -602,6 +602,9 @@ def test_multiple_responses():
         assert_response(resp, 'test')
         resp = requests.get('http://example.com')
         assert_response(resp, 'rest')
+        # After all responses are used, last response should be repeated
+        resp = requests.get('http://example.com')
+        assert_response(resp, 'rest')
 
     run()
     assert_reset()

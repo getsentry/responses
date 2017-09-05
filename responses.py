@@ -63,7 +63,11 @@ def _is_redirect(response):
 def get_wrapped(func, wrapper_template, evaldict):
     # Preserve the argspec for the wrapped function so that testing
     # tools such as pytest can continue to use their fixture injection.
-    args, a, kw, defaults = inspect.getargspec(func)
+    if six.PY2:
+        args, a, kw, defaults = inspect.getargspec(func)
+    else:
+        args, a, kw, defaults, kwonlyargs, kwonlydefaults, annotations = \
+            inspect.getfullargspec(func)
 
     signature = inspect.formatargspec(args, a, kw, defaults)
     is_bound_method = hasattr(func, '__self__')

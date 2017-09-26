@@ -1,3 +1,9 @@
+0.8.0
+-----
+
+- Added the ability to passthru real requests via ``add_passthru()``
+  and ``passthru_prefixes`` configurations.
+
 0.7.0
 -----
 

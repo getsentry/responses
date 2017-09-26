@@ -69,7 +69,7 @@ class PyTest(TestCommand):
 
 setup(
     name='responses',
-    version='0.8.0.dev0',
+    version='0.9.0.dev0',
     author='David Cramer',
     description=(
         'A utility library for mocking out the `requests` Python library.'),

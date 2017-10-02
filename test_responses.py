@@ -749,3 +749,15 @@ def test_passthru(httpserver):
 
     run()
     assert_reset()
+
+
+def test_method_named_param():
+    @responses.activate
+    def run():
+        responses.add(
+            method=responses.GET, url='http://example.com', body='OK')
+        resp = requests.get('http://example.com')
+        assert_response(resp, 'OK')
+
+    run()
+    assert_reset()

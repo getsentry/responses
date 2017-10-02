@@ -327,8 +327,9 @@ class RequestsMock(object):
         self._matches = []
         self._calls.reset()
 
-    def add(self,
-            method_or_response=None,
+    def add(
+            self,
+            method=None,  # method or ``Response``
             url=None,
             body='',
             adding_headers=None,
@@ -369,15 +370,15 @@ class RequestsMock(object):
         >>>     match_querystring=True
         >>> )
         """
-        if isinstance(method_or_response, BaseResponse):
-            self._matches.append(method_or_response)
+        if isinstance(method, BaseResponse):
+            self._matches.append(method)
             return
 
         if adding_headers is not None:
             kwargs.setdefault('headers', adding_headers)
 
         self._matches.append(
-            Response(method=method_or_response, url=url, body=body, **kwargs))
+            Response(method=method, url=url, body=body, **kwargs))
 
     def add_passthru(self, prefix):
         """

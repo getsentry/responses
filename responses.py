@@ -23,8 +23,9 @@ except ImportError:
 
 if six.PY2:
     from urlparse import urlparse, parse_qsl, urlsplit, urlunsplit
+    from urllib import quote
 else:
-    from urllib.parse import urlparse, parse_qsl, urlsplit, urlunsplit
+    from urllib.parse import urlparse, parse_qsl, urlsplit, urlunsplit, quote
 
 if six.PY2:
     try:
@@ -52,6 +53,13 @@ logger = logging.getLogger('responses')
 def _is_string(s):
     return isinstance(s, six.string_types)
 
+def _has_unicode(s):
+    return any(ord(char) > 128 for char in s)
+
+def _clean_unicode(url):
+    urllist = list(urlsplit(url))
+    urllist = [quote(x.encode('utf8')) for x in urllist]
+    return urlunsplit(urllist)
 
 def _is_redirect(response):
     try:
@@ -137,6 +145,8 @@ class BaseResponse(object):
         self.match_querystring = match_querystring
         # ensure the url has a default path set if the url is a string
         self.url = _ensure_url_default_path(url)
+        if _has_unicode(self.url):
+            self.url = _clean_unicode(self.url)
         self.call_count = 0
 
     def __eq__(self, other):

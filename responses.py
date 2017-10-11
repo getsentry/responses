@@ -57,10 +57,15 @@ def _has_unicode(s):
     return any(ord(char) > 128 for char in s)
 
 def _clean_unicode(url):
-    urllist = list(urlsplit(url))
-    urllist = [quote(x.encode('utf8')) for x in urllist]
-    return urlunsplit(urllist)
+    if isinstance(url.encode('utf8'), six.string_types):
+        url = url.encode('utf8')
+    chars = list(url)
+    for i,x in enumerate(chars):
+        if ord(x) > 128:
+            chars[i] = quote(x)
 
+    return ''.join(chars)
+    
 def _is_redirect(response):
     try:
         # 2.0.0 <= requests <= 2.2
@@ -145,8 +150,6 @@ class BaseResponse(object):
         self.match_querystring = match_querystring
         # ensure the url has a default path set if the url is a string
         self.url = _ensure_url_default_path(url)
-        if _has_unicode(self.url):
-            self.url = _clean_unicode(self.url)
         self.call_count = 0
 
     def __eq__(self, other):
@@ -172,33 +175,29 @@ class BaseResponse(object):
     def _url_matches_strict(self, url, other):
         url_parsed = urlparse(url)
         other_parsed = urlparse(other)
-
+        
         if url_parsed[:3] != other_parsed[:3]:
             return False
 
         url_qsl = sorted(parse_qsl(url_parsed.query))
         other_qsl = sorted(parse_qsl(other_parsed.query))
-
+        
         if len(url_qsl) != len(other_qsl):
             return False
 
         for (a_k, a_v), (b_k, b_v) in zip(url_qsl, other_qsl):
-            if not isinstance(a_k, six.text_type):
-                a_k = a_k.decode('utf-8')
-            if not isinstance(b_k, six.text_type):
-                b_k = b_k.decode('utf-8')
             if a_k != b_k:
                 return False
-            if not isinstance(a_v, six.text_type):
-                a_v = a_v.decode('utf-8')
-            if not isinstance(b_v, six.text_type):
-                b_v = b_v.decode('utf-8')
             if a_v != b_v:
                 return False
         return True
 
     def _url_matches(self, url, other, match_querystring=False):
         if _is_string(url):
+            if _has_unicode(url):
+                url = _clean_unicode(url)
+                if not isinstance(other, six.text_type):
+                    other = unicode(other, 'ascii')
             if match_querystring:
                 return self._url_matches_strict(url, other)
             else:

@@ -648,12 +648,27 @@ def test_allow_redirects_samehost():
     assert_reset()
 
 
-def test_handles_chinese_url():
+def test_handles_unicode_querystring():
     url = u'http://example.com/test?type=2&ie=utf8&query=汉字'
 
     @responses.activate
     def run():
         responses.add(responses.GET, url, body='test', match_querystring=True)
+
+        resp = requests.get(url)
+
+        assert_response(resp, 'test')
+
+    run()
+    assert_reset()
+
+
+def test_handles_unicode_url():
+    url = u'https://hi.wikipedia.org/wiki/दिलवाले_दुल्हनिया_ले_जाएंगे'
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, url, body='test')
 
         resp = requests.get(url)
 

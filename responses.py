@@ -53,19 +53,22 @@ logger = logging.getLogger('responses')
 def _is_string(s):
     return isinstance(s, six.string_types)
 
+
 def _has_unicode(s):
     return any(ord(char) > 128 for char in s)
+
 
 def _clean_unicode(url):
     if isinstance(url.encode('utf8'), six.string_types):
         url = url.encode('utf8')
     chars = list(url)
-    for i,x in enumerate(chars):
+    for i, x in enumerate(chars):
         if ord(x) > 128:
             chars[i] = quote(x)
 
     return ''.join(chars)
-    
+
+
 def _is_redirect(response):
     try:
         # 2.0.0 <= requests <= 2.2
@@ -175,13 +178,13 @@ class BaseResponse(object):
     def _url_matches_strict(self, url, other):
         url_parsed = urlparse(url)
         other_parsed = urlparse(other)
-        
+
         if url_parsed[:3] != other_parsed[:3]:
             return False
 
         url_qsl = sorted(parse_qsl(url_parsed.query))
         other_qsl = sorted(parse_qsl(other_parsed.query))
-        
+
         if len(url_qsl) != len(other_qsl):
             return False
 
@@ -197,7 +200,7 @@ class BaseResponse(object):
             if _has_unicode(url):
                 url = _clean_unicode(url)
                 if not isinstance(other, six.text_type):
-                    other = unicode(other, 'ascii')
+                    other = other.encode('ascii').decode('utf8')
             if match_querystring:
                 return self._url_matches_strict(url, other)
             else:

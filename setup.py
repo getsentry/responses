@@ -24,7 +24,7 @@ if 'test' in sys.argv:
 install_requires = [
     'requests>=2.0',
     'cookies',
-    'six',
+    'six'
 ]
 
 tests_require = [

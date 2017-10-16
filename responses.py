@@ -59,6 +59,19 @@ def _has_unicode(s):
 
 
 def _clean_unicode(url):
+    # Clean up domain names, which use punycode to handle unicode chars
+    urllist = list(urlsplit(url))
+    netloc = urllist[1]
+    if _has_unicode(netloc):
+        domains = netloc.split('.')
+        for i, d in enumerate(domains):
+            if _has_unicode(d):
+                d = 'xn--'+d.encode('punycode').decode('ascii')
+                domains[i] = d
+        urllist[1] = '.'.join(domains)
+        url = urlunsplit(urllist)
+
+    # Clean up path/query/params, which use url-encoding to handle unicode chars
     if isinstance(url.encode('utf8'), six.string_types):
         url = url.encode('utf8')
     chars = list(url)

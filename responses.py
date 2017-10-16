@@ -49,6 +49,7 @@ def wrapper%(signature)s:
 
 logger = logging.getLogger('responses')
 
+
 def _is_string(s):
     return isinstance(s, six.string_types)
 

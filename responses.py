@@ -11,6 +11,7 @@ import six
 from collections import namedtuple, Sequence, Sized
 from functools import update_wrapper
 from cookies import Cookies
+from publicsuffixlist import PublicSuffixList
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 from requests.sessions import REDIRECT_STATI
@@ -49,6 +50,8 @@ def wrapper%(signature)s:
 
 logger = logging.getLogger('responses')
 
+psl = PublicSuffixList()
+
 
 def _is_string(s):
     return isinstance(s, six.string_types)
@@ -59,6 +62,19 @@ def _has_unicode(s):
 
 
 def _clean_unicode(url):
+    # Clean up domain names, which use punycode to handle unicode chars
+    urllist = list(urlsplit(url))
+    netloc = urllist[1]
+    if _has_unicode(netloc):
+        domains = netloc.split('.')
+        for i, d in enumerate(domains):
+            if _has_unicode(d):
+                d = 'xn--'+d.encode('punycode').decode('ascii')
+                domains[i] = d
+        urllist[1] = '.'.join(domains)
+        url = urlunsplit(urllist)
+
+    # Clean up path/query/params, which use url-encoding to handle unicode chars
     if isinstance(url.encode('utf8'), six.string_types):
         url = url.encode('utf8')
     chars = list(url)
@@ -201,6 +217,8 @@ class BaseResponse(object):
                 url = _clean_unicode(url)
                 if not isinstance(other, six.text_type):
                     other = other.encode('ascii').decode('utf8')
+                print(url)
+                print(other)
             if match_querystring:
                 return self._url_matches_strict(url, other)
             else:

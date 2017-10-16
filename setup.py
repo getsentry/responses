@@ -25,6 +25,7 @@ install_requires = [
     'requests>=2.0',
     'cookies',
     'six',
+    'publicsuffixlist'
 ]
 
 tests_require = [

@@ -664,7 +664,7 @@ def test_handles_unicode_querystring():
 
 
 def test_handles_unicode_url():
-    url = u'https://hi.wikipedia.org/wiki/दिलवाले_दुल्हनिया_ले_जाएंगे'
+    url = u'http://www.संजाल.भारत/hi/वेबसाइट-डिजाइन'
 
     @responses.activate
     def run():

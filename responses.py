@@ -11,7 +11,6 @@ import six
 from collections import namedtuple, Sequence, Sized
 from functools import update_wrapper
 from cookies import Cookies
-from publicsuffixlist import PublicSuffixList
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 from requests.sessions import REDIRECT_STATI
@@ -49,9 +48,6 @@ def wrapper%(signature)s:
 """
 
 logger = logging.getLogger('responses')
-
-psl = PublicSuffixList()
-
 
 def _is_string(s):
     return isinstance(s, six.string_types)
@@ -217,8 +213,6 @@ class BaseResponse(object):
                 url = _clean_unicode(url)
                 if not isinstance(other, six.text_type):
                     other = other.encode('ascii').decode('utf8')
-                print(url)
-                print(other)
             if match_querystring:
                 return self._url_matches_strict(url, other)
             else:

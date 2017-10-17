@@ -782,8 +782,10 @@ def test_passthru_unicode():
     @responses.activate
     def run():
         with responses.RequestsMock() as m:
-            m.add_passthru(u'http://موقع.وزارة-الاتصالات.مصر/')
-            assert m.passthru_prefixes[0] == 'http://xn--4gbrim.xn----ymcbaaajlc6dj7bxne2c.xn--wgbh1c/'
+            url = u'http://موقع.وزارة-الاتصالات.مصر/'
+            clean_url = 'http://xn--4gbrim.xn----ymcbaaajlc6dj7bxne2c.xn--wgbh1c/'
+            m.add_passthru(url)
+            assert m.passthru_prefixes[0] == clean_url
 
     run()
     assert_reset()

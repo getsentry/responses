@@ -776,3 +776,14 @@ def test_method_named_param():
 
     run()
     assert_reset()
+
+
+def test_passthru_unicode():
+    @responses.activate
+    def run():
+        responses.add_passthru(u'http://موقع.وزارة-الاتصالات.مصر/')
+        resp = requests.get(u'http://موقع.وزارة-الاتصالات.مصر/')
+        assert resp.status_code == 200
+
+    run()
+    assert_reset()

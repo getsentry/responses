@@ -781,9 +781,9 @@ def test_method_named_param():
 def test_passthru_unicode():
     @responses.activate
     def run():
-        responses.add_passthru(u'http://موقع.وزارة-الاتصالات.مصر/')
-        resp = requests.get(u'http://موقع.وزارة-الاتصالات.مصر/')
-        assert resp.status_code == 200
+        with responses.RequestsMock() as m:
+            m.add_passthru(u'http://موقع.وزارة-الاتصالات.مصر/')
+            assert m.passthru_prefixes[0] == 'http://xn--4gbrim.xn----ymcbaaajlc6dj7bxne2c.xn--wgbh1c/'
 
     run()
     assert_reset()

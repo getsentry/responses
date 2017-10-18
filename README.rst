@@ -4,9 +4,15 @@ Responses
 .. image:: https://travis-ci.org/getsentry/responses.svg?branch=master
 	:target: https://travis-ci.org/getsentry/responses
 
-A utility library for mocking out the `requests` Python library.
+A utility library for mocking out the ``requests`` Python library.
 
-.. note:: Responses requires Python 2.7 or newer, and requests >= 2.0
+.. note:: Responses requires Python 2.7 or newer, and ``requests`` >= 2.0
+
+Installation
+------------
+::
+
+    pip install responses
 
 Basics
 ------

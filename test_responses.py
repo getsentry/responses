@@ -776,3 +776,28 @@ def test_method_named_param():
 
     run()
     assert_reset()
+
+
+def test_max_retries():
+    @responses.activate
+    def run():
+        exception = ConnectionError('Bad connection')
+        with responses.RequestsMock(assert_all_requests_are_fired=False, max_retries=3) as rsp:
+            url = 'https://www.example.com'
+            rsp.add(responses.GET, url, body=exception)
+            rsp.add(responses.GET, url, body=exception)
+            rsp.add(responses.GET, url, body=exception)
+            rsp.add(responses.GET, url, body='one')
+            resp = requests.get(url=url)
+            assert_response(resp, 'one')
+
+            url = 'https://www.example.com/tester'
+            rsp.add(responses.GET, url, body=exception)
+            rsp.add(responses.GET, url, body=exception)
+            rsp.add(responses.GET, url, body=exception)
+            rsp.add(responses.GET, url, body='two')
+            resp = requests.get(url=url)
+            assert_response(resp, 'two')
+
+    run()
+    assert_reset()

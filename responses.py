@@ -341,12 +341,14 @@ class RequestsMock(object):
     def __init__(self,
                  assert_all_requests_are_fired=True,
                  response_callback=None,
-                 passthru_prefixes=()):
+                 passthru_prefixes=(),
+                 max_retries=0):
         self._calls = CallList()
         self.reset()
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
         self.response_callback = response_callback
         self.passthru_prefixes = tuple(passthru_prefixes)
+        self.max_retries = max_retries
 
     def reset(self):
         self._matches = []
@@ -504,7 +506,7 @@ class RequestsMock(object):
                     return self._matches.pop(found)
         return found_match
 
-    def _on_request(self, adapter, request, **kwargs):
+    def _on_request(self, adapter, request, retries, **kwargs):
         match = self._find_match(request)
         resp_callback = self.response_callback
 
@@ -533,7 +535,11 @@ class RequestsMock(object):
             match.call_count += 1
             self._calls.add(request, response)
             response = resp_callback(response) if resp_callback else response
-            raise
+            if retries > 0:
+                retries -= 1
+                return self._on_request(adapter, request, retries, **kwargs)
+            else:
+                raise
 
         if not match.stream:
             response.content  # NOQA
@@ -557,7 +563,7 @@ class RequestsMock(object):
             import mock
 
         def unbound_on_send(adapter, request, *a, **kwargs):
-            return self._on_request(adapter, request, *a, **kwargs)
+            return self._on_request(adapter, request, self.max_retries, *a, **kwargs)
 
         self._patcher = mock.patch('requests.adapters.HTTPAdapter.send',
                                    unbound_on_send)

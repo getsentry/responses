@@ -781,14 +781,21 @@ def test_method_named_param():
 def test_max_retries():
     @responses.activate
     def run():
+        session = requests.Session()
+        session.verify = False
+
+        # Try max of 3 times before erroring out
+        retry_adapter = requests.adapters.HTTPAdapter(max_retries=3)
+        session.mount('https://', retry_adapter)
+
         exception = ConnectionError('Bad connection')
-        with responses.RequestsMock(assert_all_requests_are_fired=False, max_retries=3) as rsp:
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsp:
             url = 'https://www.example.com'
             rsp.add(responses.GET, url, body=exception)
             rsp.add(responses.GET, url, body=exception)
             rsp.add(responses.GET, url, body=exception)
             rsp.add(responses.GET, url, body='one')
-            resp = requests.get(url=url)
+            resp = session.get(url=url)
             assert_response(resp, 'one')
 
             url = 'https://www.example.com/tester'
@@ -796,7 +803,7 @@ def test_max_retries():
             rsp.add(responses.GET, url, body=exception)
             rsp.add(responses.GET, url, body=exception)
             rsp.add(responses.GET, url, body='two')
-            resp = requests.get(url=url)
+            resp = session.get(url=url)
             assert_response(resp, 'two')
 
     run()

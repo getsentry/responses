@@ -341,14 +341,12 @@ class RequestsMock(object):
     def __init__(self,
                  assert_all_requests_are_fired=True,
                  response_callback=None,
-                 passthru_prefixes=(),
-                 max_retries=0):
+                 passthru_prefixes=()):
         self._calls = CallList()
         self.reset()
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
         self.response_callback = response_callback
         self.passthru_prefixes = tuple(passthru_prefixes)
-        self.max_retries = max_retries
 
     def reset(self):
         self._matches = []
@@ -536,8 +534,7 @@ class RequestsMock(object):
             self._calls.add(request, response)
             response = resp_callback(response) if resp_callback else response
             if retries > 0:
-                retries -= 1
-                return self._on_request(adapter, request, retries, **kwargs)
+                return self._on_request(adapter, request, retries-1, **kwargs)
             else:
                 raise
 
@@ -563,7 +560,7 @@ class RequestsMock(object):
             import mock
 
         def unbound_on_send(adapter, request, *a, **kwargs):
-            return self._on_request(adapter, request, self.max_retries, *a, **kwargs)
+            return self._on_request(adapter, request, adapter.max_retries.total, *a, **kwargs)
 
         self._patcher = mock.patch('requests.adapters.HTTPAdapter.send',
                                    unbound_on_send)

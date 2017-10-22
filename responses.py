@@ -560,6 +560,7 @@ class RequestsMock(object):
             import mock
 
         def unbound_on_send(adapter, request, *a, **kwargs):
+            retries = adapter.max_retries if isinstance(adapter.max_retries, int) else adapter.max_retries.total
             return self._on_request(adapter, request, adapter.max_retries.total, *a, **kwargs)
 
         self._patcher = mock.patch('requests.adapters.HTTPAdapter.send',

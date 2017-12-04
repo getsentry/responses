@@ -414,6 +414,8 @@ class RequestsMock(object):
 
         >>> responses.add_passthru('https://example.com')
         """
+        if _has_unicode(prefix):
+            prefix = _clean_unicode(prefix)
         self.passthru_prefixes += (prefix, )
 
     def remove(self, method_or_response=None, url=None):

@@ -776,3 +776,16 @@ def test_method_named_param():
 
     run()
     assert_reset()
+
+
+def test_passthru_unicode():
+    @responses.activate
+    def run():
+        with responses.RequestsMock() as m:
+            url = u'http://موقع.وزارة-الاتصالات.مصر/'
+            clean_url = 'http://xn--4gbrim.xn----ymcbaaajlc6dj7bxne2c.xn--wgbh1c/'
+            m.add_passthru(url)
+            assert m.passthru_prefixes[0] == clean_url
+
+    run()
+    assert_reset()

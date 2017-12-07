@@ -16,6 +16,7 @@ The core of ``responses`` comes from registering mock responses:
 .. code-block:: python
 
     import responses
+    import requests 
 
     @responses.activate
     def test_simple():
@@ -36,6 +37,7 @@ a ``ConnectionError``:
 .. code-block:: python
 
     import responses
+    import requests 
 
     from requests.exceptions import ConnectionError
 
@@ -49,6 +51,7 @@ Lastly, you can pass an ``Exception`` as the body to trigger an error on the req
 .. code-block:: python
 
     import responses
+    import requests 
 
     @responses.activate
     def test_simple():

@@ -10,7 +10,7 @@ A utility library for mocking out the `requests` Python library.
 
 Installing
 ----------
-`pip install responses`
+``pip install responses``
 
 Basics
 ------

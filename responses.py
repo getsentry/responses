@@ -160,6 +160,7 @@ def _handle_body(body):
 class BaseResponse(object):
     content_type = None
     headers = None
+    _pattern_type = type(re.compile(''))
 
     def __init__(self, method, url, match_querystring=False):
         self.method = method
@@ -179,9 +180,9 @@ class BaseResponse(object):
         # implemented for regex. It might seem to work as regex is using a cache to return
         # the same regex instances, but it doesn't in all cases.
         self_url = self.url.pattern if isinstance(
-            self.url, re._pattern_type) else self.url
+            self.url, self._pattern_type) else self.url
         other_url = other.url.pattern if isinstance(
-            other.url, re._pattern_type) else other.url
+            other.url, self._pattern_type) else other.url
 
         return self_url == other_url
 
@@ -220,7 +221,7 @@ class BaseResponse(object):
                 url_without_qs = url.split('?', 1)[0]
                 other_without_qs = other.split('?', 1)[0]
                 return url_without_qs == other_without_qs
-        elif isinstance(url, re._pattern_type) and url.match(other):
+        elif isinstance(url, self._pattern_type) and url.match(other):
             return True
         else:
             return False

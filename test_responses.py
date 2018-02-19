@@ -797,5 +797,5 @@ def test_custom_target(monkeypatch):
     patch_mock = std_mock_mock.patch
     monkeypatch.setattr(responses, 'std_mock', std_mock_mock)
     requests_mock.start()
-    patch_mock.assert_called_once()
+    assert len(patch_mock.call_args_list) == 1
     assert patch_mock.call_args[1]['target'] == 'something.else'

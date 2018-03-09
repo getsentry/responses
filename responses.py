@@ -35,6 +35,12 @@ if six.PY2:
 else:
     from io import BytesIO as BufferIO
 
+if hasattr(re, '_pattern_type'):
+    _re_pattern_type = re._pattern_type
+else:
+    # Python 3.7
+    _re_pattern_type = re.Pattern
+
 UNSET = object()
 
 Call = namedtuple('Call', ['request', 'response'])
@@ -179,9 +185,9 @@ class BaseResponse(object):
         # implemented for regex. It might seem to work as regex is using a cache to return
         # the same regex instances, but it doesn't in all cases.
         self_url = self.url.pattern if isinstance(
-            self.url, re._pattern_type) else self.url
+            self.url, _re_pattern_type) else self.url
         other_url = other.url.pattern if isinstance(
-            other.url, re._pattern_type) else other.url
+            other.url, _re_pattern_type) else other.url
 
         return self_url == other_url
 
@@ -220,7 +226,7 @@ class BaseResponse(object):
                 url_without_qs = url.split('?', 1)[0]
                 other_without_qs = other.split('?', 1)[0]
                 return url_without_qs == other_without_qs
-        elif isinstance(url, re._pattern_type) and url.match(other):
+        elif isinstance(url, _re_pattern_type) and url.match(other):
             return True
         else:
             return False

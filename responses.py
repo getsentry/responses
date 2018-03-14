@@ -35,6 +35,11 @@ if six.PY2:
 else:
     from io import BytesIO as BufferIO
 
+try:
+    from unittest import mock as std_mock
+except ImportError:
+    import mock as std_mock
+
 UNSET = object()
 
 Call = namedtuple('Call', ['request', 'response'])
@@ -341,12 +346,14 @@ class RequestsMock(object):
     def __init__(self,
                  assert_all_requests_are_fired=True,
                  response_callback=None,
-                 passthru_prefixes=()):
+                 passthru_prefixes=(),
+                 target='requests.adapters.HTTPAdapter.send'):
         self._calls = CallList()
         self.reset()
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
         self.response_callback = response_callback
         self.passthru_prefixes = tuple(passthru_prefixes)
+        self.target = target
 
     def reset(self):
         self._matches = []
@@ -553,16 +560,11 @@ class RequestsMock(object):
         return response
 
     def start(self):
-        try:
-            from unittest import mock
-        except ImportError:
-            import mock
 
         def unbound_on_send(adapter, request, *a, **kwargs):
             return self._on_request(adapter, request, *a, **kwargs)
 
-        self._patcher = mock.patch('requests.adapters.HTTPAdapter.send',
-                                   unbound_on_send)
+        self._patcher = std_mock.patch(target=self.target, new=unbound_on_send)
         self._patcher.start()
 
     def stop(self, allow_assert=True):

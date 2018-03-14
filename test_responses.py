@@ -789,3 +789,13 @@ def test_passthru_unicode():
 
     run()
     assert_reset()
+
+
+def test_custom_target(monkeypatch):
+    requests_mock = responses.RequestsMock(target='something.else')
+    std_mock_mock = responses.std_mock.MagicMock()
+    patch_mock = std_mock_mock.patch
+    monkeypatch.setattr(responses, 'std_mock', std_mock_mock)
+    requests_mock.start()
+    assert len(patch_mock.call_args_list) == 1
+    assert patch_mock.call_args[1]['target'] == 'something.else'

@@ -23,6 +23,7 @@ matrix:
   allow_failures:
   - env: REQUESTS="-e git+git://github.com/kennethreitz/requests.git#egg=requests"
 install:
+- pyenv install 3.6
 - pip install codecov
 - pip install ${REQUESTS}
 - make install-deps

@@ -1,5 +1,4 @@
-from __future__ import (absolute_import, print_function, division,
-                        unicode_literals)
+from __future__ import (absolute_import, print_function, division, unicode_literals)
 
 import _io
 import inspect
@@ -48,7 +47,7 @@ except AttributeError:
 
 UNSET = object()
 
-Call = namedtuple('Call', ['request', 'response'])
+Call = namedtuple("Call", ["request", "response"])
 
 _real_send = HTTPAdapter.send
 
@@ -58,7 +57,7 @@ def wrapper%(signature)s:
         return func%(funcargs)s
 """
 
-logger = logging.getLogger('responses')
+logger = logging.getLogger("responses")
 
 
 def _is_string(s):
@@ -74,35 +73,37 @@ def _clean_unicode(url):
     urllist = list(urlsplit(url))
     netloc = urllist[1]
     if _has_unicode(netloc):
-        domains = netloc.split('.')
+        domains = netloc.split(".")
         for i, d in enumerate(domains):
             if _has_unicode(d):
-                d = 'xn--' + d.encode('punycode').decode('ascii')
+                d = "xn--" + d.encode("punycode").decode("ascii")
                 domains[i] = d
-        urllist[1] = '.'.join(domains)
+        urllist[1] = ".".join(domains)
         url = urlunsplit(urllist)
 
     # Clean up path/query/params, which use url-encoding to handle unicode chars
-    if isinstance(url.encode('utf8'), six.string_types):
-        url = url.encode('utf8')
+    if isinstance(url.encode("utf8"), six.string_types):
+        url = url.encode("utf8")
     chars = list(url)
     for i, x in enumerate(chars):
         if ord(x) > 128:
             chars[i] = quote(x)
 
-    return ''.join(chars)
+    return "".join(chars)
 
 
 def _is_redirect(response):
     try:
         # 2.0.0 <= requests <= 2.2
         return response.is_redirect
+
     except AttributeError:
         # requests > 2.2
         return (
             # use request.sessions conditional
-            response.status_code in REDIRECT_STATI and
-            'location' in response.headers)
+            response.status_code in REDIRECT_STATI
+            and "location" in response.headers
+        )
 
 
 def get_wrapped(func, wrapper_template, evaldict):
@@ -111,19 +112,20 @@ def get_wrapped(func, wrapper_template, evaldict):
     if six.PY2:
         args, a, kw, defaults = inspect.getargspec(func)
     else:
-        args, a, kw, defaults, kwonlyargs, kwonlydefaults, annotations = \
-            inspect.getfullargspec(func)
+        args, a, kw, defaults, kwonlyargs, kwonlydefaults, annotations = inspect.getfullargspec(
+            func
+        )
 
     signature = inspect.formatargspec(args, a, kw, defaults)
-    is_bound_method = hasattr(func, '__self__')
+    is_bound_method = hasattr(func, "__self__")
     if is_bound_method:
         args = args[1:]  # Omit 'self'
     callargs = inspect.formatargspec(args, a, kw, None)
 
-    ctx = {'signature': signature, 'funcargs': callargs}
+    ctx = {"signature": signature, "funcargs": callargs}
     six.exec_(wrapper_template % ctx, evaldict)
 
-    wrapper = evaldict['wrapper']
+    wrapper = evaldict["wrapper"]
 
     update_wrapper(wrapper, func)
     if is_bound_method:
@@ -132,6 +134,7 @@ def get_wrapped(func, wrapper_template, evaldict):
 
 
 class CallList(Sequence, Sized):
+
     def __init__(self):
         self._calls = []
 
@@ -154,17 +157,18 @@ class CallList(Sequence, Sized):
 def _ensure_url_default_path(url):
     if _is_string(url):
         url_parts = list(urlsplit(url))
-        if url_parts[2] == '':
-            url_parts[2] = '/'
+        if url_parts[2] == "":
+            url_parts[2] = "/"
         url = urlunsplit(url_parts)
     return url
 
 
 def _handle_body(body):
     if isinstance(body, six.text_type):
-        body = body.encode('utf-8')
+        body = body.encode("utf-8")
     if isinstance(body, _io.BufferedReader):
         return body
+
     return BufferIO(body)
 
 
@@ -191,10 +195,8 @@ class BaseResponse(object):
         # Can't simply do a equality check on the objects directly here since __eq__ isn't
         # implemented for regex. It might seem to work as regex is using a cache to return
         # the same regex instances, but it doesn't in all cases.
-        self_url = self.url.pattern if isinstance(self.url,
-                                                  Pattern) else self.url
-        other_url = other.url.pattern if isinstance(other.url,
-                                                    Pattern) else other.url
+        self_url = self.url.pattern if isinstance(self.url, Pattern) else self.url
+        other_url = other.url.pattern if isinstance(other.url, Pattern) else other.url
 
         return self_url == other_url
 
@@ -217,8 +219,10 @@ class BaseResponse(object):
         for (a_k, a_v), (b_k, b_v) in zip(url_qsl, other_qsl):
             if a_k != b_k:
                 return False
+
             if a_v != b_v:
                 return False
+
         return True
 
     def _url_matches(self, url, other, match_querystring=False):
@@ -226,22 +230,25 @@ class BaseResponse(object):
             if _has_unicode(url):
                 url = _clean_unicode(url)
                 if not isinstance(other, six.text_type):
-                    other = other.encode('ascii').decode('utf8')
+                    other = other.encode("ascii").decode("utf8")
             if match_querystring:
                 return self._url_matches_strict(url, other)
+
             else:
-                url_without_qs = url.split('?', 1)[0]
-                other_without_qs = other.split('?', 1)[0]
+                url_without_qs = url.split("?", 1)[0]
+                other_without_qs = other.split("?", 1)[0]
                 return url_without_qs == other_without_qs
+
         elif isinstance(url, Pattern) and url.match(other):
             return True
+
         else:
             return False
 
     def get_headers(self):
         headers = {}
         if self.content_type is not None:
-            headers['Content-Type'] = self.content_type
+            headers["Content-Type"] = self.content_type
         if self.headers:
             headers.update(self.headers)
         return headers
@@ -253,38 +260,40 @@ class BaseResponse(object):
         if request.method != self.method:
             return False
 
-        if not self._url_matches(self.url, request.url,
-                                 self.match_querystring):
+        if not self._url_matches(self.url, request.url, self.match_querystring):
             return False
 
         return True
 
 
 class Response(BaseResponse):
-    def __init__(self,
-                 method,
-                 url,
-                 body='',
-                 json=None,
-                 status=200,
-                 headers=None,
-                 stream=False,
-                 content_type=UNSET,
-                 **kwargs):
+
+    def __init__(
+        self,
+        method,
+        url,
+        body="",
+        json=None,
+        status=200,
+        headers=None,
+        stream=False,
+        content_type=UNSET,
+        **kwargs
+    ):
         # if we were passed a `json` argument,
         # override the body and content_type
         if json is not None:
             assert not body
             body = json_module.dumps(json)
             if content_type is UNSET:
-                content_type = 'application/json'
+                content_type = "application/json"
 
         if content_type is UNSET:
-            content_type = 'text/plain'
+            content_type = "text/plain"
 
         # body must be bytes
         if isinstance(body, six.text_type):
-            body = body.encode('utf-8')
+            body = body.encode("utf-8")
 
         self.body = body
         self.status = status
@@ -306,17 +315,15 @@ class Response(BaseResponse):
             reason=six.moves.http_client.responses.get(status),
             body=body,
             headers=headers,
-            preload_content=False, )
+            preload_content=False,
+        )
 
 
 class CallbackResponse(BaseResponse):
-    def __init__(self,
-                 method,
-                 url,
-                 callback,
-                 stream=False,
-                 content_type='text/plain',
-                 **kwargs):
+
+    def __init__(
+        self, method, url, callback, stream=False, content_type="text/plain", **kwargs
+    ):
         self.callback = callback
         self.stream = stream
         self.content_type = content_type
@@ -338,24 +345,27 @@ class CallbackResponse(BaseResponse):
             reason=six.moves.http_client.responses.get(status),
             body=body,
             headers=headers,
-            preload_content=False, )
+            preload_content=False,
+        )
 
 
 class RequestsMock(object):
-    DELETE = 'DELETE'
-    GET = 'GET'
-    HEAD = 'HEAD'
-    OPTIONS = 'OPTIONS'
-    PATCH = 'PATCH'
-    POST = 'POST'
-    PUT = 'PUT'
+    DELETE = "DELETE"
+    GET = "GET"
+    HEAD = "HEAD"
+    OPTIONS = "OPTIONS"
+    PATCH = "PATCH"
+    POST = "POST"
+    PUT = "PUT"
     response_callback = None
 
-    def __init__(self,
-                 assert_all_requests_are_fired=True,
-                 response_callback=None,
-                 passthru_prefixes=(),
-                 target='requests.adapters.HTTPAdapter.send'):
+    def __init__(
+        self,
+        assert_all_requests_are_fired=True,
+        response_callback=None,
+        passthru_prefixes=(),
+        target="requests.adapters.HTTPAdapter.send",
+    ):
         self._calls = CallList()
         self.reset()
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
@@ -368,13 +378,14 @@ class RequestsMock(object):
         self._calls.reset()
 
     def add(
-            self,
-            method=None,  # method or ``Response``
-            url=None,
-            body='',
-            adding_headers=None,
-            *args,
-            **kwargs):
+        self,
+        method=None,  # method or ``Response``
+        url=None,
+        body="",
+        adding_headers=None,
+        *args,
+        **kwargs
+    ):
         """
         A basic request:
 
@@ -415,10 +426,9 @@ class RequestsMock(object):
             return
 
         if adding_headers is not None:
-            kwargs.setdefault('headers', adding_headers)
+            kwargs.setdefault("headers", adding_headers)
 
-        self._matches.append(
-            Response(method=method, url=url, body=body, **kwargs))
+        self._matches.append(Response(method=method, url=url, body=body, **kwargs))
 
     def add_passthru(self, prefix):
         """
@@ -431,7 +441,7 @@ class RequestsMock(object):
         """
         if _has_unicode(prefix):
             prefix = _clean_unicode(prefix)
-        self.passthru_prefixes += (prefix, )
+        self.passthru_prefixes += (prefix,)
 
     def remove(self, method_or_response=None, url=None):
         """
@@ -450,12 +460,7 @@ class RequestsMock(object):
         while response in self._matches:
             self._matches.remove(response)
 
-    def replace(self,
-                method_or_response=None,
-                url=None,
-                body='',
-                *args,
-                **kwargs):
+    def replace(self, method_or_response=None, url=None, body="", *args, **kwargs):
         """
         Replaces a response previously added using ``add()``. The signature
         is identical to ``add()``. The response is identified using ``method``
@@ -467,18 +472,14 @@ class RequestsMock(object):
         if isinstance(method_or_response, BaseResponse):
             response = method_or_response
         else:
-            response = Response(
-                method=method_or_response, url=url, body=body, **kwargs)
+            response = Response(method=method_or_response, url=url, body=body, **kwargs)
 
         index = self._matches.index(response)
         self._matches[index] = response
 
-    def add_callback(self,
-                     method,
-                     url,
-                     callback,
-                     match_querystring=False,
-                     content_type='text/plain'):
+    def add_callback(
+        self, method, url, callback, match_querystring=False, content_type="text/plain"
+    ):
         # ensure the url has a default path set if the url is a string
         # url = _ensure_url_default_path(url, match_querystring)
 
@@ -488,7 +489,9 @@ class RequestsMock(object):
                 method=method,
                 callback=callback,
                 content_type=content_type,
-                match_querystring=match_querystring, ))
+                match_querystring=match_querystring,
+            )
+        )
 
     @property
     def calls(self):
@@ -505,7 +508,7 @@ class RequestsMock(object):
         return success
 
     def activate(self, func):
-        evaldict = {'responses': self, 'func': func}
+        evaldict = {"responses": self, "func": func}
         return get_wrapped(func, _wrapper_template, evaldict)
 
     def _find_match(self, request):
@@ -519,6 +522,7 @@ class RequestsMock(object):
                 else:
                     # Multiple matches found.  Remove & return the first match.
                     return self._matches.pop(found)
+
         return found_match
 
     def _on_request(self, adapter, request, **kwargs):
@@ -527,14 +531,12 @@ class RequestsMock(object):
 
         if match is None:
             if request.url.startswith(self.passthru_prefixes):
-                logger.info(
-                    'request.allowed-passthru', extra={
-                        'url': request.url,
-                    })
+                logger.info("request.allowed-passthru", extra={"url": request.url})
                 return _real_send(adapter, request, **kwargs)
 
-            error_msg = 'Connection refused: {0} {1}'.format(
-                request.method, request.url)
+            error_msg = "Connection refused: {0} {1}".format(
+                request.method, request.url
+            )
             response = ConnectionError(error_msg)
             response.request = request
 
@@ -543,9 +545,7 @@ class RequestsMock(object):
             raise response
 
         try:
-            response = adapter.build_response(
-                request,
-                match.get_response(request), )
+            response = adapter.build_response(request, match.get_response(request))
         except Exception as response:
             match.call_count += 1
             self._calls.add(request, response)
@@ -556,9 +556,10 @@ class RequestsMock(object):
             response.content  # NOQA
 
         try:
-            resp_cookies = Cookies.from_request(response.headers['set-cookie'])
+            resp_cookies = Cookies.from_request(response.headers["set-cookie"])
             response.cookies = cookiejar_from_dict(
-                dict((v.name, v.value) for _, v in resp_cookies.items()))
+                dict((v.name, v.value) for _, v in resp_cookies.items())
+            )
         except (KeyError, TypeError):
             pass
 
@@ -568,6 +569,7 @@ class RequestsMock(object):
         return response
 
     def start(self):
+
         def unbound_on_send(adapter, request, *a, **kwargs):
             return self._on_request(adapter, request, *a, **kwargs)
 
@@ -578,18 +580,22 @@ class RequestsMock(object):
         self._patcher.stop()
         if not self.assert_all_requests_are_fired:
             return
+
         if not allow_assert:
             return
+
         not_called = [m for m in self._matches if m.call_count == 0]
         if not_called:
             raise AssertionError(
-                'Not all requests have been executed {0!r}'.format([(
-                    match.method, match.url) for match in not_called]))
+                "Not all requests have been executed {0!r}".format(
+                    [(match.method, match.url) for match in not_called]
+                )
+            )
 
 
 # expose default mock namespace
 mock = _default_mock = RequestsMock(assert_all_requests_are_fired=False)
-__all__ = ['CallbackResponse', 'Response', 'RequestsMock']
-for __attr in (a for a in dir(_default_mock) if not a.startswith('_')):
+__all__ = ["CallbackResponse", "Response", "RequestsMock"]
+for __attr in (a for a in dir(_default_mock) if not a.startswith("_")):
     __all__.append(__attr)
     globals()[__attr] = getattr(_default_mock, __attr)

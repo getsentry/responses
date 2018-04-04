@@ -160,6 +160,7 @@ def _handle_body(body):
 class BaseResponse(object):
     content_type = None
     headers = None
+
     stream = False
 
     def __init__(self, method, url, match_querystring=False):

@@ -10,8 +10,5 @@ repos:
     hooks:
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
--   repo: git://github.com/pre-commit/pre-commit-hooks
-    rev: v0.9.1
-    hooks:
     -   id: debug-statements
     -   id: flake8

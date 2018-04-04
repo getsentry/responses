@@ -1,14 +1,17 @@
--   repo: git://github.com/pre-commit/mirrors-yapf
-    sha: v0.16.2
+repos:
+-   repo: https://github.com/ambv/black
+    rev: 51b3b2624d4b1e4608eb9addd7d292cc5174a047
     hooks:
-    -   id: yapf
+    - id: black
+      args: [--line-length=88, --safe]
+      python-version: python3.6
 -   repo: git://github.com/pre-commit/pre-commit-hooks
-    sha: v0.9.1
+    rev: v0.9.1
     hooks:
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
 -   repo: git://github.com/pre-commit/pre-commit-hooks
-    sha: v0.9.1
+    rev: v0.9.1
     hooks:
     -   id: debug-statements
     -   id: flake8

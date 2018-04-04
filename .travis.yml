@@ -37,8 +37,8 @@ after_success:
   - zeus upload -t "text/xml+coverage" artifacts/*/*coverage.xml
 after_failure:
   - npm install -g @zeus-ci/cli
-  - zeus upload -t "text/xml+xunit" artifacts/*/*junit.xml
-  - zeus upload -t "text/xml+coverage" artifacts/*/*coverage.xml
+  - zeus upload -t "text/xml+xunit" artifacts/*junit.xml
+  - zeus upload -t "text/xml+coverage" artifacts/*coverage.xml
 notifications:
   webhooks:
     urls:

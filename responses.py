@@ -40,6 +40,12 @@ try:
 except ImportError:
     import mock as std_mock
 
+try:
+    Pattern = re._pattern_type
+except AttributeError:
+    # Python 3.7
+    Pattern = re.Pattern
+
 UNSET = object()
 
 Call = namedtuple('Call', ['request', 'response'])
@@ -71,7 +77,7 @@ def _clean_unicode(url):
         domains = netloc.split('.')
         for i, d in enumerate(domains):
             if _has_unicode(d):
-                d = 'xn--'+d.encode('punycode').decode('ascii')
+                d = 'xn--' + d.encode('punycode').decode('ascii')
                 domains[i] = d
         urllist[1] = '.'.join(domains)
         url = urlunsplit(urllist)
@@ -185,10 +191,10 @@ class BaseResponse(object):
         # Can't simply do a equality check on the objects directly here since __eq__ isn't
         # implemented for regex. It might seem to work as regex is using a cache to return
         # the same regex instances, but it doesn't in all cases.
-        self_url = self.url.pattern if isinstance(
-            self.url, re._pattern_type) else self.url
-        other_url = other.url.pattern if isinstance(
-            other.url, re._pattern_type) else other.url
+        self_url = self.url.pattern if isinstance(self.url,
+                                                  Pattern) else self.url
+        other_url = other.url.pattern if isinstance(other.url,
+                                                    Pattern) else other.url
 
         return self_url == other_url
 
@@ -227,7 +233,7 @@ class BaseResponse(object):
                 url_without_qs = url.split('?', 1)[0]
                 other_without_qs = other.split('?', 1)[0]
                 return url_without_qs == other_without_qs
-        elif isinstance(url, re._pattern_type) and url.match(other):
+        elif isinstance(url, Pattern) and url.match(other):
             return True
         else:
             return False
@@ -562,7 +568,6 @@ class RequestsMock(object):
         return response
 
     def start(self):
-
         def unbound_on_send(adapter, request, *a, **kwargs):
             return self._on_request(adapter, request, *a, **kwargs)
 

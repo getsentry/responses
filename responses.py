@@ -166,6 +166,8 @@ class BaseResponse(object):
     content_type = None
     headers = None
 
+    stream = False
+
     def __init__(self, method, url, match_querystring=False):
         self.method = method
         self.match_querystring = match_querystring

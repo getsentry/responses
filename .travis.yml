@@ -23,13 +23,12 @@ matrix:
   allow_failures:
   - env: REQUESTS="-e git+git://github.com/kennethreitz/requests.git#egg=requests"
 install:
-- yes | pyenv install 3.6.3
 - pip install codecov
 - pip install ${REQUESTS}
 - make install-deps
 - mkdir -p artifacts
 script:
-- make lint
+- make
 - py.test . --cov-report term-missing  --cov . --cov-report="xml:artifacts/coverage.xml"
   --junit-xml="artifacts/junit.xml"
 deploy:

@@ -26,8 +26,25 @@ install:
   - pip install codecov
   - "pip install ${REQUESTS}"
   - make install-deps
+  - mkdir -p artifacts
 script:
   - make lint
-  - py.test . --cov responses --cov-report term-missing
+  - py.test . --cov-report term-missing  --cov . --cov-report="xml:artifacts/coverage.xml" --junit-xml="artifacts/junit.xml"
 after_success:
   - codecov -e REQUESTS -e TRAVIS_PYTHON_VERSION
+  - npm install -g @zeus-ci/cli
+  - zeus upload -t "text/xml+xunit" artifacts/*/*junit.xml
+  - zeus upload -t "text/xml+coverage" artifacts/*/*coverage.xml
+after_failure:
+  - npm install -g @zeus-ci/cli
+  - zeus upload -t "text/xml+xunit" artifacts/*/*junit.xml
+  - zeus upload -t "text/xml+coverage" artifacts/*/*coverage.xml
+notifications:
+  webhooks:
+    urls:
+      - https://zeus.ci/hooks/4f39f396-3820-11e8-982a-0a580a28001b/public/provider/travis/webhook
+    on_success: always
+    on_failure: always
+    on_start: always
+    on_cancel: always
+    on_error: always

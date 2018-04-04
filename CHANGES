@@ -1,3 +1,12 @@
+0.9.0
+-----
+
+- Support for Python 3.7 (#196)
+- Support streaming responses for BaseResponse (#192)
+- Support custom patch targets for mock (#189)
+- Fix unicode support for passthru urls (#178)
+- Fix support for unicode in domain names and tlds (177)
+
 0.8.0
 -----
 

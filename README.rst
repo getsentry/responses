@@ -1,26 +1,31 @@
 Responses
 =========
 
-.. image:: https://travis-ci.org/getsentry/responses.svg?branch=master
-	:target: https://travis-ci.org/getsentry/responses
+..  image:: https://travis-ci.org/getsentry/responses.svg?branch=master
+    :target: https://travis-ci.org/getsentry/responses
 
 A utility library for mocking out the `requests` Python library.
 
-.. note:: Responses requires Python 2.7 or newer, and requests >= 2.0
+..  note::
+
+    Responses requires Python 2.7 or newer, and requests >= 2.0
+
 
 Installing
 ----------
+
 ``pip install responses``
+
 
 Basics
 ------
 
 The core of ``responses`` comes from registering mock responses:
 
-.. code-block:: python
+..  code-block:: python
 
     import responses
-    import requests 
+    import requests
 
     @responses.activate
     def test_simple():
@@ -38,10 +43,10 @@ The core of ``responses`` comes from registering mock responses:
 If you attempt to fetch a url which doesn't hit a match, ``responses`` will raise
 a ``ConnectionError``:
 
-.. code-block:: python
+..  code-block:: python
 
     import responses
-    import requests 
+    import requests
 
     from requests.exceptions import ConnectionError
 
@@ -52,10 +57,10 @@ a ``ConnectionError``:
 
 Lastly, you can pass an ``Exception`` as the body to trigger an error on the request:
 
-.. code-block:: python
+..  code-block:: python
 
     import responses
-    import requests 
+    import requests
 
     @responses.activate
     def test_simple():
@@ -64,13 +69,14 @@ Lastly, you can pass an ``Exception`` as the body to trigger an error on the req
         with pytest.raises(Exception):
             requests.get('http://twitter.com/api/1/foobar')
 
+
 Response Parameters
 -------------------
 
 Responses are automatically registered via params on ``add``, but can also be
 passed directly:
 
-.. code-block:: python
+..  code-block:: python
 
     import responses
 
@@ -84,34 +90,32 @@ passed directly:
 The following attributes can be passed to a Response mock:
 
 method (``str``)
-  The HTTP method (GET, POST, etc).
+    The HTTP method (GET, POST, etc).
 
 url (``str`` or compiled regular expression)
-  The full resource URL.
+    The full resource URL.
 
 match_querystring (``bool``)
-  Disabled by default. Include the query string when matching requests.
+    Disabled by default. Include the query string when matching requests.
 
 body (``str`` or ``BufferedReader``)
-  The response body.
+    The response body.
 
 json
-  A python object representing the JSON response body. Automatically configures
-  the appropriate Content-Type.
+    A python object representing the JSON response body. Automatically configures
+    the appropriate Content-Type.
 
 status (``int``)
-  The HTTP status code.
+    The HTTP status code.
 
 content_type (``content_type``)
-  Defaults to ``text/plain``.
+    Defaults to ``text/plain``.
 
 headers (``dict``)
-  Response headers.
+    Response headers.
 
 stream (``bool``)
-  Disabled by default. Indicates the response should use the streaming API.
-
-
+    Disabled by default. Indicates the response should use the streaming API.
 
 
 Dynamic Responses
@@ -120,7 +124,7 @@ Dynamic Responses
 You can utilize callbacks to provide dynamic responses. The callback must return
 a tuple of (``status``, ``headers``, ``body``).
 
-.. code-block:: python
+..  code-block:: python
 
     import json
 
@@ -162,11 +166,10 @@ a tuple of (``status``, ``headers``, ``body``).
 Responses as a context manager
 ------------------------------
 
-.. code-block:: python
+..  code-block:: python
 
     import responses
     import requests
-
 
     def test_my_api():
         with responses.RequestsMock() as rsps:
@@ -194,18 +197,19 @@ the ``assert_all_requests_are_fired`` value:
     import responses
     import requests
 
-
     def test_my_api():
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
             rsps.add(responses.GET, 'http://twitter.com/api/1/foobar',
                      body='{}', status=200,
                      content_type='application/json')
 
+
 Multiple Responses
 ------------------
+
 You can also add multiple responses for the same url:
 
-.. code-block:: python
+..  code-block:: python
 
     import responses
     import requests
@@ -222,6 +226,7 @@ You can also add multiple responses for the same url:
         resp = requests.get('http://twitter.com/api/1/foobar')
         assert resp.status_code == 200
 
+
 Using a callback to modify the response
 ---------------------------------------
 
@@ -233,22 +238,21 @@ wrapped by the library before being returned to the caller.  The callback
 accepts a `response` as it's single argument, and is expected to return a
 single `response` object.
 
-
-.. code-block:: python
+..  code-block:: python
 
     import responses
     import requests
 
-	def response_callback(resp):
-		resp.callback_processed = True
-		return resp
+    def response_callback(resp):
+        resp.callback_processed = True
+        return resp
 
-	with responses.RequestsMock(response_callback=response_callback) as m:
-		m.add(responses.GET, 'http://example.com', body=b'test')
-		resp = requests.get('http://example.com')
-		assert resp.text == "test"
-		assert hasattr(resp, 'callback_processed')
-		assert resp.callback_processed is True
+    with responses.RequestsMock(response_callback=response_callback) as m:
+        m.add(responses.GET, 'http://example.com', body=b'test')
+        resp = requests.get('http://example.com')
+        assert resp.text == "test"
+        assert hasattr(resp, 'callback_processed')
+        assert resp.callback_processed is True
 
 
 Passing thru real requests

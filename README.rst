@@ -102,7 +102,7 @@ body (``str`` or ``BufferedReader``)
     The response body.
 
 json
-    A python object representing the JSON response body. Automatically configures
+    A Python object representing the JSON response body. Automatically configures
     the appropriate Content-Type.
 
 status (``int``)

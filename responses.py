@@ -531,7 +531,7 @@ class RequestsMock(object):
                     'request.allowed-passthru', extra={
                         'url': request.url,
                     })
-                return _real_send(adapter, request)
+                return _real_send(adapter, request, **kwargs)
 
             error_msg = 'Connection refused: {0} {1}'.format(
                 request.method, request.url)

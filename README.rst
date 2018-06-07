@@ -232,7 +232,7 @@ Using a callback to modify the response
 
 If you use customized processing in `requests` via subclassing/mixins, or if you
 have library tools that interact with `requests` at a low level, you may need
-to add extended processing to the mocked Response object to fully simlulate the
+to add extended processing to the mocked Response object to fully simulate the
 environment for your tests.  A `response_callback` can be used, which will be
 wrapped by the library before being returned to the caller.  The callback
 accepts a `response` as it's single argument, and is expected to return a

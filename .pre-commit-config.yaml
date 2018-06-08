@@ -8,11 +8,13 @@ repos:
 -   repo: git://github.com/pre-commit/pre-commit-hooks
     rev: v1.3.0
     hooks:
-    -   id: check-case-conflict
-    -   id: check-merge-conflict
-    -   id: check-symlinks
-    -   id: end-of-file-fixer
-    -   id: trailing-whitespace
-    -   id: debug-statements
-    -   id: flake8
-    -   id: requirements-txt-fixer
+    - id: check-case-conflict
+    - id: check-merge-conflict
+    - id: check-symlinks
+    - id: end-of-file-fixer
+    - id: trailing-whitespace
+    - id: debug-statements
+    - id: flake8
+      args: []
+      log_file: '.pre-commit-output/flake8.log'
+    - id: requirements-txt-fixer

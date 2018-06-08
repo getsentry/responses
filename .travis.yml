@@ -29,7 +29,7 @@ install:
 - make install-deps
 script:
 - make
-- if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pre-commit run -a; fi
+- if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pre-commit run -a -v; fi
 - py.test . --cov-report term-missing  --cov . --cov-report="xml:.artifacts/coverage.xml"
   --junit-xml=".artifacts/junit.xml"
 deploy:

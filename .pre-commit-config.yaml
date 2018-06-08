@@ -15,6 +15,5 @@ repos:
     - id: trailing-whitespace
     - id: debug-statements
     - id: flake8
-      args: []
       log_file: '.artifacts/flake8.log'
     - id: requirements-txt-fixer

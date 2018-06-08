@@ -4,7 +4,7 @@ install-deps:
 	pip install -e "file://`pwd`#egg=responses[tests]"
 
 install-pre-commit:
-	pip install "pre-commit>=1.8.2,<1.9.0"
+	pip install "pre-commit>=1.10.1,<1.11.0"
 
 setup-git: install-pre-commit
 	pre-commit install

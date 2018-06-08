@@ -6,7 +6,6 @@ python:
 - '3.4'
 - '3.5'
 - '3.6'
-- 3.6-dev
 - 3.7-dev
 - nightly
 cache:
@@ -14,23 +13,25 @@ cache:
   - ".pip_download_cache"
 env:
   matrix:
-  - REQUESTS=requests==2.0
-  - REQUESTS=-U requests
+  - REQUESTS="requests>=2.0,<3.0"
+  - REQUESTS="-U requests"
   - REQUESTS="-e git+git://github.com/kennethreitz/requests.git#egg=requests"
   global:
   - PIP_DOWNLOAD_CACHE=".pip_download_cache"
 matrix:
   allow_failures:
   - env: REQUESTS="-e git+git://github.com/kennethreitz/requests.git#egg=requests"
+  - python: 3.7-dev
+  - python: nightly
 install:
 - pip install codecov
 - pip install ${REQUESTS}
 - make install-deps
-- mkdir -p artifacts
 script:
-- make lint
-- py.test . --cov-report term-missing  --cov . --cov-report="xml:artifacts/coverage.xml"
-  --junit-xml="artifacts/junit.xml"
+- make
+- if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pre-commit run -a; fi
+- py.test . --cov-report term-missing  --cov . --cov-report="xml:.artifacts/coverage.xml"
+  --junit-xml=".artifacts/junit.xml"
 deploy:
   provider: pypi
   user:
@@ -42,12 +43,14 @@ deploy:
 after_success:
 - codecov -e REQUESTS -e TRAVIS_PYTHON_VERSION
 - npm install -g @zeus-ci/cli
-- zeus upload -t "text/xml+xunit" artifacts/*junit.xml
-- zeus upload -t "text/xml+coverage" artifacts/*coverage.xml
+- zeus upload -t "text/x-pycodestyle" .artifacts/flake8.log
+- zeus upload -t "text/xml+xunit" .artifacts/*junit.xml
+- zeus upload -t "text/xml+coverage" .artifacts/*coverage.xml
 after_failure:
 - npm install -g @zeus-ci/cli
-- zeus upload -t "text/xml+xunit" artifacts/*junit.xml
-- zeus upload -t "text/xml+coverage" artifacts/*coverage.xml
+- zeus upload -t "text/x-pycodestyle" .artifacts/flake8.log
+- zeus upload -t "text/xml+xunit" .artifacts/*junit.xml
+- zeus upload -t "text/xml+coverage" .artifacts/*coverage.xml
 notifications:
   webhooks:
     urls:

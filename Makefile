@@ -3,8 +3,10 @@ develop: setup-git install-deps
 install-deps:
 	pip install -e "file://`pwd`#egg=responses[tests]"
 
-setup-git:
-	pip install pre-commit==0.16.0
+install-pre-commit:
+	pip install "pre-commit>=1.10.1,<1.11.0"
+
+setup-git: install-pre-commit
 	pre-commit install
 	git config branch.autosetuprebase always
 
@@ -13,7 +15,7 @@ test: develop lint
 	py.test .
 	@echo ""
 
-lint:
+lint: install-pre-commit
 	@echo "Linting Python files"
-	PYFLAKES_NODOCTEST=1 flake8 .
+	pre-commit run -a
 	@echo ""

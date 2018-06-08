@@ -1,0 +1,32 @@
+{
+    "files.exclude": {
+        "**/*.pyc": true,
+        "**/*.min.js": true,
+        "**/*.js.map": true,
+        "node_modules": true,
+        "htmlcov": true,
+        "build": true,
+        "static": true,
+        "*.log": true,
+        "*.egg-info": true,
+        ".vscode/tags": true,
+        ".mypy_cache": true
+    },
+    "files.trimTrailingWhitespace": false,
+    "files.trimFinalNewlines": false,
+    "files.insertFinalNewline": true,
+
+    "[python]": {
+        "editor.detectIndentation": false,
+        "editor.tabSize": 4,
+        "editor.formatOnSave": true
+    },
+
+    "python.linting.pylintEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.formatting.provider": "black",
+    "python.pythonPath": "${env.WORKON_HOME}/responses/bin/python",
+    "python.unitTest.pyTestEnabled": false,
+    "python.unitTest.unittestEnabled": false,
+    "python.unitTest.nosetestsEnabled": false
+}

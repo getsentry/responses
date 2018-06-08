@@ -6,7 +6,6 @@ python:
 - '3.4'
 - '3.5'
 - '3.6'
-- 3.6-dev
 - 3.7-dev
 - nightly
 cache:
@@ -22,6 +21,8 @@ env:
 matrix:
   allow_failures:
   - env: REQUESTS="-e git+git://github.com/kennethreitz/requests.git#egg=requests"
+  - python: 3.7-dev
+  - python: nightly
 install:
 - pip install codecov
 - pip install ${REQUESTS}

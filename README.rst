@@ -271,3 +271,29 @@ and hit a real server. This can be done with the 'passthru' methods:
 
 This will allow any requests matching that prefix, that is otherwise not registered
 as a mock response, to passthru using the standard behavior.
+
+
+
+Contributing
+------------
+
+Responses uses several linting and autoformatting utilities, so it's important that when
+submitting patches you use the appropriate toolchain:
+
+Clone the repository:
+
+.. code-block:: shell
+
+    git clone https://github.com/getsentry/responses.git
+
+Create an environment (e.g. with ``virtualenv``):
+
+.. code-block:: shell
+
+    virtualenv .env && source .env/bin/activate
+
+Configure development requirements:
+
+.. code-block:: shell
+
+    make develop

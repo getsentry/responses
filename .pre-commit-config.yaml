@@ -11,7 +11,6 @@ repos:
     -   id: check-case-conflict
     -   id: check-merge-conflict
     -   id: check-symlinks
-    -   id: debug-statements
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
     -   id: debug-statements

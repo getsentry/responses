@@ -24,7 +24,7 @@ matrix:
   - env: REQUESTS="-e git+git://github.com/kennethreitz/requests.git#egg=requests"
 install:
 # we need Python 3.6 for pre-commit
-- time pyenv install -s 3.6
+- time pyenv install -s 3.6.3
 - pip install codecov
 - pip install ${REQUESTS}
 - make install-deps

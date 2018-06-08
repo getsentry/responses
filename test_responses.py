@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from __future__ import (absolute_import, print_function, division, unicode_literals)
+from __future__ import absolute_import, print_function, division, unicode_literals
 
 import re
 import requests
@@ -28,7 +28,6 @@ def assert_response(resp, body=None, content_type="text/plain"):
 
 
 def test_response():
-
     @responses.activate
     def run():
         responses.add(responses.GET, "http://example.com", body=b"test")
@@ -49,7 +48,6 @@ def test_response():
 
 
 def test_response_with_instance():
-
     @responses.activate
     def run():
         responses.add(
@@ -83,7 +81,6 @@ def test_response_with_instance():
     ],
 )
 def test_replace(original, replacement):
-
     @responses.activate
     def run():
         responses.add(responses.GET, "http://example.com/one", body="test1")
@@ -118,7 +115,6 @@ def test_replace(original, replacement):
     ],
 )
 def test_replace_error(original, replacement):
-
     @responses.activate
     def run():
         responses.add(responses.GET, original)
@@ -130,7 +126,6 @@ def test_replace_error(original, replacement):
 
 
 def test_remove():
-
     @responses.activate
     def run():
         responses.add(responses.GET, "http://example.com/zero")
@@ -186,7 +181,6 @@ def test_response_equality_different_objects():
 
 
 def test_connection_error():
-
     @responses.activate
     def run():
         responses.add(responses.GET, "http://example.com")
@@ -204,7 +198,6 @@ def test_connection_error():
 
 
 def test_match_querystring():
-
     @responses.activate
     def run():
         url = "http://example.com?test=1&foo=bar"
@@ -221,7 +214,6 @@ def test_match_querystring():
 
 
 def test_match_empty_querystring():
-
     @responses.activate
     def run():
         responses.add(
@@ -239,7 +231,6 @@ def test_match_empty_querystring():
 
 
 def test_match_querystring_error():
-
     @responses.activate
     def run():
         responses.add(
@@ -254,7 +245,6 @@ def test_match_querystring_error():
 
 
 def test_match_querystring_regex():
-
     @responses.activate
     def run():
         """Note that `match_querystring` value shouldn't matter when passing a
@@ -285,7 +275,6 @@ def test_match_querystring_regex():
 
 
 def test_match_querystring_error_regex():
-
     @responses.activate
     def run():
         """Note that `match_querystring` value shouldn't matter when passing a
@@ -314,7 +303,6 @@ def test_match_querystring_error_regex():
 
 
 def test_accept_string_body():
-
     @responses.activate
     def run():
         url = "http://example.com/"
@@ -327,7 +315,6 @@ def test_accept_string_body():
 
 
 def test_accept_json_body():
-
     @responses.activate
     def run():
         content_type = "application/json"
@@ -347,7 +334,6 @@ def test_accept_json_body():
 
 
 def test_no_content_type():
-
     @responses.activate
     def run():
         url = "http://example.com/"
@@ -360,7 +346,6 @@ def test_no_content_type():
 
 
 def test_arbitrary_status_code():
-
     @responses.activate
     def run():
         url = "http://example.com/"
@@ -374,7 +359,6 @@ def test_arbitrary_status_code():
 
 
 def test_throw_connection_error_explicit():
-
     @responses.activate
     def run():
         url = "http://example.com"
@@ -439,7 +423,6 @@ def test_callback_no_content_type():
 
 
 def test_regular_expression_url():
-
     @responses.activate
     def run():
         url = re.compile(r"https?://(.*\.)?example.com")
@@ -462,7 +445,6 @@ def test_regular_expression_url():
 
 
 def test_custom_adapter():
-
     @responses.activate
     def run():
         url = "http://example.com"
@@ -471,7 +453,6 @@ def test_custom_adapter():
         calls = [0]
 
         class DummyAdapter(requests.adapters.HTTPAdapter):
-
             def send(self, *a, **k):
                 calls[0] += 1
                 return super(DummyAdapter, self).send(*a, **k)
@@ -494,7 +475,6 @@ def test_custom_adapter():
 
 
 def test_responses_as_context_manager():
-
     def run():
         with responses.mock:
             responses.add(responses.GET, "http://example.com", body=b"test")
@@ -507,7 +487,7 @@ def test_responses_as_context_manager():
             resp = requests.get("http://example.com?foo=bar")
             assert_response(resp, "test")
             assert len(responses.calls) == 2
-            assert (responses.calls[1].request.url == "http://example.com/?foo=bar")
+            assert responses.calls[1].request.url == "http://example.com/?foo=bar"
             assert responses.calls[1].response.content == b"test"
 
     run()
@@ -515,7 +495,6 @@ def test_responses_as_context_manager():
 
 
 def test_activate_doesnt_change_signature():
-
     def test_function(a, b=None):
         return (a, b)
 
@@ -526,9 +505,7 @@ def test_activate_doesnt_change_signature():
 
 
 def test_activate_doesnt_change_signature_for_method():
-
     class TestCase(object):
-
         def test_function(self, a, b=None):
             return (self, a, b)
 
@@ -568,7 +545,6 @@ def test_response_callback():
     """adds a callback to decorate the response, then checks it"""
 
     def run():
-
         def response_callback(resp):
             resp._is_mocked = True
             return resp
@@ -597,7 +573,6 @@ def test_response_filebody():
 
 
 def test_assert_all_requests_are_fired():
-
     def run():
         with pytest.raises(AssertionError) as excinfo:
             with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
@@ -681,7 +656,7 @@ def test_allow_redirects_samehost():
 
 
 def test_handles_unicode_querystring():
-    url = u"http://example.com/test?type=2&ie=utf8&query=汉字"
+    url = "http://example.com/test?type=2&ie=utf8&query=汉字"
 
     @responses.activate
     def run():
@@ -696,7 +671,7 @@ def test_handles_unicode_querystring():
 
 
 def test_handles_unicode_url():
-    url = u"http://www.संजाल.भारत/hi/वेबसाइट-डिजाइन"
+    url = "http://www.संजाल.भारत/hi/वेबसाइट-डिजाइन"
 
     @responses.activate
     def run():
@@ -711,7 +686,6 @@ def test_handles_unicode_url():
 
 
 def test_headers():
-
     @responses.activate
     def run():
         responses.add(
@@ -725,7 +699,6 @@ def test_headers():
 
 
 def test_legacy_adding_headers():
-
     @responses.activate
     def run():
         responses.add(
@@ -742,7 +715,6 @@ def test_legacy_adding_headers():
 
 
 def test_multiple_responses():
-
     @responses.activate
     def run():
         responses.add(responses.GET, "http://example.com", body="test")
@@ -761,7 +733,6 @@ def test_multiple_responses():
 
 
 def test_multiple_urls():
-
     @responses.activate
     def run():
         responses.add(responses.GET, "http://example.com/one", body="one")
@@ -797,7 +768,6 @@ def test_passthru(httpserver):
 
 
 def test_method_named_param():
-
     @responses.activate
     def run():
         responses.add(method=responses.GET, url="http://example.com", body="OK")
@@ -809,11 +779,10 @@ def test_method_named_param():
 
 
 def test_passthru_unicode():
-
     @responses.activate
     def run():
         with responses.RequestsMock() as m:
-            url = u"http://موقع.وزارة-الاتصالات.مصر/"
+            url = "http://موقع.وزارة-الاتصالات.مصر/"
             clean_url = "http://xn--4gbrim.xn----ymcbaaajlc6dj7bxne2c.xn--wgbh1c/"
             m.add_passthru(url)
             assert m.passthru_prefixes[0] == clean_url

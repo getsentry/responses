@@ -24,11 +24,16 @@ if "test" in sys.argv:
 install_requires = ["requests>=2.0", "cookies", "six"]
 
 tests_require = [
-    "pytest", "coverage >= 3.7.1, < 5.0.0", "pytest-cov", "pytest-localserver", "flake8"
+    "pytest",
+    "coverage >= 3.7.1, < 5.0.0",
+    "pytest-cov",
+    "pytest-localserver",
+    "flake8",
 ]
 
 extras_require = {
-    ':python_version in "2.6, 2.7, 3.2"': ["mock"], "tests": tests_require
+    ':python_version in "2.6, 2.7, 3.2"': ["mock"],
+    "tests": tests_require,
 }
 
 try:
@@ -47,7 +52,6 @@ except Exception:
 
 
 class PyTest(TestCommand):
-
     def finalize_options(self):
         TestCommand.finalize_options(self)
         self.test_args = ["test_responses.py"]

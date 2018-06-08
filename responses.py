@@ -1,4 +1,4 @@
-from __future__ import (absolute_import, print_function, division, unicode_literals)
+from __future__ import absolute_import, print_function, division, unicode_literals
 
 import _io
 import inspect
@@ -134,7 +134,6 @@ def get_wrapped(func, wrapper_template, evaldict):
 
 
 class CallList(Sequence, Sized):
-
     def __init__(self):
         self._calls = []
 
@@ -267,7 +266,6 @@ class BaseResponse(object):
 
 
 class Response(BaseResponse):
-
     def __init__(
         self,
         method,
@@ -320,7 +318,6 @@ class Response(BaseResponse):
 
 
 class CallbackResponse(BaseResponse):
-
     def __init__(
         self, method, url, callback, stream=False, content_type="text/plain", **kwargs
     ):
@@ -569,7 +566,6 @@ class RequestsMock(object):
         return response
 
     def start(self):
-
         def unbound_on_send(adapter, request, *a, **kwargs):
             return self._on_request(adapter, request, *a, **kwargs)
 

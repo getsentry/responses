@@ -26,11 +26,11 @@ install:
 - pip install codecov
 - pip install ${REQUESTS}
 - make install-deps
-- mkdir -p artifacts
 script:
 - make
-- py.test . --cov-report term-missing  --cov . --cov-report="xml:artifacts/coverage.xml"
-  --junit-xml="artifacts/junit.xml"
+- pre-commit run -a
+- py.test . --cov-report term-missing  --cov . --cov-report="xml:.artifacts/coverage.xml"
+  --junit-xml=".artifacts/junit.xml"
 deploy:
   provider: pypi
   user:
@@ -42,12 +42,14 @@ deploy:
 after_success:
 - codecov -e REQUESTS -e TRAVIS_PYTHON_VERSION
 - npm install -g @zeus-ci/cli
-- zeus upload -t "text/xml+xunit" artifacts/*junit.xml
-- zeus upload -t "text/xml+coverage" artifacts/*coverage.xml
+- zeus upload -t "text/x-pycodestyle" .artifacts/flake8.log
+- zeus upload -t "text/xml+xunit" .artifacts/*junit.xml
+- zeus upload -t "text/xml+coverage" .artifacts/*coverage.xml
 after_failure:
 - npm install -g @zeus-ci/cli
-- zeus upload -t "text/xml+xunit" artifacts/*junit.xml
-- zeus upload -t "text/xml+coverage" artifacts/*coverage.xml
+- zeus upload -t "text/x-pycodestyle" .artifacts/flake8.log
+- zeus upload -t "text/xml+xunit" .artifacts/*junit.xml
+- zeus upload -t "text/xml+coverage" .artifacts/*coverage.xml
 notifications:
   webhooks:
     urls:

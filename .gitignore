@@ -11,4 +11,4 @@
 /.cache
 /.pytest_cache
 /.tox
-/.pre-commit-output
+/.artifacts

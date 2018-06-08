@@ -16,5 +16,5 @@ repos:
     - id: debug-statements
     - id: flake8
       args: []
-      log_file: '.pre-commit-output/flake8.log'
+      log_file: '.artifacts/flake8.log'
     - id: requirements-txt-fixer

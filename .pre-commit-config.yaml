@@ -1,14 +1,19 @@
 repos:
 -   repo: https://github.com/ambv/black
-    rev: 51b3b2624d4b1e4608eb9addd7d292cc5174a047
+    rev: 18.6b2
     hooks:
     - id: black
       args: [--line-length=88, --safe]
       python_version: python3.6
 -   repo: git://github.com/pre-commit/pre-commit-hooks
-    rev: v0.9.1
+    rev: v1.3.0
     hooks:
+    -   id: check-case-conflict
+    -   id: check-merge-conflict
+    -   id: check-symlinks
+    -   id: debug-statements
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
     -   id: debug-statements
     -   id: flake8
+    -   id: requirements-txt-fixer

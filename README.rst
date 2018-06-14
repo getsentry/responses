@@ -162,6 +162,27 @@ a tuple of (``status``, ``headers``, ``body``).
             '728d329e-0e86-11e4-a748-0c84dc037c13'
         )
 
+If you want to pass extra keyword arguments to the callback function, for example when reusing
+a callback function to give a slightly different result, you can use ``functools.partial``:
+
+.. code-block:: python
+
+    from functools import partial
+
+    ...
+
+        def request_callback(request, id=None):
+            payload = json.loads(request.body)
+            resp_body = {'value': sum(payload['numbers'])}
+            headers = {'request-id': id}
+            return (200, headers, json.dumps(resp_body))
+
+        responses.add_callback(
+            responses.POST, 'http://calc.com/sum',
+            callback=partial(request_callback, id='728d329e-0e86-11e4-a748-0c84dc037c13',
+            content_type='application/json',
+        )
+
 
 Responses as a context manager
 ------------------------------

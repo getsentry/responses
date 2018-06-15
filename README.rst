@@ -179,7 +179,7 @@ a callback function to give a slightly different result, you can use ``functools
 
         responses.add_callback(
             responses.POST, 'http://calc.com/sum',
-            callback=partial(request_callback, id='728d329e-0e86-11e4-a748-0c84dc037c13',
+            callback=partial(request_callback, id='728d329e-0e86-11e4-a748-0c84dc037c13'),
             content_type='application/json',
         )
 

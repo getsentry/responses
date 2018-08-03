@@ -171,17 +171,20 @@ def _handle_body(body):
     return BufferIO(body)
 
 
+_unspecified = object()
+
+
 class BaseResponse(object):
     content_type = None
     headers = None
 
     stream = False
 
-    def __init__(self, method, url, match_querystring=False):
+    def __init__(self, method, url, match_querystring=_unspecified):
         self.method = method
-        self.match_querystring = match_querystring
         # ensure the url has a default path set if the url is a string
         self.url = _ensure_url_default_path(url)
+        self.match_querystring = self._should_match_querystring(match_querystring)
         self.call_count = 0
 
     def __eq__(self, other):
@@ -223,6 +226,16 @@ class BaseResponse(object):
                 return False
 
         return True
+
+    def _should_match_querystring(self, match_querystring_argument):
+        if match_querystring_argument is not _unspecified:
+            return match_querystring_argument
+
+        if isinstance(self.url, Pattern):
+            # the old default from <= 0.9.0
+            return False
+
+        return bool(urlparse(self.url).query)
 
     def _url_matches(self, url, other, match_querystring=False):
         if _is_string(url):

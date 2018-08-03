@@ -96,7 +96,9 @@ url (``str`` or compiled regular expression)
     The full resource URL.
 
 match_querystring (``bool``)
-    Disabled by default. Include the query string when matching requests.
+    Include the query string when matching requests.
+    Enabled by default if the response URL contains a query string,
+    disabled if it doesn't or the URL is a regular expression.
 
 body (``str`` or ``BufferedReader``)
     The response body.

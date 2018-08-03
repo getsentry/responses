@@ -302,6 +302,19 @@ def test_match_querystring_error_regex():
     assert_reset()
 
 
+def test_match_querystring_auto_activates():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com?test=1", body=b"test")
+        resp = requests.get("http://example.com?test=1")
+        assert_response(resp, "test")
+        with pytest.raises(ConnectionError):
+            requests.get("http://example.com/?test=2")
+
+    run()
+    assert_reset()
+
+
 def test_accept_string_body():
     @responses.activate
     def run():

@@ -3,15 +3,19 @@
 from __future__ import absolute_import, print_function, division, unicode_literals
 
 import re
-import requests
-import responses
+
 import pytest
-from responses import BaseResponse, Response
-
-from inspect import getargspec
+import requests
 from requests.exceptions import ConnectionError, HTTPError
+import responses
+from responses import BaseResponse, Response
+import six
 
-
+if six.PY2:
+    from inspect import getargspec
+else:
+    from inspect import getfullargspec as getargspec
+    
 def assert_reset():
     assert len(responses._default_mock._matches) == 0
     assert len(responses.calls) == 0

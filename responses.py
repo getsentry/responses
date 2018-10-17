@@ -6,10 +6,10 @@ import json as json_module
 import logging
 import re
 import six
+import sys
 
 from collections import namedtuple
 from functools import update_wrapper
-from cookies import Cookies
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 from requests.sessions import REDIRECT_STATI
@@ -109,6 +109,19 @@ def _is_redirect(response):
             response.status_code in REDIRECT_STATI
             and "location" in response.headers
         )
+
+
+def _cookies_from_headers(headers):
+    if sys.version_info[:2] < (3, 4):
+        from cookies import Cookies
+
+        resp_cookies = Cookies.from_request(headers["set-cookie"])
+        cookies_dict = {v.name: v.value for _, v in resp_cookies.items()}
+    else:
+        import biscuits
+
+        cookies_dict = biscuits.parse(headers["set-cookie"])
+    return cookiejar_from_dict(cookies_dict)
 
 
 def get_wrapped(func, wrapper_template, evaldict):
@@ -571,10 +584,7 @@ class RequestsMock(object):
             response.content  # NOQA
 
         try:
-            resp_cookies = Cookies.from_request(response.headers["set-cookie"])
-            response.cookies = cookiejar_from_dict(
-                dict((v.name, v.value) for _, v in resp_cookies.items())
-            )
+            response.cookies = _cookies_from_headers(response.headers)
         except (KeyError, TypeError):
             pass
 

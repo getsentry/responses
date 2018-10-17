@@ -107,12 +107,14 @@ def _is_redirect(response):
 
 
 def _cookies_from_headers(headers):
-    if sys.version_info[:2] < (3,4):
+    if sys.version_info[:2] < (3, 4):
         from cookies import Cookies
+
         resp_cookies = Cookies.from_request(headers["set-cookie"])
         cookies_dict = {v.name: v.value for _, v in resp_cookies.items()}
     else:
         import biscuits
+
         cookies_dict = biscuits.parse(headers["set-cookie"])
     return cookiejar_from_dict(cookies_dict)
 

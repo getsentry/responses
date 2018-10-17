@@ -15,7 +15,8 @@ if six.PY2:
     from inspect import getargspec
 else:
     from inspect import getfullargspec as getargspec
-    
+
+
 def assert_reset():
     assert len(responses._default_mock._matches) == 0
     assert len(responses.calls) == 0

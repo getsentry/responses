@@ -7,13 +7,18 @@ import logging
 import re
 import six
 
-from collections import namedtuple, Sequence, Sized
+from collections import namedtuple
 from functools import update_wrapper
 from cookies import Cookies
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 from requests.sessions import REDIRECT_STATI
 from requests.utils import cookiejar_from_dict
+
+try:
+    from collections.abc import Sequence, Sized
+except ImportError:
+    from collections import Sequence, Sized
 
 try:
     from requests.packages.urllib3.response import HTTPResponse

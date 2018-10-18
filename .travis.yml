@@ -33,6 +33,7 @@ script:
   --junit-xml=".artifacts/junit.xml"
 deploy:
   provider: pypi
+  distributions: "sdist bdist_wheel"
   user:
     secure: Mt6mQiqtcxi1xf3TpTtPQ5fJ97LQiO754qV1zsK2izTs5kDg5NhJUUGReJCKvl9fJKbGqGwT+RR1q6/5kW1s8UGVduqLfBUBUSW++qciwcvIg2B3DlBFuW7vVfzi0DCF6xssjSjwpXH4iAg5QO71qOkoE9t71G2boKxUuK1wL+E=
   password:

@@ -144,15 +144,15 @@ def get_wrapped(func, responses):
             signature = signature.replace(parameters=new_params)
 
         params_without_defaults = [
-            param.replace(default=inspect.Parameter.empty) for
-            param in signature.parameters.values()
+            param.replace(default=inspect.Parameter.empty)
+            for param in signature.parameters.values()
         ]
         signature = signature.replace(parameters=params_without_defaults)
         func_args = str(signature)
 
     evaldict = {"func": func, "responses": responses}
     six.exec_(
-        _wrapper_template % {'wrapper_args': wrapper_args, 'func_args': func_args},
+        _wrapper_template % {"wrapper_args": wrapper_args, "func_args": func_args},
         evaldict,
     )
     wrapper = evaldict["wrapper"]

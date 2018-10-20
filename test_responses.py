@@ -529,7 +529,9 @@ def test_activate_doesnt_change_signature_for_method():
 
         decorated_test_function = responses.activate(test_function)
 
-    assert getargspec(TestCase.test_function) == getargspec(TestCase.decorated_test_function)
+    assert getargspec(TestCase.test_function) == getargspec(
+        TestCase.decorated_test_function
+    )
     test_case = TestCase()
     assert test_case.decorated_test_function(1, 2) == test_case.test_function(1, 2)
     assert test_case.decorated_test_function(3) == test_case.test_function(3)

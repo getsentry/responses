@@ -10,7 +10,6 @@ import requests
 from requests.exceptions import ConnectionError, HTTPError
 import responses
 from responses import BaseResponse, Response
-import six
 
 
 def assert_reset():

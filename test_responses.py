@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import, print_function, division, unicode_literals
 
+import inspect
 import re
 
 import pytest
@@ -10,11 +11,6 @@ from requests.exceptions import ConnectionError, HTTPError
 import responses
 from responses import BaseResponse, Response
 import six
-
-if six.PY2:
-    from inspect import getargspec
-else:
-    from inspect import getfullargspec as getargspec
 
 
 def assert_reset():
@@ -517,7 +513,14 @@ def test_activate_doesnt_change_signature():
         return (a, b)
 
     decorated_test_function = responses.activate(test_function)
-    assert getargspec(test_function) == getargspec(decorated_test_function)
+    if hasattr(inspect, "signature"):
+        assert inspect.signature(test_function) == inspect.signature(
+            decorated_test_function
+        )
+    else:
+        assert inspect.getargspec(test_function) == inspect.getargspec(
+            decorated_test_function
+        )
     assert decorated_test_function(1, 2) == test_function(1, 2)
     assert decorated_test_function(3) == test_function(3)
 
@@ -529,9 +532,6 @@ def test_activate_doesnt_change_signature_for_method():
 
         decorated_test_function = responses.activate(test_function)
 
-    assert getargspec(TestCase.test_function) == getargspec(
-        TestCase.decorated_test_function
-    )
     test_case = TestCase()
     assert test_case.decorated_test_function(1, 2) == test_case.test_function(1, 2)
     assert test_case.decorated_test_function(3) == test_case.test_function(3)

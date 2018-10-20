@@ -527,12 +527,12 @@ def test_activate_doesnt_change_signature_for_method():
         def test_function(self, a, b=None):
             return (self, a, b)
 
+        decorated_test_function = responses.activate(test_function)
+
+    assert getargspec(TestCase.test_function) == getargspec(TestCase.decorated_test_function)
     test_case = TestCase()
-    argspec = getargspec(test_case.test_function)
-    decorated_test_function = responses.activate(test_case.test_function)
-    assert argspec == getargspec(decorated_test_function)
-    assert decorated_test_function(1, 2) == test_case.test_function(1, 2)
-    assert decorated_test_function(3) == test_case.test_function(3)
+    assert test_case.decorated_test_function(1, 2) == test_case.test_function(1, 2)
+    assert test_case.decorated_test_function(3) == test_case.test_function(3)
 
 
 def test_response_cookies():

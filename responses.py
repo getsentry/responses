@@ -56,12 +56,6 @@ Call = namedtuple("Call", ["request", "response"])
 
 _real_send = HTTPAdapter.send
 
-_wrapper_template = """\
-def wrapper%(signature)s:
-    with responses:
-        return func%(funcargs)s
-"""
-
 logger = logging.getLogger("responses")
 
 
@@ -124,25 +118,43 @@ def _cookies_from_headers(headers):
     return cookiejar_from_dict(cookies_dict)
 
 
-def get_wrapped(func, wrapper_template, evaldict):
+_wrapper_template = """\
+def wrapper%(wrapper_args)s:
+    with responses:
+        return func%(func_args)s
+"""
+
+
+def get_wrapped(func, responses):
     # Preserve the argspec for the wrapped function so that testing
     # tools such as pytest can continue to use their fixture injection.
+    is_bound_method = hasattr(func, "__self__")
+
     if six.PY2:
         args, a, kw, defaults = inspect.getargspec(func)
+        wrapper_args = inspect.formatargspec(args, a, kw, defaults)
+        if is_bound_method:
+            args = args[1:]  # Omit 'self'
+        func_args = inspect.formatargspec(args, a, kw, None)
     else:
-        args, a, kw, defaults, kwonlyargs, kwonlydefaults, annotations = inspect.getfullargspec(
-            func
-        )
+        signature = inspect.signature(func)
+        wrapper_args = str(signature)
+        if is_bound_method:
+            new_params = list(signature.parameters.values())[1:]  # omit 'self'
+            signature = signature.replace(parameters=new_params)
 
-    signature = inspect.formatargspec(args, a, kw, defaults)
-    is_bound_method = hasattr(func, "__self__")
-    if is_bound_method:
-        args = args[1:]  # Omit 'self'
-    callargs = inspect.formatargspec(args, a, kw, None)
+        params_without_defaults = [
+            param.replace(default=inspect.Parameter.empty) for
+            param in signature.parameters.values()
+        ]
+        signature = signature.replace(parameters=params_without_defaults)
+        func_args = str(signature)
 
-    ctx = {"signature": signature, "funcargs": callargs}
-    six.exec_(wrapper_template % ctx, evaldict)
-
+    evaldict = {"func": func, "responses": responses}
+    six.exec_(
+        _wrapper_template % {'wrapper_args': wrapper_args, 'func_args': func_args},
+        evaldict,
+    )
     wrapper = evaldict["wrapper"]
 
     update_wrapper(wrapper, func)
@@ -536,8 +548,7 @@ class RequestsMock(object):
         return success
 
     def activate(self, func):
-        evaldict = {"responses": self, "func": func}
-        return get_wrapped(func, _wrapper_template, evaldict)
+        return get_wrapped(func, self)
 
     def _find_match(self, request):
         found = None

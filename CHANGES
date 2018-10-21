@@ -1,3 +1,15 @@
+0.10.1
+------
+
+- Packaging fix to distribute wheel (#219)
+
+0.10.0
+------
+
+- Fix passing through extra settings (#207)
+- Fix collections.abc warning on Python 3.7 (#215)
+- Use 'biscuits' library instead of 'cookies' on Python 3.4+ (#218)
+
 0.9.0
 -----
 

@@ -24,7 +24,6 @@ if "test" in sys.argv:
 install_requires = [
     "requests>=2.0",
     "cookies;python_version<'3.4'",
-    "biscuits;python_version>='3.4'",
     "six",
 ]
 

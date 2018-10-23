@@ -212,7 +212,7 @@ Responses as a pytest fixture
 
 .. code-block:: python
 
-    @pytest.yield_fixture
+    @pytest.fixture
     def mocked_responses():
         with responses.RequestsMock() as rsps:
             yield rsps

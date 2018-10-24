@@ -6,7 +6,6 @@ import json as json_module
 import logging
 import re
 import six
-import sys
 
 from collections import namedtuple
 from functools import update_wrapper
@@ -112,15 +111,18 @@ def _is_redirect(response):
 
 
 def _cookies_from_headers(headers):
-    if sys.version_info[:2] < (3, 4):
+    try:
+        import http.cookies as cookies
+
+        resp_cookie = cookies.SimpleCookie()
+        resp_cookie.load(headers["set-cookie"])
+
+        cookies_dict = {name: v.value for name, v in resp_cookie.items()}
+    except ImportError:
         from cookies import Cookies
 
         resp_cookies = Cookies.from_request(headers["set-cookie"])
         cookies_dict = {v.name: v.value for _, v in resp_cookies.items()}
-    else:
-        import biscuits
-
-        cookies_dict = biscuits.parse(headers["set-cookie"])
     return cookiejar_from_dict(cookies_dict)
 
 

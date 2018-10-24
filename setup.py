@@ -21,12 +21,7 @@ setup_requires = []
 if "test" in sys.argv:
     setup_requires.append("pytest")
 
-install_requires = [
-    "requests>=2.0",
-    "cookies;python_version<'3.4'",
-    "biscuits;python_version>='3.4'",
-    "six",
-]
+install_requires = ["requests>=2.0", "cookies;python_version<'3.4'", "six"]
 
 tests_require = [
     "pytest",

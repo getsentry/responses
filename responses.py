@@ -113,8 +113,9 @@ def _is_redirect(response):
 def _cookies_from_headers(headers):
     try:
         import http.cookies as cookies
+
         resp_cookie = cookies.SimpleCookie()
-        resp_cookie.load(headers['set-cookie'])
+        resp_cookie.load(headers["set-cookie"])
 
         cookies_dict = {name: v.value for name, v in resp_cookie.items()}
     except ImportError:

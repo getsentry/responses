@@ -1,3 +1,11 @@
+0.10.2
+------
+
+- Fixed build setup to use undeprecated `pytest` bin stub.
+- Updated `tox` configuration.
+- Added example of using responses with `pytest.fixture`
+- Removed dependency on `biscuits` in py3. Instead `http.cookies` is being used.
+
 0.10.1
 ------
 

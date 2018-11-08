@@ -129,18 +129,27 @@ def _cookies_from_headers(headers):
 def get_wrapped(func, wrapper_template, evaldict):
     # Preserve the argspec for the wrapped function so that testing
     # tools such as pytest can continue to use their fixture injection.
-    if six.PY2:
-        args, a, kw, defaults = inspect.getargspec(func)
-    else:
-        args, a, kw, defaults, kwonlyargs, kwonlydefaults, annotations = inspect.getfullargspec(
-            func
-        )
-
-    signature = inspect.formatargspec(args, a, kw, defaults)
     is_bound_method = hasattr(func, "__self__")
-    if is_bound_method:
-        args = args[1:]  # Omit 'self'
-    callargs = inspect.formatargspec(args, a, kw, None)
+    if six.PY34:
+        full_signature = inspect.signature(func)
+        parameters = full_signature.parameters.values()
+        signature = str(full_signature)
+        if is_bound_method:
+            signature = signature[:1] + 'self, ' + signature[1:]
+        callargs = str(full_signature.replace(
+            parameters=(inspect.Parameter(p.name, p.kind) for p in parameters))
+        )
+    else:
+        if six.PY2:
+            args, a, kw, defaults = inspect.getargspec(func)
+        else:
+            args, a, kw, defaults, kwonlyargs, kwonlydefaults, annotations = inspect.getfullargspec(
+                func
+            )
+        signature = inspect.formatargspec(args, a, kw, defaults)
+        if is_bound_method:
+            args = args[1:]  # Omit 'self'
+        callargs = inspect.formatargspec(args, a, kw, None)
 
     ctx = {"signature": signature, "funcargs": callargs}
     six.exec_(wrapper_template % ctx, evaldict)

@@ -1,3 +1,8 @@
+0.10.3
+------
+
+- Fixed deprecation warnings in python 3.7 for inspect module usage.
+
 0.10.2
 ------
 

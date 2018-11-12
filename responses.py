@@ -146,10 +146,15 @@ def get_wrapped(func, responses):
             signature = signature.replace(parameters=new_params)
 
         params_without_defaults = [
-            param.replace(default=inspect.Parameter.empty)
+            param.replace(
+                annotation=inspect.Parameter.empty, default=inspect.Parameter.empty
+            )
             for param in signature.parameters.values()
         ]
-        signature = signature.replace(parameters=params_without_defaults)
+        signature = signature.replace(
+            parameters=params_without_defaults,
+            return_annotation=inspect.Signature.empty,
+        )
         func_args = str(signature)
 
     evaldict = {"func": func, "responses": responses}

@@ -4,6 +4,7 @@ from __future__ import absolute_import, print_function, division, unicode_litera
 
 import inspect
 import re
+import six
 
 import pytest
 import requests
@@ -510,6 +511,28 @@ def test_responses_as_context_manager():
 def test_activate_doesnt_change_signature():
     def test_function(a, b=None):
         return (a, b)
+
+    decorated_test_function = responses.activate(test_function)
+    if hasattr(inspect, "signature"):
+        assert inspect.signature(test_function) == inspect.signature(
+            decorated_test_function
+        )
+    else:
+        assert inspect.getargspec(test_function) == inspect.getargspec(
+            decorated_test_function
+        )
+    assert decorated_test_function(1, 2) == test_function(1, 2)
+    assert decorated_test_function(3) == test_function(3)
+
+
+@pytest.mark.skipif(six.PY2, reason="Cannot run in python2")
+def test_activate_doesnt_change_signature_with_return_type():
+    def test_function(a, b=None):
+        return (a, b)
+
+    # Add type annotations as they are syntax errors in py2.
+    test_function.__annotations__["return"] = None
+    test_function.__annotations__["a"] = str
 
     decorated_test_function = responses.activate(test_function)
     if hasattr(inspect, "signature"):

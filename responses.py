@@ -129,17 +129,28 @@ def wrapper%(wrapper_args)s:
 
 def get_wrapped(func, responses):
     if six.PY2:
-        # Preserve the argspec for the wrapped function so that testing
-        # tools such as pytest can continue to use their fixture injection.
-        is_bound_method = hasattr(func, "__self__")
-
         args, a, kw, defaults = inspect.getargspec(func)
         wrapper_args = inspect.formatargspec(args, a, kw, defaults)
-        if is_bound_method:
+
+        # Preserve the argspec for the wrapped function so that testing
+        # tools such as pytest can continue to use their fixture injection.
+        if hasattr(func, "__self__"):
             args = args[1:]  # Omit 'self'
         func_args = inspect.formatargspec(args, a, kw, None)
     else:
         signature = inspect.signature(func)
+        signature = signature.replace(return_annotation=inspect.Signature.empty)
+        # If the function is wrapped, switch to *args, **kwargs for the parameters
+        # as we can't rely on the signature to give us the arguments the function will
+        # be called with. For example unittest.mock.patch uses required args that are
+        # not actually passed to the function when invoked.
+        if hasattr(func, "__wrapped__"):
+            wrapper_params = [
+                inspect.Parameter("args", inspect.Parameter.VAR_POSITIONAL),
+                inspect.Parameter("kwargs", inspect.Parameter.VAR_KEYWORD),
+            ]
+            signature = signature.replace(parameters=wrapper_params)
+
         wrapper_args = str(signature)
         params_without_defaults = [
             param.replace(
@@ -147,10 +158,7 @@ def get_wrapped(func, responses):
             )
             for param in signature.parameters.values()
         ]
-        signature = signature.replace(
-            parameters=params_without_defaults,
-            return_annotation=inspect.Signature.empty,
-        )
+        signature = signature.replace(parameters=params_without_defaults)
         func_args = str(signature)
 
     evaldict = {"func": func, "responses": responses}

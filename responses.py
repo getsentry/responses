@@ -149,7 +149,12 @@ def get_wrapped(func, responses):
                 inspect.Parameter("args", inspect.Parameter.VAR_POSITIONAL),
                 inspect.Parameter("kwargs", inspect.Parameter.VAR_KEYWORD),
             ]
-            signature = signature.replace(parameters=wrapper_params)
+        else:
+            wrapper_params = [
+                param.replace(annotation=inspect.Parameter.empty)
+                for param in signature.parameters.values()
+            ]
+        signature = signature.replace(parameters=wrapper_params)
 
         wrapper_args = str(signature)
         params_without_defaults = [

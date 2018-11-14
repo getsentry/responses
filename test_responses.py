@@ -560,7 +560,7 @@ def test_activate_doesnt_change_signature_with_return_type():
     # Add type annotations as they are syntax errors in py2.
     # Use a class to test for import errors in evaled code.
     test_function.__annotations__["return"] = Mock
-    test_function.__annotations__["a"] = str
+    test_function.__annotations__["a"] = Mock
 
     decorated_test_function = responses.activate(test_function)
     if hasattr(inspect, "signature"):

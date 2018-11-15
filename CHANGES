@@ -1,3 +1,9 @@
+0.10.4
+------
+
+- Fixed generated wrapper when using `@responses.activate` in Python 3.6+
+  when decorated functions use parameter and/or return annotations.
+
 0.10.3
 ------
 

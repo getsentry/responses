@@ -6,6 +6,7 @@ import json as json_module
 import logging
 import re
 import six
+import warnings
 
 from collections import namedtuple
 from functools import update_wrapper
@@ -387,9 +388,19 @@ class CallbackResponse(BaseResponse):
 
         result = self.callback(request)
         if isinstance(result, Exception):
+            warnings.warn(
+                "Callbacks should always return a (status, headers, body) "
+                "tuple. To mock an exception, provide that exception as "
+                "the body in the tuple. Support for exception responses "
+                "from callbacks will be removed in version 1.0.0.",
+                DeprecationWarning,
+            )
             raise result
 
         status, r_headers, body = result
+        if isinstance(body, Exception):
+            raise body
+
         body = _handle_body(body)
         headers.update(r_headers)
 
@@ -647,3 +658,7 @@ __all__ = ["CallbackResponse", "Response", "RequestsMock"]
 for __attr in (a for a in dir(_default_mock) if not a.startswith("_")):
     __all__.append(__attr)
     globals()[__attr] = getattr(_default_mock, __attr)
+
+
+# Turn on our deprecation warnings for API users.
+warnings.filterwarnings(action="default", category=DeprecationWarning, module=__name__)

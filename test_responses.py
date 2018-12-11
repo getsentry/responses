@@ -5,7 +5,6 @@ from __future__ import absolute_import, print_function, division, unicode_litera
 import inspect
 import re
 import six
-import warnings
 
 import pytest
 import requests
@@ -430,12 +429,8 @@ def test_callback_exception_result():
         responses.add_callback(responses.GET, url, request_callback)
 
         with pytest.raises(Exception) as e:
-            with warnings.catch_warnings(record=True) as w:
-                warnings.simplefilter("always")
-                requests.get(url)
+            requests.get(url)
 
-        assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
         assert e.value is result
 
     run()

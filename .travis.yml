@@ -14,12 +14,12 @@ env:
   matrix:
   - REQUESTS="requests>=2.0,<3.0"
   - REQUESTS="-U requests"
-  - REQUESTS="-e git+git://github.com/kennethreitz/requests.git#egg=requests"
+  - REQUESTS="-e git+git://github.com/requests/requests.git#egg=requests"
   global:
   - PIP_DOWNLOAD_CACHE=".pip_download_cache"
 matrix:
   allow_failures:
-  - env: REQUESTS="-e git+git://github.com/kennethreitz/requests.git#egg=requests"
+  - env: REQUESTS="-e git+git://github.com/requests/requests.git#egg=requests"
   - python: 3.7-dev
   - python: nightly
 install:

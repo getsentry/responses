@@ -53,6 +53,19 @@ def test_response():
     assert_reset()
 
 
+def test_response_encoded():
+    @responses.activate
+    def run():
+        # Path contains urlencoded =/()[]
+        url = "http://example.org/foo.bar%3D%2F%28%29%5B%5D"
+        responses.add(responses.GET, url, body="it works", status=200)
+        resp = requests.get(url)
+        assert_response(resp, "it works")
+
+    run()
+    assert_reset()
+
+
 def test_response_with_instance():
     @responses.activate
     def run():

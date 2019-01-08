@@ -84,7 +84,7 @@ passed directly:
         responses.Response(
             method='GET',
             url='http://example.com',
-        ),
+        )
     )
 
 The following attributes can be passed to a Response mock:

@@ -164,6 +164,53 @@ a tuple of (``status``, ``headers``, ``body``).
             '728d329e-0e86-11e4-a748-0c84dc037c13'
         )
 
+You can also pass a compiled regex to `add_callback` to match multiple urls:
+
+..  code-block:: python
+
+    import re, json
+
+    from functools import reduce
+
+    import responses
+    import requests
+
+    operators = {
+      'sum': lambda x, y: x+y,
+      'prod': lambda x, y: x*y,
+      'pow': lambda x, y: x**y
+    }
+
+    @responses.activate
+    def test_regex_url():
+
+        def request_callback(request):
+            payload = json.loads(request.body)
+            operator_name = request.path_url[1:]
+
+            operator = operators[operator_name]
+
+            resp_body = {'value': reduce(operator, payload['numbers'])}
+            headers = {'request-id': '728d329e-0e86-11e4-a748-0c84dc037c13'}
+            return (200, headers, json.dumps(resp_body))
+
+        responses.add_callback(
+            responses.POST,
+            re.compile('http://calc.com/[sum|prod|pow|unsupported]'),
+            callback=request_callback,
+            content_type='application/json',
+        )
+
+        resp = requests.post(
+            'http://calc.com/prod',
+            json.dumps({'numbers': [2, 3, 4]}),
+            headers={'content-type': 'application/json'},
+        )
+        assert resp.json() == {'value': 24}
+
+    test_regex_url()
+
+
 If you want to pass extra keyword arguments to the callback function, for example when reusing
 a callback function to give a slightly different result, you can use ``functools.partial``:
 

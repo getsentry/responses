@@ -196,7 +196,7 @@ You can also pass a compiled regex to `add_callback` to match multiple urls:
 
         responses.add_callback(
             responses.POST,
-            re.compile('http://calc.com/[sum|prod|pow|unsupported]'),
+            re.compile('http://calc.com/(sum|prod|pow|unsupported)'),
             callback=request_callback,
             content_type='application/json',
         )

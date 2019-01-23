@@ -553,6 +553,10 @@ class RequestsMock(object):
     def calls(self):
         return self._calls
 
+    @property
+    def matches(self):
+        return self._matches
+
     def __enter__(self):
         self.start()
         return self

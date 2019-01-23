@@ -360,6 +360,35 @@ This will allow any requests matching that prefix, that is otherwise not registe
 as a mock response, to passthru using the standard behavior.
 
 
+Modifying registered responses
+------------------------------
+
+The ``replace`` function allows a previously registered ``response`` to be
+changed. The method signature is identical to ``add``. ``response``s are
+identified using ``method`` and ``url``. Only the first matched ``response`` is
+replaced.
+
+..  code-block:: python
+
+    import responses
+    import requests
+
+    @responses.activate
+    def test_replace():
+
+        responses.add(responses.GET, 'http://example.org', json={'data': 1})
+        responses.replace(responses.GET, 'http://example.org', json={'data': 2})
+
+        resp = requests.get('http://example.org')
+
+        assert resp.json() == {'data': 2}
+
+
+``remove`` takes a ``method`` and ``url`` argument and will remove *all*
+matched ``response``s from the registered list.
+
+Finally, ``clear`` will reset all registered ``response``s
+
 
 Contributing
 ------------

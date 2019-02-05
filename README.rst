@@ -360,8 +360,12 @@ This will allow any requests matching that prefix, that is otherwise not registe
 as a mock response, to passthru using the standard behavior.
 
 
-Modifying registered responses
+Viewing/Modifying registered responses
 ------------------------------
+
+Registered responses are available as a private attribute of the RequestMock
+instance. It is sometimes useful for debugging purposes to view the stack of
+registered responses which can be accessed via ``responses.mock._matches``.
 
 The ``replace`` function allows a previously registered ``response`` to be
 changed. The method signature is identical to ``add``. ``response``s are
@@ -388,6 +392,7 @@ replaced.
 matched ``response``s from the registered list.
 
 Finally, ``clear`` will reset all registered ``response``s
+
 
 
 Contributing

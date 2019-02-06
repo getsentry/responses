@@ -361,7 +361,7 @@ as a mock response, to passthru using the standard behavior.
 
 
 Viewing/Modifying registered responses
-------------------------------
+--------------------------------------
 
 Registered responses are available as a private attribute of the RequestMock
 instance. It is sometimes useful for debugging purposes to view the stack of

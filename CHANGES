@@ -1,3 +1,12 @@
+0.10.6
+------
+
+- Improved documentation.
+- Improved installation requirements for py3
+- ConnectionError's raised by responses now indicate which request
+  path/method failed to match a mock.
+- `test_responses.py` is no longer part of the installation targets.
+
 0.10.5
 ------
 

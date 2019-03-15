@@ -1,3 +1,9 @@
+0.10.5
+------
+
+- Improved support for raising exceptions from callback mocks. If a mock
+  callback returns an exception object that exception will be raised.
+
 0.10.4
 ------
 

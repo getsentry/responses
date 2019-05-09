@@ -1,6 +1,9 @@
 Responses
 =========
 
+.. image:: https://img.shields.io/pypi/v/responses.svg
+    :target: https://pypi.python.org/pypi/responses/   
+    
 ..  image:: https://travis-ci.org/getsentry/responses.svg?branch=master
     :target: https://travis-ci.org/getsentry/responses
 

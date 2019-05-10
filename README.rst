@@ -391,12 +391,10 @@ replaced.
         assert resp.json() == {'data': 2}
 
 
-``remove`` takes a ``method`` and ``url`` argument and will remove *all*
-matched ``response``s from the registered list.
+``remove`` takes a ``method`` and ``url`` argument and will remove **all**
+matched responses from the registered list.
 
-Finally, ``clear`` will reset all registered ``response``s
-
-
+Finally, ``clear`` will reset all registered responses.
 
 Contributing
 ------------

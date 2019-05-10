@@ -543,9 +543,20 @@ class RequestsMock(object):
         content_type="text/plain",
         **kwargs
     ):
-        # ensure the url has a default path set if the url is a string
-        # url = _ensure_url_default_path(url, match_querystring)
+        """
+        Register a callback to provide a dynamic response. The callback should
+        return a tuple of ``(status, headers, body)``.
 
+        >>> responses.add_callback(responses.GET, 'http://example.com', request_callback)
+
+        You can also pass a compiled regex to match multiple URLs.
+
+        >>> responses.add_callback(
+        >>>     responses.POST,
+        >>>     re.compile('http://calc.com/(sum|prod|pow|unsupported)'),
+        >>>     callback=request_callback,
+        >>> )
+        """
         self._matches.append(
             CallbackResponse(
                 url=url,

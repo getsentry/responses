@@ -534,7 +534,14 @@ class RequestsMock(object):
         self._matches[index] = response
 
     def add_callback(
-        self, method, url, callback, match_querystring=False, content_type="text/plain"
+        self,
+        method,
+        url,
+        callback,
+        match_querystring=False,
+        stream=False,
+        content_type="text/plain",
+        **kwargs
     ):
         # ensure the url has a default path set if the url is a string
         # url = _ensure_url_default_path(url, match_querystring)
@@ -544,8 +551,10 @@ class RequestsMock(object):
                 url=url,
                 method=method,
                 callback=callback,
-                content_type=content_type,
                 match_querystring=match_querystring,
+                stream=stream,
+                content_type=content_type,
+                **kwargs
             )
         )
 

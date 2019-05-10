@@ -430,6 +430,37 @@ def test_callback():
     assert_reset()
 
 
+def test_callback_args():
+    @patch("responses.CallbackResponse")
+    @responses.activate
+    def run(mock_response):
+        responses.add_callback(
+            url="url",
+            method="method",
+            callback="callback",
+            match_querystring="match_querystring",
+            stream="stream",
+            content_type="content_type",
+            butter="nope",
+            jelly="yes please",
+        )
+
+        call = mock_response.mock_calls[0]
+        kwargs = call[2]
+        assert kwargs["url"] == "url"
+        assert kwargs["method"] == "method"
+        assert kwargs["callback"] == "callback"
+        assert kwargs["match_querystring"] == "match_querystring"
+        assert kwargs["stream"] == "stream"
+        assert kwargs["content_type"] == "content_type"
+
+        assert kwargs["butter"] == "nope"
+        assert kwargs["jelly"] == "yes please"
+
+    run()
+    assert_reset()
+
+
 def test_callback_exception_result():
     result = Exception()
     url = "http://example.com/"

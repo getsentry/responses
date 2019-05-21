@@ -665,10 +665,10 @@ def test_response_cookies():
 
 
 def test_session_cookies():
-    body = b'test callback'
+    body = b"test callback"
     status = 200
-    headers = {'set-cookie': 'session_id=12345; a=b; c=d'}
-    url = 'http://example.com/'
+    headers = {"set-cookie": "session_id=12345; a=b; c=d"}
+    url = "http://example.com/"
 
     def request_callback(request):
         return (status, headers, body)
@@ -680,15 +680,13 @@ def test_session_cookies():
         resp = session.get(url)
         assert resp.text == "test callback"
         assert resp.status_code == status
-        assert 'session_id' in resp.cookies
-        print(resp.cookies)
-        assert resp.cookies['session_id'] == '12345'
-        assert resp.cookies['a'] == 'b'
-        assert resp.cookies['c'] == 'd'
-        print(session.cookies)
-        assert session.cookies['session_id'] == '12345'
-        assert session.cookies['a'] == 'b'
-        assert session.cookies['c'] == 'd'
+        assert "session_id" in resp.cookies
+        assert resp.cookies["session_id"] == "12345"
+        assert resp.cookies["a"] == "b"
+        assert resp.cookies["c"] == "d"
+        assert session.cookies["session_id"] == "12345"
+        assert session.cookies["a"] == "b"
+        assert session.cookies["c"] == "d"
 
     run()
     assert_reset()

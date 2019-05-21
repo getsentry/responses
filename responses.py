@@ -375,7 +375,7 @@ class Response(BaseResponse):
             body=body,
             headers=headers,
             preload_content=False,
-            original_response=_OriginalResponse(headers)
+            original_response=_OriginalResponse(headers),
         )
 
 
@@ -408,7 +408,7 @@ class CallbackResponse(BaseResponse):
             body=body,
             headers=headers,
             preload_content=False,
-            original_response=_OriginalResponse(headers)
+            original_response=_OriginalResponse(headers),
         )
 
 
@@ -416,25 +416,25 @@ class _OriginalResponse(object):
     def __init__(self, headers):
         headers = headers.copy()
 
-        if 'set-cookie' in headers:
+        if "set-cookie" in headers:
             cookiejar = _cookies_from_headers(headers)
-            headers.pop('set-cookie', None)
+            headers.pop("set-cookie", None)
         else:
             cookiejar = None
 
         if six.PY2:
-            items = [k + ': ' + v for k, v in headers.iteritems()]
+            items = [k + ": " + v for k, v in headers.iteritems()]
             if cookiejar:
                 for k, v in cookiejar.iteritems():
-                    items.append('Set-Cookie: ' + k + '=' + v)
-            msg = HTTPMessage(BufferIO('\n'.join(items)))
+                    items.append("Set-Cookie: " + k + "=" + v)
+            msg = HTTPMessage(BufferIO("\n".join(items)))
         else:
             msg = HTTPMessage()
             for k, v in headers.items():
                 msg[k] = v
             if cookiejar:
                 for k, v in cookiejar.iteritems():
-                    msg.add_header('set-cookie', k + '=' + v)
+                    msg.add_header("set-cookie", k + "=" + v)
         self.msg = msg
 
     def close(self):

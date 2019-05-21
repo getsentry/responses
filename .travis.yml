@@ -1,27 +1,62 @@
+dist: xenial
 language: python
 sudo: false
 python:
-  - "2.6"
-  - "2.7"
-  - "3.3"
-  - "3.4"
-  - "3.5"
+- '2.7'
+- '3.4'
+- '3.5'
+- '3.6'
+- '3.7'
+- nightly
 cache:
   directories:
-    - .pip_download_cache
+  - ".pip_download_cache"
 env:
   matrix:
-    - REQUESTS=requests==2.0
-    - REQUESTS=-U requests
-    - REQUESTS="-e git+git://github.com/kennethreitz/requests.git#egg=requests"
+  - REQUESTS="requests>=2.0,<3.0"
+  - REQUESTS="-U requests"
+  - REQUESTS="-e git+git://github.com/requests/requests.git#egg=requests"
   global:
-    - PIP_DOWNLOAD_CACHE=".pip_download_cache"
+  - PIP_DOWNLOAD_CACHE=".pip_download_cache"
 matrix:
   allow_failures:
-    - env: 'REQUESTS="-e git+git://github.com/kennethreitz/requests.git#egg=requests"'
+  - env: REQUESTS="-e git+git://github.com/requests/requests.git#egg=requests"
+  - python: nightly
 install:
-  - "pip install ${REQUESTS}"
-  - make develop
+- pip install codecov
+- pip install ${REQUESTS}
+- make install-deps
 script:
-  - make lint
-  - py.test . --cov responses --cov-report term-missing
+- make
+- if [[ $TRAVIS_PYTHON_VERSION == '3.6' ]]; then pre-commit run -a -v; fi
+- pytest . --cov-report term-missing  --cov . --cov-report="xml:.artifacts/coverage.xml"
+  --junit-xml=".artifacts/junit.xml"
+deploy:
+  provider: pypi
+  distributions: "sdist bdist_wheel"
+  user:
+    secure: Mt6mQiqtcxi1xf3TpTtPQ5fJ97LQiO754qV1zsK2izTs5kDg5NhJUUGReJCKvl9fJKbGqGwT+RR1q6/5kW1s8UGVduqLfBUBUSW++qciwcvIg2B3DlBFuW7vVfzi0DCF6xssjSjwpXH4iAg5QO71qOkoE9t71G2boKxUuK1wL+E=
+  password:
+    secure: SejRAkh567ae8HNgLMWebpPwOxn2+wfrKWHkm8JTmCJcxKIQmfbPlUJPAspJ9HF7kBB1MzkkqNkXG184VEgH1l1JqUNyZKqrk+y4R3s+jjJ+Yqepm3SeAiq5FceS8BwCegO9L3po299NtdWFHllydVLLL+Rf3ZnCQOl5YT1tzzk=
+  on:
+    tags: true
+after_success:
+- codecov -e REQUESTS -e TRAVIS_PYTHON_VERSION
+- npm install -g @zeus-ci/cli
+- zeus upload -t "text/x-pycodestyle" .artifacts/flake8.log
+- zeus upload -t "text/xml+xunit" .artifacts/*junit.xml
+- zeus upload -t "text/xml+coverage" .artifacts/*coverage.xml
+after_failure:
+- npm install -g @zeus-ci/cli
+- zeus upload -t "text/x-pycodestyle" .artifacts/flake8.log
+- zeus upload -t "text/xml+xunit" .artifacts/*junit.xml
+- zeus upload -t "text/xml+coverage" .artifacts/*coverage.xml
+notifications:
+  webhooks:
+    urls:
+    - https://zeus.ci/hooks/4f39f396-3820-11e8-982a-0a580a28001b/public/provider/travis/webhook
+    on_success: always
+    on_failure: always
+    on_start: always
+    on_cancel: always
+    on_error: always

@@ -9,4 +9,6 @@
 /dist
 /build
 /.cache
+/.pytest_cache
 /.tox
+/.artifacts

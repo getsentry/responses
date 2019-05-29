@@ -539,8 +539,8 @@ class RequestsMock(object):
         url,
         callback,
         match_querystring=False,
-        stream=False,
         content_type="text/plain",
+        stream=False,
         **kwargs
     ):
         """

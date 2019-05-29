@@ -439,8 +439,8 @@ def test_callback_args():
             method="method",
             callback="callback",
             match_querystring="match_querystring",
-            stream="stream",
             content_type="content_type",
+            stream="stream",
             butter="nope",
             jelly="yes please",
         )
@@ -451,8 +451,8 @@ def test_callback_args():
         assert kwargs["method"] == "method"
         assert kwargs["callback"] == "callback"
         assert kwargs["match_querystring"] == "match_querystring"
-        assert kwargs["stream"] == "stream"
         assert kwargs["content_type"] == "content_type"
+        assert kwargs["stream"] == "stream"
 
         assert kwargs["butter"] == "nope"
         assert kwargs["jelly"] == "yes please"

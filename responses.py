@@ -107,8 +107,6 @@ def _is_redirect(response):
 def _ensure_str(s):
     if six.PY2:
         s = s.encode("utf-8") if isinstance(s, six.text_type) else s
-    if not isinstance(s, str):
-        raise TypeError("%r is not str" % s)
     return s
 
 

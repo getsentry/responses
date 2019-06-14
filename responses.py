@@ -104,6 +104,12 @@ def _is_redirect(response):
         )
 
 
+def _ensure_str(s):
+    if six.PY2:
+        s = s.encode("utf-8") if isinstance(s, six.text_type) else s
+    return s
+
+
 def _cookies_from_headers(headers):
     try:
         import http.cookies as cookies
@@ -115,8 +121,10 @@ def _cookies_from_headers(headers):
     except ImportError:
         from cookies import Cookies
 
-        resp_cookies = Cookies.from_request(headers["set-cookie"])
-        cookies_dict = {v.name: v.value for _, v in resp_cookies.items()}
+        resp_cookies = Cookies.from_request(_ensure_str(headers["set-cookie"]))
+        cookies_dict = {
+            v.name: quote(_ensure_str(v.value)) for _, v in resp_cookies.items()
+        }
     return cookiejar_from_dict(cookies_dict)
 
 

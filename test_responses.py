@@ -950,3 +950,18 @@ def test_custom_target(monkeypatch):
     requests_mock.start()
     assert len(patch_mock.call_args_list) == 1
     assert patch_mock.call_args[1]["target"] == "something.else"
+
+
+def _quote(s):
+    return responses.quote(responses._ensure_str(s))
+
+
+def test_cookies_from_headers():
+    text = "こんにちは/世界"
+    quoted_text = _quote(text)
+    expected = {"x": "a", "y": quoted_text}
+    headers = {"set-cookie": "; ".join(k + "=" + v for k, v in expected.items())}
+    cookiejar = responses._cookies_from_headers(headers)
+    for k, v in cookiejar.items():
+        assert isinstance(v, str)
+        assert v == expected[k]

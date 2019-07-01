@@ -19,11 +19,7 @@ setup_requires = []
 if "test" in sys.argv:
     setup_requires.append("pytest")
 
-install_requires = [
-    "mock; python_version < '3.3'",
-    "requests>=2.0",
-    "six",
-]
+install_requires = ["mock; python_version < '3.3'", "requests>=2.0", "six"]
 
 tests_require = [
     "pytest",

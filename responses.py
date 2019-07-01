@@ -113,10 +113,12 @@ def _ensure_str(s):
 def _cookies_from_headers(headers):
     try:
         import http.cookies as cookies
+
         cookie_text = headers["set-cookie"]
 
     except ImportError:
         import Cookie as cookies
+
         cookie_text = _ensure_str(headers["set-cookie"])
 
     resp_cookie = cookies.SimpleCookie()

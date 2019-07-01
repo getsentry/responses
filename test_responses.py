@@ -938,18 +938,19 @@ def test_cookies_from_headers():
         assert isinstance(v, str)
         assert v == expected[k]
 
+
 def test_cookie_attribute_handling():
-    expected_domains = ['.stackoverflow.com']
-    expected_paths = ['/']
-    cookie_attributes = {
-        "prov": "c83dc7dc-e0b9-xxxx-xxxx-xxxxxxxxxxxx",
-        "domain": ".stackoverflow.com",
-        "expires": "Fri, 01-Jan-2055 00:00:00 GMT",
-        "path": "/",
-    }
-    cookie_text = "; ".join(k + "=" + v for k,v in cookie_attributes.items())
-    cookie_text = cookie_text + "; HttpOnly"
-    headers = {'set-cookie': cookie_text}
+    expected_domains = [".stackoverflow.com"]
+    expected_paths = ["/"]
+    cookie_attributes = [
+        "prov=c83dc7dc-e0b9-xxxx-xxxx-xxxxxxxxxxxx",
+        "domain=.stackoverflow.com",
+        "expires=Fri, 01-Jan-2055 00:00:00 GMT",
+        "path=/",
+        "HttpOnly",
+    ]
+    cookie_text = "; ".join(cookie_attributes)
+    headers = {"set-cookie": cookie_text}
     cookiejar = responses._cookies_from_headers(headers)
     assert cookiejar.list_domains() == expected_domains
     assert cookiejar.list_paths() == expected_paths

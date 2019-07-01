@@ -13,7 +13,6 @@ from requests.adapters import HTTPAdapter
 from requests.cookies import RequestsCookieJar
 from requests.exceptions import ConnectionError
 from requests.sessions import REDIRECT_STATI
-from requests.utils import cookiejar_from_dict
 
 try:
     from collections.abc import Sequence, Sized

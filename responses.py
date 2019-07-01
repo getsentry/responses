@@ -115,23 +115,16 @@ def _cookies_from_headers(headers):
     try:
         import http.cookies as cookies
 
-        resp_cookie = cookies.SimpleCookie()
-        resp_cookie.load(headers["set-cookie"])
-
-        cookie_jar = RequestsCookieJar()
-        cookie_jar.update(resp_cookie.items())
-
-        return cookie_jar
-
     except ImportError:
-        from cookies import Cookies
+        import Cookie as cookies
 
-        resp_cookies = Cookies.from_request(_ensure_str(headers["set-cookie"]))
-        cookies_dict = {
-            v.name: quote(_ensure_str(v.value)) for _, v in resp_cookies.items()
-        }
+    resp_cookie = cookies.SimpleCookie()
+    resp_cookie.load(headers["set-cookie"])
 
-        return cookiejar_from_dict(cookies_dict)
+    cookie_jar = RequestsCookieJar()
+    cookie_jar.update(resp_cookie.items())
+
+    return cookie_jar
 
 
 _wrapper_template = """\

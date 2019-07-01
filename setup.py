@@ -20,7 +20,6 @@ if "test" in sys.argv:
     setup_requires.append("pytest")
 
 install_requires = [
-    "cookies; python_version < '3.4'",
     "mock; python_version < '3.3'",
     "requests>=2.0",
     "six",

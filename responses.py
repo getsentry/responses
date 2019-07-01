@@ -10,6 +10,7 @@ import six
 from collections import namedtuple
 from functools import update_wrapper
 from requests.adapters import HTTPAdapter
+from requests.cookies import RequestsCookieJar
 from requests.exceptions import ConnectionError
 from requests.sessions import REDIRECT_STATI
 from requests.utils import cookiejar_from_dict
@@ -117,7 +118,11 @@ def _cookies_from_headers(headers):
         resp_cookie = cookies.SimpleCookie()
         resp_cookie.load(headers["set-cookie"])
 
-        cookies_dict = {name: v.value for name, v in resp_cookie.items()}
+        cookie_jar = RequestsCookieJar()
+        cookie_jar.update(resp_cookie.items())
+
+        return cookie_jar
+
     except ImportError:
         from cookies import Cookies
 
@@ -125,7 +130,8 @@ def _cookies_from_headers(headers):
         cookies_dict = {
             v.name: quote(_ensure_str(v.value)) for _, v in resp_cookies.items()
         }
-    return cookiejar_from_dict(cookies_dict)
+
+        return cookiejar_from_dict(cookies_dict)
 
 
 _wrapper_template = """\

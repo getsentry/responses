@@ -394,7 +394,7 @@ replaced.
 ``remove`` takes a ``method`` and ``url`` argument and will remove **all**
 matched responses from the registered list.
 
-Finally, ``clear`` will reset all registered responses.
+Finally, ``reset`` will reset all registered responses.
 
 Contributing
 ------------

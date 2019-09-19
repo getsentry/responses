@@ -655,7 +655,52 @@ class RequestsMock(object):
 
 # expose default mock namespace
 mock = _default_mock = RequestsMock(assert_all_requests_are_fired=False)
-__all__ = ["CallbackResponse", "Response", "RequestsMock"]
-for __attr in (a for a in dir(_default_mock) if not a.startswith("_")):
-    __all__.append(__attr)
-    globals()[__attr] = getattr(_default_mock, __attr)
+__all__ = [
+    "CallbackResponse",
+    "Response",
+    "RequestsMock",
+    # Exposed by the RequestsMock class:
+    "activate",
+    "add",
+    "add_callback",
+    "add_passthru",
+    "assert_all_requests_are_fired",
+    "calls",
+    "DELETE",
+    "GET",
+    "HEAD",
+    "OPTIONS",
+    "passthru_prefixes",
+    "PATCH",
+    "POST",
+    "PUT",
+    "remove",
+    "replace",
+    "reset",
+    "response_callback",
+    "start",
+    "stop",
+    "target",
+]
+
+activate = _default_mock.activate
+add = _default_mock.add
+add_callback = _default_mock.add_callback
+add_passthru = _default_mock.add_passthru
+assert_all_requests_are_fired = _default_mock.assert_all_requests_are_fired
+calls = _default_mock.calls
+DELETE = _default_mock.DELETE
+GET = _default_mock.GET
+HEAD = _default_mock.HEAD
+OPTIONS = _default_mock.OPTIONS
+passthru_prefixes = _default_mock.passthru_prefixes
+PATCH = _default_mock.PATCH
+POST = _default_mock.POST
+PUT = _default_mock.PUT
+remove = _default_mock.remove
+replace = _default_mock.replace
+reset = _default_mock.reset
+response_callback = _default_mock.response_callback
+start = _default_mock.start
+stop = _default_mock.stop
+target = _default_mock.target

@@ -701,7 +701,7 @@ def test_assert_all_requests_are_fired():
             with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
                 m.add(responses.GET, "http://example.com", body=b"test")
         assert "http://example.com" in str(excinfo.value)
-        assert responses.GET in str(excinfo)
+        assert responses.GET in str(excinfo.value)
 
         # check that assert_all_requests_are_fired default to True
         with pytest.raises(AssertionError):

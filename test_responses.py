@@ -657,8 +657,7 @@ def test_response_cookies():
         assert resp.status_code == status
         assert "session_id" in resp.cookies
         assert resp.cookies["session_id"] == "12345"
-        assert resp.cookies["a"] == "b"
-        assert resp.cookies["c"] == "d"
+        assert set(resp.cookies.keys()) == set(['session_id'])
 
     run()
     assert_reset()

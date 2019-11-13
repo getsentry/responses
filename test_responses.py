@@ -663,6 +663,55 @@ def test_response_cookies():
     assert_reset()
 
 
+def test_response_secure_cookies():
+    body = b"test callback"
+    status = 200
+    headers = {"set-cookie": "session_id=12345; a=b; c=d; secure"}
+    url = "http://example.com/"
+
+    def request_callback(request):
+        return (status, headers, body)
+
+    @responses.activate
+    def run():
+        responses.add_callback(responses.GET, url, request_callback)
+        resp = requests.get(url)
+        assert resp.text == "test callback"
+        assert resp.status_code == status
+        assert "session_id" in resp.cookies
+        assert resp.cookies["session_id"] == "12345"
+        assert set(resp.cookies.keys()) == set(['session_id'])
+
+    run()
+    assert_reset()
+
+
+def test_response_cookies_multiple():
+    body = b"test callback"
+    status = 200
+    headers = [
+        ("set-cookie", '1P_JAR=2019-12-31-23; path=/; domain=.example.com; HttpOnly'),
+        ("set-cookie", 'NID=some=value; path=/; domain=.example.com; secure'),
+    ]
+    url = "http://example.com/"
+
+    def request_callback(request):
+        return (status, headers, body)
+
+    @responses.activate
+    def run():
+        responses.add_callback(responses.GET, url, request_callback)
+        resp = requests.get(url)
+        assert resp.text == "test callback"
+        assert resp.status_code == status
+        assert set(resp.cookies.keys()) == set(['1P_JAR', 'NID'])
+        assert resp.cookies["1P_JAR"] == "2019-12-31-23"
+        assert resp.cookies["NID"] == "some=value"
+
+    run()
+    assert_reset()
+
+
 def test_response_callback():
     """adds a callback to decorate the response, then checks it"""
 

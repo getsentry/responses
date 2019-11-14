@@ -27,7 +27,8 @@ install_requires = [
 ]
 
 tests_require = [
-    "pytest",
+    "pytest==4.6; python_version < '3.5'",
+    "pytest; python_version >= '3.5'",
     "coverage >= 3.7.1, < 5.0.0",
     "pytest-cov",
     "pytest-localserver",

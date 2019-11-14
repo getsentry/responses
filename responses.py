@@ -313,7 +313,7 @@ class BaseResponse(object):
             return False
 
     def get_headers(self):
-        headers = HTTPHeaderDict() # Duplicate headers are legal
+        headers = HTTPHeaderDict()  # Duplicate headers are legal
         if self.content_type is not None:
             headers["Content-Type"] = self.content_type
         if self.headers:
@@ -380,7 +380,7 @@ class Response(BaseResponse):
         # having an original response object with the headers as the `msg`, so
         # we give it what it needs.
         orig_response = HTTPResponse(
-            body=body, # required to avoid "ValueError: Unable to determine whether fp is closed."
+            body=body,  # required to avoid "ValueError: Unable to determine whether fp is closed."
             msg=headers,
             preload_content=False,
         )
@@ -421,7 +421,7 @@ class CallbackResponse(BaseResponse):
         # having an original response object with the headers as the `msg`, so
         # we give it what it needs.
         orig_response = HTTPResponse(
-            body=body, # required to avoid "ValueError: Unable to determine whether fp is closed."
+            body=body,  # required to avoid "ValueError: Unable to determine whether fp is closed."
             msg=headers,
             preload_content=False,
         )

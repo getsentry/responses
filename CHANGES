@@ -1,3 +1,18 @@
+0.10.8
+------
+
+- Fixed cookie parsing and enabled multiple cookies to be set by using a list of
+  tuple values.
+
+0.10.7
+------
+
+- Added pypi badges to README.
+- Fixed formatting issues in README.
+- Quoted cookie values are returned correctly now.
+- Improved compatibility for pytest 5
+- Module level method names are no longer generated dynamically improving IDE navigation.
+
 0.10.6
 ------
 

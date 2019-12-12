@@ -23,6 +23,10 @@ try:
     from requests.packages.urllib3.response import HTTPResponse
 except ImportError:
     from urllib3.response import HTTPResponse
+try:
+    from requests.packages.urllib3.connection import HTTPHeaderDict
+except ImportError:
+    from urllib3.connection import HTTPHeaderDict
 
 if six.PY2:
     from urlparse import urlparse, parse_qsl, urlsplit, urlunsplit
@@ -309,11 +313,11 @@ class BaseResponse(object):
             return False
 
     def get_headers(self):
-        headers = {}
+        headers = HTTPHeaderDict()  # Duplicate headers are legal
         if self.content_type is not None:
             headers["Content-Type"] = self.content_type
         if self.headers:
-            headers.update(self.headers)
+            headers.extend(self.headers)
         return headers
 
     def get_response(self, request):
@@ -372,11 +376,20 @@ class Response(BaseResponse):
         status = self.status
         body = _handle_body(self.body)
 
+        # The requests library's cookie handling depends on the response object
+        # having an original response object with the headers as the `msg`, so
+        # we give it what it needs.
+        orig_response = HTTPResponse(
+            body=body,  # required to avoid "ValueError: Unable to determine whether fp is closed."
+            msg=headers,
+            preload_content=False,
+        )
         return HTTPResponse(
             status=status,
             reason=six.moves.http_client.responses.get(status),
             body=body,
             headers=headers,
+            original_response=orig_response,
             preload_content=False,
         )
 
@@ -402,13 +415,22 @@ class CallbackResponse(BaseResponse):
             raise body
 
         body = _handle_body(body)
-        headers.update(r_headers)
+        headers.extend(r_headers)
 
+        # The requests library's cookie handling depends on the response object
+        # having an original response object with the headers as the `msg`, so
+        # we give it what it needs.
+        orig_response = HTTPResponse(
+            body=body,  # required to avoid "ValueError: Unable to determine whether fp is closed."
+            msg=headers,
+            preload_content=False,
+        )
         return HTTPResponse(
             status=status,
             reason=six.moves.http_client.responses.get(status),
             body=body,
             headers=headers,
+            original_response=orig_response,
             preload_content=False,
         )
 
@@ -618,11 +640,6 @@ class RequestsMock(object):
 
         if not match.stream:
             response.content  # NOQA
-
-        try:
-            response.cookies = _cookies_from_headers(response.headers)
-        except (KeyError, TypeError):
-            pass
 
         response = resp_callback(response) if resp_callback else response
         match.call_count += 1

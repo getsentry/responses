@@ -3,7 +3,6 @@ language: python
 sudo: false
 python:
 - '2.7'
-- '3.4'
 - '3.5'
 - '3.6'
 - '3.7'
@@ -13,7 +12,7 @@ cache:
   - ".pip_download_cache"
 env:
   matrix:
-  - REQUESTS="requests>=2.0,<3.0"
+  - REQUESTS="requests>=2.22.0,<3.0"
   - REQUESTS="-U requests"
   - REQUESTS="-e git+git://github.com/requests/requests.git#egg=requests"
   global:

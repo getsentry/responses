@@ -405,6 +405,12 @@ class CallbackResponse(BaseResponse):
         if isinstance(body, Exception):
             raise body
 
+        # If the callback set a content-type remove the one
+        # set in add_callback() so that we don't have multiple
+        # content type values.
+        if "Content-Type" in r_headers:
+            headers.pop("Content-Type", None)
+
         body = _handle_body(body)
         headers.extend(r_headers)
 

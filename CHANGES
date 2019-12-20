@@ -2,7 +2,7 @@
 ------
 
 - Fixed regression with `add_callback()` and content-type header.
-- Fixed implicit dependency on urllib>1.23.0
+- Fixed implicit dependency on urllib3>1.23.0
 
 0.10.8
 ------

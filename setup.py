@@ -54,7 +54,7 @@ class PyTest(TestCommand):
 
 setup(
     name="responses",
-    version="0.10.9",
+    version="0.10.10-dev",
     author="David Cramer",
     description=("A utility library for mocking out the `requests` Python library."),
     url="https://github.com/getsentry/responses",

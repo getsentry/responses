@@ -375,21 +375,12 @@ class Response(BaseResponse):
         headers = self.get_headers()
         status = self.status
         body = _handle_body(self.body)
-
-        # The requests library's cookie handling depends on the response object
-        # having an original response object with the headers as the `msg`, so
-        # we give it what it needs.
-        orig_response = HTTPResponse(
-            body=body,  # required to avoid "ValueError: Unable to determine whether fp is closed."
-            msg=headers,
-            preload_content=False,
-        )
         return HTTPResponse(
             status=status,
             reason=six.moves.http_client.responses.get(status),
             body=body,
             headers=headers,
-            original_response=orig_response,
+            original_response=OriginalResponseShim(headers),
             preload_content=False,
         )
 
@@ -414,25 +405,43 @@ class CallbackResponse(BaseResponse):
         if isinstance(body, Exception):
             raise body
 
+        # If the callback set a content-type remove the one
+        # set in add_callback() so that we don't have multiple
+        # content type values.
+        if "Content-Type" in r_headers:
+            headers.pop("Content-Type", None)
+
         body = _handle_body(body)
         headers.extend(r_headers)
 
-        # The requests library's cookie handling depends on the response object
-        # having an original response object with the headers as the `msg`, so
-        # we give it what it needs.
-        orig_response = HTTPResponse(
-            body=body,  # required to avoid "ValueError: Unable to determine whether fp is closed."
-            msg=headers,
-            preload_content=False,
-        )
         return HTTPResponse(
             status=status,
             reason=six.moves.http_client.responses.get(status),
             body=body,
             headers=headers,
-            original_response=orig_response,
+            original_response=OriginalResponseShim(headers),
             preload_content=False,
         )
+
+
+class OriginalResponseShim(object):
+    """
+    Shim for compatibility with older versions of urllib3
+
+    requests cookie handling depends on responses having a property chain of
+    `response._original_response.msg` which contains the response headers [1]
+
+    Using HTTPResponse() for this purpose causes compatibility errors with
+    urllib3<1.23.0. To avoid adding more dependencies we can use this shim.
+
+    [1]: https://github.com/psf/requests/blob/75bdc998e2d/requests/cookies.py#L125
+    """
+
+    def __init__(self, headers):
+        self.msg = headers
+
+    def isclosed(self):
+        return True
 
 
 class RequestsMock(object):

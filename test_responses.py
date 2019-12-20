@@ -410,7 +410,11 @@ def test_callback():
     body = b"test callback"
     status = 400
     reason = "Bad Request"
-    headers = {"foo": "bar"}
+    headers = {
+        "foo": "bar",
+        "Content-Type": "application/json",
+        "Content-Length": "13",
+    }
     url = "http://example.com/"
 
     def request_callback(request):
@@ -423,8 +427,9 @@ def test_callback():
         assert resp.text == "test callback"
         assert resp.status_code == status
         assert resp.reason == reason
-        assert "foo" in resp.headers
-        assert resp.headers["foo"] == "bar"
+        assert "bar" == resp.headers.get("foo")
+        assert "application/json" == resp.headers.get("Content-Type")
+        assert "13" == resp.headers.get("Content-Length")
 
     run()
     assert_reset()

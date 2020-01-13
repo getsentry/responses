@@ -249,7 +249,7 @@ class BaseResponse(object):
         if self.method != other.method:
             return False
 
-        # Can't simply do a equality check on the objects directly here since __eq__ isn't
+        # Can't simply do an equality check on the objects directly here since __eq__ isn't
         # implemented for regex. It might seem to work as regex is using a cache to return
         # the same regex instances, but it doesn't in all cases.
         self_url = self.url.pattern if isinstance(self.url, Pattern) else self.url

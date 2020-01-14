@@ -7,6 +7,9 @@ Responses
 ..  image:: https://travis-ci.org/getsentry/responses.svg?branch=master
     :target: https://travis-ci.org/getsentry/responses
 
+.. image:: https://img.shields.io/pypi/pyversions/responses.svg
+    :target: https://pypi.org/project/responses/
+
 A utility library for mocking out the `requests` Python library.
 
 ..  note::

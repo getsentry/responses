@@ -527,14 +527,18 @@ class RequestsMock(object):
 
     def add_passthru(self, prefix):
         """
-        Register a URL prefix to passthru any non-matching mock requests to.
+        Register a URL prefix or regex to passthru any non-matching mock requests to.
 
         For example, to allow any request to 'https://example.com', but require
         mocks for the remainder, you would add the prefix as so:
 
         >>> responses.add_passthru('https://example.com')
+
+        Regex can be used like:
+
+        >>> responses.add_passthru(re.compile('https://example.com/\\w+'))
         """
-        if _has_unicode(prefix):
+        if not isinstance(prefix, Pattern) and _has_unicode(prefix):
             prefix = _clean_unicode(prefix)
         self.passthru_prefixes += (prefix,)
 
@@ -624,7 +628,14 @@ class RequestsMock(object):
         resp_callback = self.response_callback
 
         if match is None:
-            if request.url.startswith(self.passthru_prefixes):
+            if any(
+                [
+                    p.match(request.url)
+                    if isinstance(p, Pattern)
+                    else request.url.startswith(p)
+                    for p in self.passthru_prefixes
+                ]
+            ):
                 logger.info("request.allowed-passthru", extra={"url": request.url})
                 return _real_send(adapter, request, **kwargs)
 

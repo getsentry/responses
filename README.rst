@@ -352,7 +352,7 @@ Passing thru real requests
 --------------------------
 
 In some cases you may wish to allow for certain requests to pass thru responses
-and hit a real server. This can be done with the 'passthru' methods:
+and hit a real server. This can be done with the ``add_passthru' methods:
 
 .. code-block:: python
 

@@ -622,6 +622,7 @@ class RequestsMock(object):
     def _on_request(self, adapter, request, **kwargs):
         match = self._find_match(request)
         resp_callback = self.response_callback
+        request.params = dict(parse_qsl(request.path_url.replace("/?", "")))
 
         if match is None:
             if request.url.startswith(self.passthru_prefixes):

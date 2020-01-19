@@ -241,6 +241,7 @@ class BaseResponse(object):
         self.url = _ensure_url_default_path(url)
         self.match_querystring = self._should_match_querystring(match_querystring)
         self.call_count = 0
+        self._calls = CallList()
 
     def __eq__(self, other):
         if not isinstance(other, BaseResponse):
@@ -331,6 +332,10 @@ class BaseResponse(object):
             return False
 
         return True
+
+    @property
+    def calls(self):
+        return self._calls
 
 
 class Response(BaseResponse):
@@ -523,7 +528,9 @@ class RequestsMock(object):
         if adding_headers is not None:
             kwargs.setdefault("headers", adding_headers)
 
-        self._matches.append(Response(method=method, url=url, body=body, **kwargs))
+        response = Response(method=method, url=url, body=body, **kwargs)
+        self._matches.append(response)
+        return response
 
     def add_passthru(self, prefix):
         """
@@ -582,15 +589,15 @@ class RequestsMock(object):
         # ensure the url has a default path set if the url is a string
         # url = _ensure_url_default_path(url, match_querystring)
 
-        self._matches.append(
-            CallbackResponse(
-                url=url,
-                method=method,
-                callback=callback,
-                content_type=content_type,
-                match_querystring=match_querystring,
-            )
+        response = CallbackResponse(
+            url=url,
+            method=method,
+            callback=callback,
+            content_type=content_type,
+            match_querystring=match_querystring,
         )
+        self._matches.append(response)
+        return response
 
     @property
     def calls(self):
@@ -661,6 +668,7 @@ class RequestsMock(object):
             response = adapter.build_response(request, match.get_response(request))
         except BaseException as response:
             match.call_count += 1
+            match._calls.add(request, response)
             self._calls.add(request, response)
             response = resp_callback(response) if resp_callback else response
             raise
@@ -670,6 +678,7 @@ class RequestsMock(object):
 
         response = resp_callback(response) if resp_callback else response
         match.call_count += 1
+        match._calls.add(request, response)
         self._calls.add(request, response)
         return response
 

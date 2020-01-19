@@ -1044,3 +1044,78 @@ def test_request_param():
 
     run()
     assert_reset()
+
+
+def test_response_match_has_own_calls():
+    @responses.activate
+    def run():
+        match = responses.add(
+            method=responses.GET, url="http://example.com", body="OK"
+        )
+        requests.get("http://example.com")
+        resp = match.calls[0].response
+        assert_response(resp, "OK")
+        assert match.call_count == 1
+        assert len(match._calls) == 1
+
+    run()
+    assert_reset()
+
+
+def test_callback_has_own_calls():
+    body = b"test callback"
+    status = 200
+    url = "http://example.com/"
+
+    def request_callback(request):
+        return status, {}, body
+
+    @responses.activate
+    def run():
+        match = responses.add_callback(responses.GET, url, request_callback)
+        requests.get(url)
+        assert match.call_count == 1
+        resp = match.calls[0].response
+        assert resp.text == "test callback"
+        assert resp.status_code == status
+
+    run()
+    assert_reset()
+
+
+def test_match_has_call_when_exception():
+    @responses.activate
+    def run():
+        url = "http://example.com"
+        exception = HTTPError("HTTP Error")
+        match = responses.add(responses.GET, url, exception)
+
+        with pytest.raises(HTTPError) as HE:
+            requests.get(url)
+
+        assert match.call_count == 1
+        assert len(match.calls) == 1
+
+    run()
+    assert_reset()
+
+
+def test_callback_has_call_when_exception():
+    body = Exception()
+    url = "http://example.com/"
+
+    def request_callback(request):
+        return (200, {}, body)
+
+    @responses.activate
+    def run():
+        match = responses.add_callback(responses.GET, url, request_callback)
+
+        with pytest.raises(Exception) as e:
+            requests.get(url)
+
+        assert match.call_count == 1
+        assert len(match.calls) == 1
+
+    run()
+    assert_reset()

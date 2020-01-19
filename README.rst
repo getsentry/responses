@@ -61,6 +61,27 @@ a ``ConnectionError``:
         with pytest.raises(ConnectionError):
             requests.get('http://twitter.com/api/1/foobar')
 
+Also, you can store `responses.add(…)` result as a variable to get call list only for the pattern:
+
+..  code-block:: python
+
+    import responses
+    import requests
+
+    @responses.activate
+    def test_simple():
+        twitter_match = responses.add(
+            responses.GET, 'http://twitter.com/api/1/foobar',
+            json={'error': 'not found'}, status=404
+        )
+
+        requests.get('http://twitter.com/api/1/foobar')
+        resp = twitter_match.calls[0].response
+
+        assert resp.json() == {"error": "not found"}
+
+        assert len(twitter_match.calls) == 1
+
 Lastly, you can pass an ``Exception`` as the body to trigger an error on the request:
 
 ..  code-block:: python

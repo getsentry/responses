@@ -1049,9 +1049,7 @@ def test_request_param():
 def test_response_match_has_own_calls():
     @responses.activate
     def run():
-        match = responses.add(
-            method=responses.GET, url="http://example.com", body="OK"
-        )
+        match = responses.add(method=responses.GET, url="http://example.com", body="OK")
         requests.get("http://example.com")
         resp = match.calls[0].response
         assert_response(resp, "OK")
@@ -1068,7 +1066,7 @@ def test_callback_has_own_calls():
     url = "http://example.com/"
 
     def request_callback(request):
-        return status, {}, body
+        return (status, {}, body)
 
     @responses.activate
     def run():
@@ -1090,7 +1088,7 @@ def test_match_has_call_when_exception():
         exception = HTTPError("HTTP Error")
         match = responses.add(responses.GET, url, exception)
 
-        with pytest.raises(HTTPError) as HE:
+        with pytest.raises(HTTPError):
             requests.get(url)
 
         assert match.call_count == 1
@@ -1111,7 +1109,7 @@ def test_callback_has_call_when_exception():
     def run():
         match = responses.add_callback(responses.GET, url, request_callback)
 
-        with pytest.raises(Exception) as e:
+        with pytest.raises(Exception):
             requests.get(url)
 
         assert match.call_count == 1

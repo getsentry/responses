@@ -422,3 +422,16 @@ Configure development requirements:
 .. code-block:: shell
 
     make develop
+
+Responses uses `Pytest <https://docs.pytest.org/en/latest/>`_ for
+testing. You can run all tests by:
+
+.. code-block:: shell
+
+    pytest
+
+And run a single test by:
+
+.. code-block:: shell
+
+    pytest -k '<test_function_name>'

@@ -239,6 +239,25 @@ a callback function to give a slightly different result, you can use ``functools
         )
 
 
+You can see params passed in the original ‍‍``request`` in ‍‍``responses.calls[].request.params``:
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+    @responses.activate
+    def test_request_params():
+        responses.add(
+            method=responses.GET,
+            url="http://example.com?hello=world",
+            body="test",
+            match_querystring=False,
+        )
+
+        resp = requests.get('http://example.com', params={"hello": "world"})
+        assert response.calls[0].request.params == {"hello": "world"}
+
 Responses as a context manager
 ------------------------------
 

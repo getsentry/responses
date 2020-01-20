@@ -1049,12 +1049,28 @@ def test_request_param():
 def test_response_match_has_own_calls():
     @responses.activate
     def run():
-        match = responses.add(method=responses.GET, url="http://example.com", body="OK")
-        requests.get("http://example.com")
-        resp = match.calls[0].response
+        first_match = responses.add(
+            method=responses.GET, url="http://example.com/one/", body="OK"
+        )
+        second_match = responses.add(
+            method=responses.GET, url="http://example.com/two/", body="OK"
+        )
+        requests.get("http://example.com/one/")
+        resp = first_match.calls[0].response
         assert_response(resp, "OK")
-        assert match.call_count == 1
-        assert len(match._calls) == 1
+        assert first_match.call_count == 1
+        assert len(first_match.calls) == 1
+        assert first_match.calls[0].request.url == "http://example.com/one/"
+        # make sure the second match has empty call list
+        assert second_match.call_count == 0
+        assert len(second_match.calls) == 0
+
+        requests.get("http://example.com/two/")
+        assert first_match.call_count == 1
+        assert len(first_match.calls) == 1
+        assert second_match.call_count == 1
+        assert len(second_match.calls) == 1
+        assert second_match.calls[0].request.url == "http://example.com/two/"
 
     run()
     assert_reset()

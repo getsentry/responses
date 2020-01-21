@@ -352,7 +352,7 @@ Passing thru real requests
 --------------------------
 
 In some cases you may wish to allow for certain requests to pass thru responses
-and hit a real server. This can be done with the 'passthru' methods:
+and hit a real server. This can be done with the ``add_passthru' methods:
 
 .. code-block:: python
 
@@ -364,6 +364,12 @@ and hit a real server. This can be done with the 'passthru' methods:
 
 This will allow any requests matching that prefix, that is otherwise not registered
 as a mock response, to passthru using the standard behavior.
+
+Regex can be used like:
+
+.. code-block:: python
+
+    responses.add_passthru(re.compile('https://percy.io/\\w+'))
 
 
 Viewing/Modifying registered responses

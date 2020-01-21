@@ -943,6 +943,28 @@ def test_passthru(httpserver):
     assert_reset()
 
 
+def test_passthru_regex(httpserver):
+    httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
+
+    @responses.activate
+    def run():
+        responses.add_passthru(re.compile("{}/\\w+".format(httpserver.url)))
+        responses.add(responses.GET, "{}/one".format(httpserver.url), body="one")
+        responses.add(responses.GET, "http://example.com/two", body="two")
+
+        resp = requests.get("http://example.com/two")
+        assert_response(resp, "two")
+        resp = requests.get("{}/one".format(httpserver.url))
+        assert_response(resp, "one")
+        resp = requests.get("{}/two".format(httpserver.url))
+        assert_response(resp, "OK")
+        resp = requests.get("{}/three".format(httpserver.url))
+        assert_response(resp, "OK")
+
+    run()
+    assert_reset()
+
+
 def test_method_named_param():
     @responses.activate
     def run():

@@ -749,6 +749,9 @@ def test_response_filebody():
 
 
 def test_assert_all_requests_are_fired():
+    def request_callback(request):
+        raise BaseException()
+
     def run():
         with pytest.raises(AssertionError) as excinfo:
             with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
@@ -779,6 +782,13 @@ def test_assert_all_requests_are_fired():
             m.add(responses.GET, "http://example.com", body=Exception())
             assert len(m._matches) == 1
             with pytest.raises(Exception):
+                requests.get("http://example.com")
+            assert len(m._matches) == 1
+
+        with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
+            m.add_callback(responses.GET, "http://example.com", request_callback)
+            assert len(m._matches) == 1
+            with pytest.raises(BaseException):
                 requests.get("http://example.com")
             assert len(m._matches) == 1
 

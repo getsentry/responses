@@ -652,7 +652,7 @@ class RequestsMock(object):
 
         try:
             response = adapter.build_response(request, match.get_response(request))
-        except Exception as response:
+        except BaseException as response:
             match.call_count += 1
             self._calls.add(request, response)
             response = resp_callback(response) if resp_callback else response

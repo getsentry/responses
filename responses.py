@@ -641,14 +641,14 @@ class RequestsMock(object):
                 return _real_send(adapter, request, **kwargs)
 
             error_msg = (
-                u"Connection refused by Responses - the call doesn't "
+                "Connection refused by Responses - the call doesn't "
                 "match any registered mock.\n\n"
                 "Request: \n"
-                "- {0} {1}\n\n"
-                "Available matches:\n".format(request.method, request.url)
+                "- %s %s\n\n"
+                "Available matches:\n" % (request.method, request.url)
             )
             for m in self._matches:
-                error_msg += u"- {} {}\n".format(m.method, m.url)
+                error_msg += "- {} {}\n".format(m.method, m.url)
 
             response = ConnectionError(error_msg)
             response.request = request

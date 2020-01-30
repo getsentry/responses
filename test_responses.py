@@ -1022,3 +1022,25 @@ def test_cookies_from_headers():
     for k, v in cookiejar.items():
         assert isinstance(v, str)
         assert v == expected[k]
+
+
+def test_request_param():
+    @responses.activate
+    def run():
+        params = {"hello": "world", "example": "params"}
+        responses.add(
+            method=responses.GET,
+            url="http://example.com?hello=world",
+            body="test",
+            match_querystring=False,
+        )
+        resp = requests.get("http://example.com", params=params)
+        assert_response(resp, "test")
+        assert resp.request.params == params
+
+        resp = requests.get("http://example.com")
+        assert_response(resp, "test")
+        assert resp.request.params == {}
+
+    run()
+    assert_reset()

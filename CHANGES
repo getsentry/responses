@@ -1,3 +1,12 @@
+0.10.10
+------
+
+- Added Python 3.8 support
+- Remove Python 3.4 from test suite matrix.
+- The `response.request` object now has a `params` attribute that contains the query string parameters from the request that was captured.
+- `add_passthru` now supports `re` pattern objects to match URLs.
+- ConnectionErrors raised by responses now include more details on the request that was attempted and the mocks registered.
+
 0.10.9
 ------
 

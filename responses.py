@@ -413,7 +413,7 @@ class CallbackResponse(BaseResponse):
             has_content_type = True
         elif isinstance(r_headers, list):
             has_content_type = any(
-                [h for h in r_headers if len(h) and h[0].lower() == "content-type"]
+                [h for h in r_headers if h and h[0].lower() == "content-type"]
             )
         if has_content_type:
             headers.pop("Content-Type", None)

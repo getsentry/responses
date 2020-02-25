@@ -499,6 +499,44 @@ def test_callback_no_content_type():
     assert_reset()
 
 
+def test_callback_content_type_dict():
+    def request_callback(request):
+        return (
+            200,
+            {"Content-Type": "application/json"},
+            b"foo",
+        )
+
+    @responses.activate
+    def run():
+        responses.add_callback("GET", "http://mockhost/.foo", callback=request_callback)
+        resp = requests.get("http://mockhost/.foo")
+        assert resp.text == "foo"
+        assert resp.headers["content-type"] == "application/json"
+
+    run()
+    assert_reset()
+
+
+def test_callback_content_type_tuple():
+    def request_callback(request):
+        return (
+            200,
+            [("Content-Type", "application/json")],
+            b"foo",
+        )
+
+    @responses.activate
+    def run():
+        responses.add_callback("GET", "http://mockhost/.foo", callback=request_callback)
+        resp = requests.get("http://mockhost/.foo")
+        assert resp.text == "foo"
+        assert resp.headers["content-type"] == "application/json"
+
+    run()
+    assert_reset()
+
+
 def test_regular_expression_url():
     @responses.activate
     def run():

@@ -408,7 +408,14 @@ class CallbackResponse(BaseResponse):
         # If the callback set a content-type remove the one
         # set in add_callback() so that we don't have multiple
         # content type values.
-        if "Content-Type" in r_headers:
+        has_content_type = False
+        if isinstance(r_headers, dict) and "Content-Type" in r_headers:
+            has_content_type = True
+        elif isinstance(r_headers, list):
+            has_content_type = any(
+                [h for h in r_headers if len(h) and h[0].lower() == "content-type"]
+            )
+        if has_content_type:
             headers.pop("Content-Type", None)
 
         body = _handle_body(body)

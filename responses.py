@@ -617,18 +617,9 @@ class RequestsMock(object):
         return get_wrapped(func, self)
 
     def _find_match(self, request):
-        found = None
-        found_match = None
         for i, match in enumerate(self._matches):
             if match.matches(request):
-                if found is None:
-                    found = i
-                    found_match = match
-                else:
-                    # Multiple matches found.  Remove & return the first match.
-                    return self._matches.pop(found)
-
-        return found_match
+                return match
 
     def _on_request(self, adapter, request, **kwargs):
         match = self._find_match(request)

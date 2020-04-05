@@ -239,7 +239,7 @@ a callback function to give a slightly different result, you can use ``functools
         )
 
 
-You can see params passed in the original ‍‍``request`` in ‍‍``responses.calls[].request.params``:
+You can see params passed in the original ``request`` in ``responses.calls[].request.params``:
 
 .. code-block:: python
 

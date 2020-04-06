@@ -235,11 +235,12 @@ class BaseResponse(object):
 
     stream = False
 
-    def __init__(self, method, url, match_querystring=_unspecified):
+    def __init__(self, method, url, match_querystring=_unspecified, post_params=None):
         self.method = method
         # ensure the url has a default path set if the url is a string
         self.url = _ensure_url_default_path(url)
         self.match_querystring = self._should_match_querystring(match_querystring)
+        self.post_params = post_params
         self.call_count = 0
 
     def __eq__(self, other):
@@ -312,6 +313,12 @@ class BaseResponse(object):
         else:
             return False
 
+    def _post_params_match(self, post_params, request_body, content_type):
+        if post_params == None:
+            return True
+
+        return sorted(post_params.items()) == sorted(parse_qsl(request_body))
+
     def get_headers(self):
         headers = HTTPHeaderDict()  # Duplicate headers are legal
         if self.content_type is not None:
@@ -328,6 +335,9 @@ class BaseResponse(object):
             return False
 
         if not self._url_matches(self.url, request.url, self.match_querystring):
+            return False
+
+        if not self._post_params_match(self.post_params, request.body, self.content_type):
             return False
 
         return True

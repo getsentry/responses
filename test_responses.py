@@ -1030,7 +1030,6 @@ def test_multiple_methods():
     run()
     assert_reset()
 
-
 def test_passthru(httpserver):
     httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
 
@@ -1049,7 +1048,6 @@ def test_passthru(httpserver):
 
     run()
     assert_reset()
-
 
 def test_passthru_regex(httpserver):
     httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
@@ -1181,6 +1179,40 @@ def test_assert_call_count(url):
         assert "Expected URL '{0}' to be called 3 times. Called 2 times.".format(
             url
         ) in str(excinfo.value)
+
+    run()
+    assert_reset()
+
+def test_request_matches_post_params():
+    @responses.activate
+    def run():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="one",
+            post_params={"page": "first"}
+        )
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="two",
+            post_params={"page": "second"}
+        )
+
+        resp = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={'Content-Type': 'application/json'},
+            data={"page": "second"}
+        )
+        assert_response(resp, "two")
+        resp = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={'Content-Type': 'application/json'},
+            data={"page": "first"}
+        )
+        assert_response(resp, "one")
 
     run()
     assert_reset()

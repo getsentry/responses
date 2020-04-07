@@ -355,11 +355,10 @@ class Response(BaseResponse):
                 content_type = "application/json"
 
         if content_type is UNSET:
-            content_type = "text/plain"
-
-        # body must be bytes
-        if isinstance(body, six.text_type):
-            body = body.encode("utf-8")
+            if isinstance(body, six.text_type) and _has_unicode(body):
+                content_type = "text/plain; charset=utf-8"
+            else:
+                content_type = "text/plain"
 
         self.body = body
         self.status = status

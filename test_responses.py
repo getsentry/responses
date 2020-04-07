@@ -985,6 +985,21 @@ def test_multiple_urls():
     assert_reset()
 
 
+def test_multiple_methods():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com/one", body="gotcha")
+        responses.add(responses.POST, "http://example.com/one", body="posted")
+
+        resp = requests.get("http://example.com/one")
+        assert_response(resp, "gotcha")
+        resp = requests.post("http://example.com/one")
+        assert_response(resp, "posted")
+
+    run()
+    assert_reset()
+
+
 def test_passthru(httpserver):
     httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
 

@@ -314,7 +314,7 @@ class BaseResponse(object):
             return False
 
     def _post_params_match(self, post_params, request_body, content_type):
-        if post_params == None:
+        if post_params is None:
             return True
 
         return sorted(post_params.items()) == sorted(parse_qsl(request_body))
@@ -337,7 +337,9 @@ class BaseResponse(object):
         if not self._url_matches(self.url, request.url, self.match_querystring):
             return False
 
-        if not self._post_params_match(self.post_params, request.body, self.content_type):
+        if not self._post_params_match(
+            self.post_params, request.body, self.content_type
+        ):
             return False
 
         return True

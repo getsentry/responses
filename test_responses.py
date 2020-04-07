@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function, division, unicode_litera
 import inspect
 import re
 import six
+from io import BufferedReader, BytesIO
 
 import pytest
 import requests
@@ -914,6 +915,21 @@ def test_handles_unicode_url():
     @responses.activate
     def run():
         responses.add(responses.GET, url, body="test")
+
+        resp = requests.get(url)
+
+        assert_response(resp, "test")
+
+    run()
+    assert_reset()
+
+
+def test_handles_buffered_reader_body():
+    url = "http://example.com/test"
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, url, body=BufferedReader(BytesIO(b"test")))
 
         resp = requests.get(url)
 

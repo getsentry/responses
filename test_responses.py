@@ -334,6 +334,20 @@ def test_match_querystring_auto_activates():
     assert_reset()
 
 
+def test_match_querystring_missing_key():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com?foo=1&bar=2", body=b"test")
+        with pytest.raises(ConnectionError):
+            requests.get("http://example.com/?foo=1&baz=2")
+
+        with pytest.raises(ConnectionError):
+            requests.get("http://example.com/?bar=2&fez=1")
+
+    run()
+    assert_reset()
+
+
 def test_accept_string_body():
     @responses.activate
     def run():

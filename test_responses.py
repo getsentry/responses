@@ -5,6 +5,7 @@ from __future__ import absolute_import, print_function, division, unicode_litera
 import inspect
 import re
 import six
+from io import BufferedReader, BytesIO
 
 import pytest
 import requests
@@ -329,6 +330,20 @@ def test_match_querystring_auto_activates():
         assert_response(resp, "test")
         with pytest.raises(ConnectionError):
             requests.get("http://example.com/?test=2")
+
+    run()
+    assert_reset()
+
+
+def test_match_querystring_missing_key():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com?foo=1&bar=2", body=b"test")
+        with pytest.raises(ConnectionError):
+            requests.get("http://example.com/?foo=1&baz=2")
+
+        with pytest.raises(ConnectionError):
+            requests.get("http://example.com/?bar=2&fez=1")
 
     run()
     assert_reset()
@@ -924,6 +939,21 @@ def test_handles_unicode_body():
     assert_reset()
 
 
+def test_handles_buffered_reader_body():
+    url = "http://example.com/test"
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, url, body=BufferedReader(BytesIO(b"test")))
+
+        resp = requests.get(url)
+
+        assert_response(resp, "test")
+
+    run()
+    assert_reset()
+
+
 def test_headers():
     @responses.activate
     def run():
@@ -981,6 +1011,21 @@ def test_multiple_urls():
         assert_response(resp, "two")
         resp = requests.get("http://example.com/one")
         assert_response(resp, "one")
+
+    run()
+    assert_reset()
+
+
+def test_multiple_methods():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com/one", body="gotcha")
+        responses.add(responses.POST, "http://example.com/one", body="posted")
+
+        resp = requests.get("http://example.com/one")
+        assert_response(resp, "gotcha")
+        resp = requests.post("http://example.com/one")
+        assert_response(resp, "posted")
 
     run()
     assert_reset()

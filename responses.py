@@ -270,17 +270,7 @@ class BaseResponse(object):
         url_qsl = sorted(parse_qsl(url_parsed.query))
         other_qsl = sorted(parse_qsl(other_parsed.query))
 
-        if len(url_qsl) != len(other_qsl):
-            return False
-
-        for (a_k, a_v), (b_k, b_v) in zip(url_qsl, other_qsl):
-            if a_k != b_k:
-                return False
-
-            if a_v != b_v:
-                return False
-
-        return True
+        return url_qsl == other_qsl
 
     def _should_match_querystring(self, match_querystring_argument):
         if match_querystring_argument is not _unspecified:

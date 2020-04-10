@@ -1122,21 +1122,22 @@ def test_cookies_from_headers():
         assert v == expected[k]
 
 
-def test_request_param():
+@pytest.mark.parametrize("url", ("http://example.com", "http://example.com/some/path",))
+def test_request_param(url):
     @responses.activate
     def run():
         params = {"hello": "world", "example": "params"}
         responses.add(
             method=responses.GET,
-            url="http://example.com?hello=world",
+            url="{0}?hello=world".format(url),
             body="test",
             match_querystring=False,
         )
-        resp = requests.get("http://example.com", params=params)
+        resp = requests.get(url, params=params)
         assert_response(resp, "test")
         assert resp.request.params == params
 
-        resp = requests.get("http://example.com")
+        resp = requests.get(url)
         assert_response(resp, "test")
         assert resp.request.params == {}
 

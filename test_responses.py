@@ -924,6 +924,21 @@ def test_handles_unicode_url():
     assert_reset()
 
 
+def test_handles_unicode_body():
+    url = "http://example.com/test"
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, url, body="михољско лето")
+
+        resp = requests.get(url)
+
+        assert_response(resp, "михољско лето", content_type="text/plain; charset=utf-8")
+
+    run()
+    assert_reset()
+
+
 def test_handles_buffered_reader_body():
     url = "http://example.com/test"
 

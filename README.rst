@@ -315,6 +315,28 @@ the ``assert_all_requests_are_fired`` value:
                      body='{}', status=200,
                      content_type='application/json')
 
+assert_call_count
+-----------------
+
+Assert that the request was called exactly n times.
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+    @responses.activate
+    def test_assert_call_count():
+        responses.add(responses.GET, "http://example.com")
+
+        requests.get("http://example.com")
+        assert responses.assert_call_count("http://example.com", 1) is True
+
+        requests.get("http://example.com")
+        with pytest.raises(AssertionError) as excinfo:
+            responses.assert_call_count("http://example.com", 1)
+        assert "Expected URL 'http://example.com' to be called 1 times. Called 2 times." in str(excinfo.value)
+
 
 Multiple Responses
 ------------------

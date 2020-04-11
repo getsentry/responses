@@ -692,6 +692,23 @@ class RequestsMock(object):
                 )
             )
 
+    def assert_call_count(self, url, count):
+        call_count = len(
+            [
+                1
+                for call in self.calls
+                if call.request.url == _ensure_url_default_path(url)
+            ]
+        )
+        if call_count == count:
+            return True
+        else:
+            raise AssertionError(
+                "Expected URL '{0}' to be called {1} times. Called {2} times.".format(
+                    url, count, call_count
+                )
+            )
+
 
 # expose default mock namespace
 mock = _default_mock = RequestsMock(assert_all_requests_are_fired=False)
@@ -705,6 +722,7 @@ __all__ = [
     "add_callback",
     "add_passthru",
     "assert_all_requests_are_fired",
+    "assert_call_count",
     "calls",
     "DELETE",
     "GET",
@@ -728,6 +746,7 @@ add = _default_mock.add
 add_callback = _default_mock.add_callback
 add_passthru = _default_mock.add_passthru
 assert_all_requests_are_fired = _default_mock.assert_all_requests_are_fired
+assert_call_count = _default_mock.assert_call_count
 calls = _default_mock.calls
 DELETE = _default_mock.DELETE
 GET = _default_mock.GET

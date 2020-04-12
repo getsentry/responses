@@ -247,7 +247,7 @@ def json_params_matcher(params):
             if isinstance(request_body, bytes):
                 request_body = request_body.decode("utf-8")
             return params == json_module.loads(request_body)
-        except JSONDecodeError as err:
+        except JSONDecodeError:
             return False
 
     return match

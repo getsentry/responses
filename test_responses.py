@@ -1194,7 +1194,7 @@ def test_request_matches_post_params():
             url="http://example.com/",
             body="one",
             post_params_matcher=responses.json_params_matcher(
-                {"page": {"name": "first", "type": "json",}}
+                {"page": {"name": "first", "type": "json"}}
             ),
         )
         responses.add(
@@ -1218,7 +1218,7 @@ def test_request_matches_post_params():
             "POST",
             "http://example.com/",
             headers={"Content-Type": "application/json"},
-            json={"page": {"name": "first", "type": "json",}},
+            json={"page": {"name": "first", "type": "json"}},
         )
         assert_response(resp, "one")
 

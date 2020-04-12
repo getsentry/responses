@@ -229,18 +229,37 @@ def _handle_body(body):
 _unspecified = object()
 
 
+def urlencoded_params_matcher(params):
+    def match(request_body):
+        return sorted(params.items()) == sorted(parse_qsl(request_body))
+
+    return match
+
+
+def json_params_matcher(params):
+    def match(request_body):
+        try:
+            return params == json_module.loads(request_body)
+        except json_module.decoder.JSONDecodeError as err:
+            return False
+
+    return match
+
+
 class BaseResponse(object):
     content_type = None
     headers = None
 
     stream = False
 
-    def __init__(self, method, url, match_querystring=_unspecified, post_params=None):
+    def __init__(
+        self, method, url, match_querystring=_unspecified, post_params_matcher=None
+    ):
         self.method = method
         # ensure the url has a default path set if the url is a string
         self.url = _ensure_url_default_path(url)
         self.match_querystring = self._should_match_querystring(match_querystring)
-        self.post_params = post_params
+        self.post_params_matcher = post_params_matcher
         self.call_count = 0
 
     def __eq__(self, other):
@@ -303,11 +322,11 @@ class BaseResponse(object):
         else:
             return False
 
-    def _post_params_match(self, post_params, request_body, content_type):
-        if post_params is None:
+    def _post_params_match(self, post_params_matcher, request_body):
+        if post_params_matcher is None:
             return True
 
-        return sorted(post_params.items()) == sorted(parse_qsl(request_body))
+        return post_params_matcher(request_body)
 
     def get_headers(self):
         headers = HTTPHeaderDict()  # Duplicate headers are legal
@@ -327,9 +346,7 @@ class BaseResponse(object):
         if not self._url_matches(self.url, request.url, self.match_querystring):
             return False
 
-        if not self._post_params_match(
-            self.post_params, request.body, self.content_type
-        ):
+        if not self._post_params_match(self.post_params_matcher, request.body):
             return False
 
         return True

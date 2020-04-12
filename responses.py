@@ -53,6 +53,11 @@ except AttributeError:
     # Python 3.7
     Pattern = re.Pattern
 
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
+
 UNSET = object()
 
 Call = namedtuple("Call", ["request", "response"])
@@ -240,7 +245,7 @@ def json_params_matcher(params):
     def match(request_body):
         try:
             return params == json_module.loads(request_body)
-        except json_module.decoder.JSONDecodeError as err:
+        except JSONDecodeError as err:
             return False
 
     return match

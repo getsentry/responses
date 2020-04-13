@@ -53,6 +53,11 @@ except AttributeError:
     # Python 3.7
     Pattern = re.Pattern
 
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
+
 UNSET = object()
 
 Call = namedtuple("Call", ["request", "response"])
@@ -313,11 +318,24 @@ class BaseResponse(object):
         else:
             return False
 
-    def _post_params_match(self, post_params, request_body, content_type):
-        if post_params == None:
+    def _post_params_match(self, post_params, request_body, request_headers):
+        if post_params is None:
             return True
 
-        return sorted(post_params.items()) == sorted(parse_qsl(request_body))
+        content_type = request_headers["Content-Type"]
+
+        if content_type == "application/x-www-form-urlencoded":
+            return sorted(post_params.items()) == sorted(parse_qsl(request_body))
+
+        if content_type == "application/json":
+            try:
+                if isinstance(request_body, bytes):
+                    request_body = request_body.decode("utf-8")
+                return post_params == json_module.loads(request_body)
+            except JSONDecodeError:
+                return False
+
+        return False
 
     def get_headers(self):
         headers = HTTPHeaderDict()  # Duplicate headers are legal
@@ -337,7 +355,7 @@ class BaseResponse(object):
         if not self._url_matches(self.url, request.url, self.match_querystring):
             return False
 
-        if not self._post_params_match(self.post_params, request.body, self.content_type):
+        if not self._post_params_match(self.post_params, request.body, request.headers):
             return False
 
         return True

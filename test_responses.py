@@ -970,6 +970,7 @@ def test_multiple_urls():
     run()
     assert_reset()
 
+
 def test_passthru(httpserver):
     httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
 
@@ -988,6 +989,7 @@ def test_passthru(httpserver):
 
     run()
     assert_reset()
+
 
 def test_passthru_regex(httpserver):
     httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
@@ -1081,6 +1083,7 @@ def test_request_param():
     run()
     assert_reset()
 
+
 def test_request_matches_post_params():
     @responses.activate
     def run():
@@ -1088,27 +1091,28 @@ def test_request_matches_post_params():
             method=responses.POST,
             url="http://example.com/",
             body="one",
-            post_params={"page": "first"}
+            post_params={"page": {"name": "first", "type": "json"}},
         )
         responses.add(
             method=responses.POST,
             url="http://example.com/",
             body="two",
-            post_params={"page": "second"}
+            post_params={"page": "second", "type": "urlencoded"},
         )
 
         resp = requests.request(
             "POST",
             "http://example.com/",
-            headers={'Content-Type': 'application/json'},
-            data={"page": "second"}
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data={"page": "second", "type": "urlencoded"},
         )
         assert_response(resp, "two")
+
         resp = requests.request(
             "POST",
             "http://example.com/",
-            headers={'Content-Type': 'application/json'},
-            data={"page": "first"}
+            headers={"Content-Type": "application/json"},
+            json={"page": {"name": "first", "type": "json"}},
         )
         assert_response(resp, "one")
 

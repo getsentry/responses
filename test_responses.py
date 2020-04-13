@@ -1116,5 +1116,29 @@ def test_request_matches_post_params():
         )
         assert_response(resp, "one")
 
+        with pytest.raises(ConnectionError):
+            resp = requests.request(
+                "POST",
+                "http://example.com/",
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                data={"page": {"name": "third", "type": "not present"}},
+            )
+
+        with pytest.raises(ConnectionError):
+            resp = requests.request(
+                "POST",
+                "http://example.com/",
+                headers={"Content-Type": "application/json"},
+                data="BAD JSON",
+            )
+
+        with pytest.raises(ConnectionError):
+            resp = requests.request(
+                "POST",
+                "http://example.com/",
+                headers={"Content-Type": "plain/text"},
+                data="bad content-type",
+            )
+
     run()
     assert_reset()

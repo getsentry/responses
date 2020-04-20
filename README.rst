@@ -256,7 +256,7 @@ You can see params passed in the original ``request`` in ``responses.calls[].req
         )
 
         resp = requests.get('http://example.com', params={"hello": "world"})
-        assert response.calls[0].request.params == {"hello": "world"}
+        assert responses.calls[0].request.params == {"hello": "world"}
 
 Responses as a context manager
 ------------------------------

@@ -1150,3 +1150,37 @@ def test_request_param(url):
 
     run()
     assert_reset()
+
+
+@pytest.mark.parametrize(
+    "url", ("http://example.com", "http://example.com?hello=world")
+)
+def test_assert_call_count(url):
+    @responses.activate
+    def run():
+        responses.add(responses.GET, url)
+        responses.add(responses.GET, "http://example1.com")
+
+        assert responses.assert_call_count(url, 0) is True
+
+        with pytest.raises(AssertionError) as excinfo:
+            responses.assert_call_count(url, 2)
+        assert "Expected URL '{0}' to be called 2 times. Called 0 times.".format(
+            url
+        ) in str(excinfo.value)
+
+        requests.get(url)
+        assert responses.assert_call_count(url, 1) is True
+
+        requests.get("http://example1.com")
+        assert responses.assert_call_count(url, 1) is True
+
+        requests.get(url)
+        with pytest.raises(AssertionError) as excinfo:
+            responses.assert_call_count(url, 3)
+        assert "Expected URL '{0}' to be called 3 times. Called 2 times.".format(
+            url
+        ) in str(excinfo.value)
+
+    run()
+    assert_reset()

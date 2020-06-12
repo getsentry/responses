@@ -1,3 +1,15 @@
+0.10.15
+-------
+
+- Added `assert_call_count` to improve ergonomics around ensuring a mock was called.
+- Fix incorrect handling of paths with query strings.
+- Add Python 3.9 support to CI matrix.
+
+0.10.14
+-------
+
+- Retag of 0.10.13
+
 0.10.13
 -------
 

@@ -396,9 +396,9 @@ def test_arbitrary_status_code():
     @responses.activate
     def run():
         url = "http://example.com/"
-        responses.add(responses.GET, url, body="test", status=418)
+        responses.add(responses.GET, url, body="test", status=419)
         resp = requests.get(url)
-        assert resp.status_code == 418
+        assert resp.status_code == 419
         assert resp.reason is None
 
     run()

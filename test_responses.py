@@ -24,9 +24,11 @@ def assert_reset():
     assert len(responses.calls) == 0
 
 
-def assert_response(resp, body=None, content_type="text/plain"):
-    assert resp.status_code == 200
-    assert resp.reason == "OK"
+def assert_response(
+    resp, body=None, content_type="text/plain", status_code=200, reason="OK"
+):
+    assert resp.status_code == status_code
+    assert resp.reason == reason
     if content_type is not None:
         assert resp.headers["Content-Type"] == content_type
     else:
@@ -49,6 +51,34 @@ def test_response():
         assert len(responses.calls) == 2
         assert responses.calls[1].request.url == "http://example.com/?foo=bar"
         assert responses.calls[1].response.content == b"test"
+
+    run()
+    assert_reset()
+
+
+def test_response_with_custom_reason():
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "http://example.com",
+            body=b"take care!",
+            status=299,
+            reason="warning",
+        )
+        requests.get("http://example.com")
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.url == "http://example.com/"
+        assert responses.calls[0].response.content == b"take care!"
+        assert responses.calls[0].response.reason == "warning"
+        assert responses.calls[0].response.status_code == 299
+
+        requests.get("http://example.com?foo=bar")
+        assert len(responses.calls) == 2
+        assert responses.calls[1].request.url == "http://example.com/?foo=bar"
+        assert responses.calls[1].response.content == b"take care!"
+        assert responses.calls[1].response.reason == "warning"
+        assert responses.calls[1].response.status_code == 299
 
     run()
     assert_reset()
@@ -122,6 +152,46 @@ def test_replace(original, replacement):
 
         resp = requests.get("http://example.com/two")
         assert_response(resp, "testtwo")
+
+    run()
+    assert_reset()
+
+
+@pytest.mark.parametrize(
+    "original,replacement",
+    [
+        (
+            Response(
+                method=responses.GET,
+                url="http://example.com/api",
+                body="original",
+                status=202,
+            ),
+            Response(
+                method=responses.GET,
+                url="http://example.com/api",
+                body="replacement",
+                status=299,
+                reason="warning",
+            ),
+        ),
+    ],
+)
+def test_replace_with_reason(original, replacement):
+    @responses.activate
+    def run():
+        if isinstance(original, BaseResponse):
+            responses.add(original)
+        else:
+            responses.add(responses.GET, original, body="original")
+
+        if isinstance(replacement, BaseResponse):
+            responses.replace(replacement)
+        else:
+            responses.replace(responses.GET, replacement, body="replacement")
+
+        resp = requests.get("http://example.com/api")
+        assert_response(resp, "replacement", status_code=299, reason="warning")
 
     run()
     assert_reset()

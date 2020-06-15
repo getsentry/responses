@@ -331,6 +331,7 @@ class Response(BaseResponse):
         body="",
         json=None,
         status=200,
+        reason=None,
         headers=None,
         stream=False,
         content_type=UNSET,
@@ -352,6 +353,7 @@ class Response(BaseResponse):
 
         self.body = body
         self.status = status
+        self.reason = reason
         self.headers = headers
         self.stream = stream
         self.content_type = content_type
@@ -364,9 +366,12 @@ class Response(BaseResponse):
         headers = self.get_headers()
         status = self.status
         body = _handle_body(self.body)
+        reason = (
+            self.reason if self.reason else six.moves.http_client.responses.get(status)
+        )
         return HTTPResponse(
             status=status,
-            reason=six.moves.http_client.responses.get(status),
+            reason=reason,
             body=body,
             headers=headers,
             original_response=OriginalResponseShim(headers),
@@ -503,6 +508,13 @@ class RequestsMock(object):
         >>>     headers={'X-Header': 'foo'},
         >>> )
 
+        Custom reason:
+
+        >>> responses.add(
+        >>>     method='GET',
+        >>>     url='http://example.com',
+        >>>     reason='warning',
+        >>> )
 
         Strict query string matching:
 

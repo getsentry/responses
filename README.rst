@@ -116,6 +116,9 @@ json
 status (``int``)
     The HTTP status code.
 
+reason (``str``)
+    The reason text corresponding to the HTTP status code. Default: mapping of the HTTP status code via six.moves.http_client.responses
+
 content_type (``content_type``)
     Defaults to ``text/plain``.
 

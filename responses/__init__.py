@@ -14,6 +14,8 @@ from requests.exceptions import ConnectionError
 from requests.sessions import REDIRECT_STATI
 from requests.utils import cookiejar_from_dict
 
+from .__version__ import __version__
+
 try:
     from collections.abc import Sequence, Sized
 except ImportError:
@@ -713,6 +715,7 @@ class RequestsMock(object):
 # expose default mock namespace
 mock = _default_mock = RequestsMock(assert_all_requests_are_fired=False)
 __all__ = [
+    "__version__",
     "CallbackResponse",
     "Response",
     "RequestsMock",

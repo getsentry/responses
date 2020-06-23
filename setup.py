@@ -9,7 +9,10 @@ A utility library for mocking out the `requests` Python library.
 :license: Apache 2.0
 """
 
+import os
 import sys
+
+from codecs import open
 
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
@@ -52,9 +55,14 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
+here = os.path.abspath(os.path.dirname(__file__))
+about = {}
+with open(os.path.join(here, "responses", "__version__.py"), "r", "utf-8") as f:
+    exec(f.read(), about)
+
 setup(
     name="responses",
-    version="0.10.16-dev",
+    version=about["__version__"],
     author="David Cramer",
     description=("A utility library for mocking out the `requests` Python library."),
     url="https://github.com/getsentry/responses",

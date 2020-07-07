@@ -1193,17 +1193,21 @@ def test_request_matches_post_params():
             method=responses.POST,
             url="http://example.com/",
             body="one",
-            post_params_matcher=responses.json_params_matcher(
-                {"page": {"name": "first", "type": "json"}}
-            ),
+            match=[
+                responses.json_params_matcher(
+                    {"page": {"name": "first", "type": "json"}}
+                )
+            ],
         )
         responses.add(
             method=responses.POST,
             url="http://example.com/",
             body="two",
-            post_params_matcher=responses.urlencoded_params_matcher(
-                {"page": "second", "type": "urlencoded"}
-            ),
+            match=[
+                responses.urlencoded_params_matcher(
+                    {"page": "second", "type": "urlencoded"}
+                )
+            ],
         )
 
         resp = requests.request(

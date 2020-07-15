@@ -389,10 +389,10 @@ single `response` object.
         assert resp.callback_processed is True
 
 
-Passing thru real requests
---------------------------
+Passing through real requests
+-----------------------------
 
-In some cases you may wish to allow for certain requests to pass thru responses
+In some cases you may wish to allow for certain requests to pass through responses
 and hit a real server. This can be done with the ``add_passthru`` methods:
 
 .. code-block:: python
@@ -421,7 +421,7 @@ instance. It is sometimes useful for debugging purposes to view the stack of
 registered responses which can be accessed via ``responses.mock._matches``.
 
 The ``replace`` function allows a previously registered ``response`` to be
-changed. The method signature is identical to ``add``. ``response``s are
+changed. The method signature is identical to ``add``. ``response`` s are
 identified using ``method`` and ``url``. Only the first matched ``response`` is
 replaced.
 

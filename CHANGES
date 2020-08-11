@@ -1,3 +1,9 @@
+0.10.16
+-------
+
+- Add a requirements pin to urllib3. This helps prevent broken install states where
+  cookie usage fails.
+
 0.10.15
 -------
 

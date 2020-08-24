@@ -10,7 +10,7 @@ Responses
 .. image:: https://img.shields.io/pypi/pyversions/responses.svg
     :target: https://pypi.org/project/responses/
 
-A utility library for mocking out the `requests` Python library.
+A utility library for mocking out the ``requests`` Python library.
 
 ..  note::
 
@@ -125,6 +125,40 @@ headers (``dict``)
 stream (``bool``)
     Disabled by default. Indicates the response should use the streaming API.
 
+match (``list``)
+    A list of callbacks to match requests based on request body contents.
+
+
+Matching Request Parameters
+---------------------------
+
+When adding responses for endpoints that are sent request data you can add
+matchers to ensure your code is sending the right parameters and provide
+different responses based on the request body contents. Resposnes provides
+matchers for JSON and URLencoded request bodies and you can supply your own for
+other formats.
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+    @responses.activate
+    def test_calc_api():
+        responses.add(
+            responses.POST,
+            url='http://calc.com/sum',
+            body=4,
+            match=[
+                resposnes.urlencoded_params_matcher({"left": 1, "right": 3})
+            ]
+        )
+        requests.post("http://calc.com/sum", data={"left": 1, "right": 3})
+
+Matching JSON encoded data can be done with ``responses.json_params_matcher()``.
+If your application uses other encodings you can build your own matcher that
+returns ``True`` or ``False`` if the request parameters match. Your matcher can
+expect a ``request_body`` parameter to be provided by responses.
 
 Dynamic Responses
 -----------------
@@ -170,7 +204,7 @@ a tuple of (``status``, ``headers``, ``body``).
             '728d329e-0e86-11e4-a748-0c84dc037c13'
         )
 
-You can also pass a compiled regex to `add_callback` to match multiple urls:
+You can also pass a compiled regex to ``add_callback`` to match multiple urls:
 
 ..  code-block:: python
 

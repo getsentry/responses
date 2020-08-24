@@ -53,6 +53,11 @@ except AttributeError:
     # Python 3.7
     Pattern = re.Pattern
 
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
+
 UNSET = object()
 
 Call = namedtuple("Call", ["request", "response"])
@@ -229,17 +234,37 @@ def _handle_body(body):
 _unspecified = object()
 
 
+def urlencoded_params_matcher(params):
+    def match(request_body):
+        return sorted(params.items()) == sorted(parse_qsl(request_body))
+
+    return match
+
+
+def json_params_matcher(params):
+    def match(request_body):
+        try:
+            if isinstance(request_body, bytes):
+                request_body = request_body.decode("utf-8")
+            return params == json_module.loads(request_body)
+        except JSONDecodeError:
+            return False
+
+    return match
+
+
 class BaseResponse(object):
     content_type = None
     headers = None
 
     stream = False
 
-    def __init__(self, method, url, match_querystring=_unspecified):
+    def __init__(self, method, url, match_querystring=_unspecified, match=[]):
         self.method = method
         # ensure the url has a default path set if the url is a string
         self.url = _ensure_url_default_path(url)
         self.match_querystring = self._should_match_querystring(match_querystring)
+        self.match = match
         self.call_count = 0
 
     def __eq__(self, other):
@@ -302,6 +327,13 @@ class BaseResponse(object):
         else:
             return False
 
+    def _body_matches(self, match, request_body):
+        for matcher in match:
+            if not matcher(request_body):
+                return False
+
+        return True
+
     def get_headers(self):
         headers = HTTPHeaderDict()  # Duplicate headers are legal
         if self.content_type is not None:
@@ -318,6 +350,9 @@ class BaseResponse(object):
             return False
 
         if not self._url_matches(self.url, request.url, self.match_querystring):
+            return False
+
+        if not self._body_matches(self.match, request.body):
             return False
 
         return True

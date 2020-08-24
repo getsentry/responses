@@ -1184,3 +1184,47 @@ def test_assert_call_count(url):
 
     run()
     assert_reset()
+
+
+def test_request_matches_post_params():
+    @responses.activate
+    def run():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="one",
+            match=[
+                responses.json_params_matcher(
+                    {"page": {"name": "first", "type": "json"}}
+                )
+            ],
+        )
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="two",
+            match=[
+                responses.urlencoded_params_matcher(
+                    {"page": "second", "type": "urlencoded"}
+                )
+            ],
+        )
+
+        resp = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={"Content-Type": "x-www-form-urlencoded"},
+            data={"page": "second", "type": "urlencoded"},
+        )
+        assert_response(resp, "two")
+
+        resp = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={"Content-Type": "application/json"},
+            json={"page": {"name": "first", "type": "json"}},
+        )
+        assert_response(resp, "one")
+
+    run()
+    assert_reset()

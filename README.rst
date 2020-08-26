@@ -134,7 +134,7 @@ Matching Request Parameters
 
 When adding responses for endpoints that are sent request data you can add
 matchers to ensure your code is sending the right parameters and provide
-different responses based on the request body contents. Resposnes provides
+different responses based on the request body contents. Responses provides
 matchers for JSON and URLencoded request bodies and you can supply your own for
 other formats.
 
@@ -150,7 +150,7 @@ other formats.
             url='http://calc.com/sum',
             body=4,
             match=[
-                resposnes.urlencoded_params_matcher({"left": 1, "right": 3})
+                responses.urlencoded_params_matcher({"left": 1, "right": 3})
             ]
         )
         requests.post("http://calc.com/sum", data={"left": 1, "right": 3})

@@ -1228,3 +1228,39 @@ def test_request_matches_post_params():
 
     run()
     assert_reset()
+
+
+def test_request_matches_post_keys():
+    @responses.activate
+    def run():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="one",
+            match=[responses.json_keys_matcher(["from", "to"])],
+        )
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="two",
+            match=[responses.urlencoded_keys_matcher(["from", "to"])],
+        )
+
+        resp = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={"Content-Type": "x-www-form-urlencoded"},
+            data={"from": 12, "to": 24},
+        )
+        assert_response(resp, "two")
+
+        resp = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={"Content-Type": "application/json"},
+            json={"from": 12, "to": 24},
+        )
+        assert_response(resp, "one")
+
+    run()
+    assert_reset()

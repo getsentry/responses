@@ -241,12 +241,31 @@ def urlencoded_params_matcher(params):
     return match
 
 
+def urlencoded_keys_matcher(keys):
+    def match(request_body):
+        return sorted(keys) == sorted(dict(parse_qsl(request_body)).keys())
+
+    return match
+
+
 def json_params_matcher(params):
     def match(request_body):
         try:
             if isinstance(request_body, bytes):
                 request_body = request_body.decode("utf-8")
             return params == json_module.loads(request_body)
+        except JSONDecodeError:
+            return False
+
+    return match
+
+
+def json_keys_matcher(keys):
+    def match(request_body):
+        try:
+            if isinstance(request_body, bytes):
+                request_body = request_body.decode("utf-8")
+            return sorted(keys) == sorted(json_module.loads(request_body).keys())
         except JSONDecodeError:
             return False
 

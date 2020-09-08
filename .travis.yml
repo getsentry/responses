@@ -1,6 +1,6 @@
+os: linux
 dist: xenial
 language: python
-sudo: false
 python:
 - '2.7'
 - '3.5'
@@ -15,14 +15,14 @@ cache:
   - ".pip_download_cache"
 
 env:
-  matrix:
+  jobs:
   - REQUESTS="requests>=2.0,<3.0"
   - REQUESTS="-U requests"
   - REQUESTS="-e git+git://github.com/requests/requests.git#egg=requests"
   global:
   - PIP_DOWNLOAD_CACHE=".pip_download_cache"
 
-matrix:
+jobs:
   allow_failures:
   - env: REQUESTS="-e git+git://github.com/requests/requests.git#egg=requests"
   - python: nightly
@@ -41,7 +41,7 @@ script:
 deploy:
   provider: pypi
   distributions: "sdist bdist_wheel"
-  user:
+  username:
     secure: Mt6mQiqtcxi1xf3TpTtPQ5fJ97LQiO754qV1zsK2izTs5kDg5NhJUUGReJCKvl9fJKbGqGwT+RR1q6/5kW1s8UGVduqLfBUBUSW++qciwcvIg2B3DlBFuW7vVfzi0DCF6xssjSjwpXH4iAg5QO71qOkoE9t71G2boKxUuK1wL+E=
   password:
     secure: SejRAkh567ae8HNgLMWebpPwOxn2+wfrKWHkm8JTmCJcxKIQmfbPlUJPAspJ9HF7kBB1MzkkqNkXG184VEgH1l1JqUNyZKqrk+y4R3s+jjJ+Yqepm3SeAiq5FceS8BwCegO9L3po299NtdWFHllydVLLL+Rf3ZnCQOl5YT1tzzk=

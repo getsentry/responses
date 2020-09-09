@@ -1228,3 +1228,20 @@ def test_request_matches_post_params():
 
     run()
     assert_reset()
+
+
+def test_request_matches_empty_body():
+    @responses.activate
+    def run():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="one",
+            match=[responses.json_params_matcher(None)],
+        )
+
+        resp = requests.request("POST", "http://example.com/",)
+        assert_response(resp, "one")
+
+    run()
+    assert_reset()

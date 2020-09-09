@@ -246,7 +246,11 @@ def json_params_matcher(params):
         try:
             if isinstance(request_body, bytes):
                 request_body = request_body.decode("utf-8")
-            return params == json_module.loads(request_body)
+            return (
+                params is None
+                if request_body is None
+                else params == json_module.loads(request_body)
+            )
         except JSONDecodeError:
             return False
 

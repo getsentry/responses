@@ -236,7 +236,11 @@ _unspecified = object()
 
 def urlencoded_params_matcher(params):
     def match(request_body):
-        return sorted(params.items()) == sorted(parse_qsl(request_body))
+        return (
+            params is None
+            if request_body is None
+            else sorted(params.items()) == sorted(parse_qsl(request_body))
+        )
 
     return match
 

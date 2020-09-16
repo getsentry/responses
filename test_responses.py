@@ -1247,7 +1247,7 @@ def test_request_matches_empty_body():
             match=[responses.urlencoded_params_matcher(None)],
         )
 
-        resp = requests.request("POST", "http://example.com/",)
+        resp = requests.request("POST", "http://example.com/")
         assert_response(resp, "one")
 
         resp = requests.request(

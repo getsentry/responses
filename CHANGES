@@ -1,3 +1,9 @@
+0.12.1
+------
+
+* `responses.urlencoded_params_matcher` and `responses.json_params_matcher` now
+  accept None to match empty requests.
+
 0.12.0
 ------
 

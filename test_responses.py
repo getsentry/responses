@@ -1228,3 +1228,34 @@ def test_request_matches_post_params():
 
     run()
     assert_reset()
+
+
+def test_request_matches_empty_body():
+    @responses.activate
+    def run():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="one",
+            match=[responses.json_params_matcher(None)],
+        )
+
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="two",
+            match=[responses.urlencoded_params_matcher(None)],
+        )
+
+        resp = requests.request("POST", "http://example.com/")
+        assert_response(resp, "one")
+
+        resp = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={"Content-Type": "x-www-form-urlencoded"},
+        )
+        assert_response(resp, "two")
+
+    run()
+    assert_reset()

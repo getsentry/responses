@@ -357,15 +357,15 @@ class BaseResponse(object):
 
     def matches(self, request):
         if request.method != self.method:
-            return False
+            return False, "Method does not match"
 
         if not self._url_matches(self.url, request.url, self.match_querystring):
-            return False
+            return False, "URL does not match"
 
         if not self._body_matches(self.match, request.body):
-            return False
+            return False, "Parameters do not match"
 
-        return True
+        return True, ""
 
 
 class Response(BaseResponse):
@@ -653,16 +653,19 @@ class RequestsMock(object):
     def _find_match(self, request):
         found = None
         found_match = None
+        match_failed_reasons = []
         for i, match in enumerate(self._matches):
-            if match.matches(request):
+            match_result, reason = match.matches(request)
+            if match_result:
                 if found is None:
                     found = i
                     found_match = match
                 else:
                     # Multiple matches found.  Remove & return the first match.
-                    return self._matches.pop(found)
-
-        return found_match
+                    return self._matches.pop(found), match_failed_reasons
+            else:
+                match_failed_reasons.append(reason)
+        return found_match, match_failed_reasons
 
     def _parse_request_params(self, url):
         params = {}
@@ -674,7 +677,7 @@ class RequestsMock(object):
         return params
 
     def _on_request(self, adapter, request, **kwargs):
-        match = self._find_match(request)
+        match, match_failed_reasons = self._find_match(request)
         resp_callback = self.response_callback
         request.params = self._parse_request_params(request.path_url)
 
@@ -697,8 +700,10 @@ class RequestsMock(object):
                 "- %s %s\n\n"
                 "Available matches:\n" % (request.method, request.url)
             )
-            for m in self._matches:
-                error_msg += "- {} {}\n".format(m.method, m.url)
+            for i, m in enumerate(self._matches):
+                error_msg += "- {} {} {}\n".format(
+                    m.method, m.url, match_failed_reasons[i]
+                )
 
             response = ConnectionError(error_msg)
             response.request = request

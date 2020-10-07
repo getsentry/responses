@@ -1277,3 +1277,25 @@ def test_request_matches_empty_body():
 
     run()
     assert_reset()
+
+
+def test_fail_request_error():
+    @responses.activate
+    def run():
+        responses.add("POST", "http://example1.com")
+        responses.add("GET", "http://example.com")
+        responses.add(
+            "POST",
+            "http://example.com",
+            match=[responses.urlencoded_params_matcher({"foo": "bar"})],
+        )
+
+        with pytest.raises(ConnectionError) as excinfo:
+            requests.post("http://example.com", data={"id": "bad"})
+        msg = str(excinfo.value)
+        assert "- POST http://example1.com/ URL does not match" in msg
+        assert "- GET http://example.com/ Method does not match" in msg
+        assert "- POST http://example.com/ Parameters do not match" in msg
+
+    run()
+    assert_reset()

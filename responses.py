@@ -5,6 +5,8 @@ import inspect
 import json as json_module
 import logging
 import re
+from itertools import groupby
+
 import six
 
 from collections import namedtuple
@@ -662,10 +664,19 @@ class RequestsMock(object):
 
         return found_match
 
+    def _parse_request_params(self, url):
+        params = {}
+        for k, v in groupby(parse_qsl(urlparse(url).query), lambda kv: kv[0]):
+            vs = list(map(lambda x: x[1], v))
+            if len(vs) == 1:
+                vs = vs[0]
+            params[k] = vs
+        return params
+
     def _on_request(self, adapter, request, **kwargs):
         match = self._find_match(request)
         resp_callback = self.response_callback
-        request.params = dict(parse_qsl(urlparse(request.path_url).query))
+        request.params = self._parse_request_params(request.path_url)
 
         if match is None:
             if any(

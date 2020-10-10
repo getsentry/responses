@@ -1152,6 +1152,22 @@ def test_request_param(url):
     assert_reset()
 
 
+def test_request_param_with_multiple_values_for_the_same_key():
+    @responses.activate
+    def run():
+        url = "http://example.com"
+        params = {"key1": ["one", "two"], "key2": "three"}
+        responses.add(
+            method=responses.GET, url=url, body="test",
+        )
+        resp = requests.get(url, params=params)
+        assert_response(resp, "test")
+        assert resp.request.params == params
+
+    run()
+    assert_reset()
+
+
 @pytest.mark.parametrize(
     "url", ("http://example.com", "http://example.com?hello=world")
 )

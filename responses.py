@@ -666,11 +666,11 @@ class RequestsMock(object):
 
     def _parse_request_params(self, url):
         params = {}
-        for k, v in groupby(parse_qsl(urlparse(url).query), lambda kv: kv[0]):
-            vs = list(map(lambda x: x[1], v))
-            if len(vs) == 1:
-                vs = vs[0]
-            params[k] = vs
+        for key, val in groupby(parse_qsl(urlparse(url).query), lambda kv: kv[0]):
+            values = list(map(lambda x: x[1], val))
+            if len(values) == 1:
+                values = values[0]
+            params[key] = values
         return params
 
     def _on_request(self, adapter, request, **kwargs):

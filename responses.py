@@ -677,7 +677,12 @@ class RequestsMock(object):
         return params
 
     def _on_request(self, adapter, request, **kwargs):
-        match, match_failed_reasons = self._find_match(request)
+        match_failed_reasons = []
+        match = self._find_match(request)
+        # Some libraries mock `_find_match` and return single result,
+        # So, we extract `match_failed_reasons` like this to prevent crash
+        if isinstance(match, tuple) and len(match) == 2:
+            match, match_failed_reasons = match
         resp_callback = self.response_callback
         request.params = self._parse_request_params(request.path_url)
 

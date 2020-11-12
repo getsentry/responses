@@ -1299,3 +1299,20 @@ def test_fail_request_error():
 
     run()
     assert_reset()
+
+
+def test_mock_find_match():
+    @responses.activate
+    def run():
+        url = "http://example.com/"
+        responses.add("POST", url)
+
+        with patch(
+            "responses.RequestsMock._find_match",
+            return_value=Response(method=responses.GET, url=url),
+        ):
+            response = requests.post("http://example.com/")
+        assert response.url == url
+
+    run()
+    assert_reset()

@@ -28,7 +28,7 @@ except ImportError:
 try:
     from requests.packages.urllib3.connection import HTTPHeaderDict
 except ImportError:
-    from urllib3.connection import HTTPHeaderDict
+    from urllib3.response import HTTPHeaderDict
 
 if six.PY2:
     from urlparse import urlparse, parse_qsl, urlsplit, urlunsplit

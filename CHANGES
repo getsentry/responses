@@ -3,6 +3,9 @@
 
 * `responses.urlencoded_params_matcher` and `responses.json_params_matcher` now
   accept None to match empty requests.
+* Fixed imports to work with new `urllib3` versions.
+* `request.params` now allows parameters to have multiple values for the same key.
+* Improved ConnectionError messages.
 
 0.12.0
 ------

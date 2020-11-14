@@ -610,11 +610,15 @@ class RequestsMock(object):
         >>> responses.replace(responses.GET, 'http://example.org', json={'data': 2})
         """
         if isinstance(method_or_response, BaseResponse):
+            url = method_or_response.url
             response = method_or_response
         else:
             response = Response(method=method_or_response, url=url, body=body, **kwargs)
 
-        index = self._matches.index(response)
+        try:
+            index = self._matches.index(response)
+        except ValueError:
+            raise ValueError("Response is not registered for URL %s" % url)
         self._matches[index] = response
 
     def add_callback(

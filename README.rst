@@ -148,9 +148,9 @@ other formats.
         responses.add(
             responses.POST,
             url='http://calc.com/sum',
-            body=4,
+            body="4",
             match=[
-                responses.urlencoded_params_matcher({"left": 1, "right": 3})
+                responses.urlencoded_params_matcher({"left": "1", "right": "3"})
             ]
         )
         requests.post("http://calc.com/sum", data={"left": 1, "right": 3})

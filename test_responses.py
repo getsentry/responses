@@ -138,8 +138,27 @@ def test_replace_error(original, replacement):
     @responses.activate
     def run():
         responses.add(responses.GET, original)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as excinfo:
             responses.replace(responses.GET, replacement)
+        assert "Response is not registered for URL %s" % replacement in str(
+            excinfo.value
+        )
+
+    run()
+    assert_reset()
+
+
+def test_replace_response_object_error():
+    @responses.activate
+    def run():
+        responses.add(Response(method=responses.GET, url="http://example.com/one"))
+        with pytest.raises(ValueError) as excinfo:
+            responses.replace(
+                Response(method=responses.GET, url="http://example.com/two")
+            )
+        assert "Response is not registered for URL http://example.com/two" in str(
+            excinfo.value
+        )
 
     run()
     assert_reset()

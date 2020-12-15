@@ -621,6 +621,20 @@ class RequestsMock(object):
             raise ValueError("Response is not registered for URL %s" % url)
         self._matches[index] = response
 
+    def upsert(self, method_or_response=None, url=None, body="", *args, **kwargs):
+        """
+        Replaces a response previously added using ``add()``, or adds the response
+        if no response exists.  Responses are matched using ``method``and ``url``.
+        The first matching response is replaced.
+
+        >>> responses.add(responses.GET, 'http://example.org', json={'data': 1})
+        >>> responses.upsert(responses.GET, 'http://example.org', json={'data': 2})
+        """
+        try:
+            self.replace(method_or_response, url, body, *args, **kwargs)
+        except ValueError:
+            self.add(method_or_response, url, body, *args, **kwargs)
+
     def add_callback(
         self, method, url, callback, match_querystring=False, content_type="text/plain"
     ):
@@ -802,6 +816,7 @@ __all__ = [
     "start",
     "stop",
     "target",
+    "upsert",
 ]
 
 activate = _default_mock.activate
@@ -826,3 +841,4 @@ response_callback = _default_mock.response_callback
 start = _default_mock.start
 stop = _default_mock.stop
 target = _default_mock.target
+upsert = _default_mock.upsert

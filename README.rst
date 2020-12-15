@@ -475,6 +475,10 @@ replaced.
         assert resp.json() == {'data': 2}
 
 
+The ``upsert`` function allows a previously registered ``response`` to be
+changed like ``replace``. If the response is registered, the ``upsert`` function
+will registered it like ``add``.
+
 ``remove`` takes a ``method`` and ``url`` argument and will remove **all**
 matched responses from the registered list.
 

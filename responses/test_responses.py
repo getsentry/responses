@@ -444,7 +444,11 @@ def test_callback():
     body = b"test callback"
     status = 400
     reason = "Bad Request"
-    headers = {"foo": "bar", "Content-Type": "application/json", "Content-Length": "13"}
+    headers = {
+        "foo": "bar",
+        "Content-Type": "application/json",
+        "Content-Length": "13",
+    }
     url = "http://example.com/"
 
     def request_callback(request):
@@ -531,7 +535,11 @@ def test_callback_no_content_type():
 
 def test_callback_content_type_dict():
     def request_callback(request):
-        return (200, {"Content-Type": "application/json"}, b"foo")
+        return (
+            200,
+            {"Content-Type": "application/json"},
+            b"foo",
+        )
 
     @responses.activate
     def run():
@@ -546,7 +554,11 @@ def test_callback_content_type_dict():
 
 def test_callback_content_type_tuple():
     def request_callback(request):
-        return (200, [("Content-Type", "application/json")], b"foo")
+        return (
+            200,
+            [("Content-Type", "application/json")],
+            b"foo",
+        )
 
     @responses.activate
     def run():
@@ -1038,46 +1050,46 @@ def test_multiple_methods():
     assert_reset()
 
 
-# def test_passthru(httpserver):
-#     httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
+def test_passthru(httpserver):
+    httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
 
-#     @responses.activate
-#     def run():
-#         responses.add_passthru(httpserver.url)
-#         responses.add(responses.GET, "{}/one".format(httpserver.url), body="one")
-#         responses.add(responses.GET, "http://example.com/two", body="two")
+    @responses.activate
+    def run():
+        responses.add_passthru(httpserver.url)
+        responses.add(responses.GET, "{}/one".format(httpserver.url), body="one")
+        responses.add(responses.GET, "http://example.com/two", body="two")
 
-#         resp = requests.get("http://example.com/two")
-#         assert_response(resp, "two")
-#         resp = requests.get("{}/one".format(httpserver.url))
-#         assert_response(resp, "one")
-#         resp = requests.get(httpserver.url)
-#         assert_response(resp, "OK")
+        resp = requests.get("http://example.com/two")
+        assert_response(resp, "two")
+        resp = requests.get("{}/one".format(httpserver.url))
+        assert_response(resp, "one")
+        resp = requests.get(httpserver.url)
+        assert_response(resp, "OK")
 
-#     run()
-#     assert_reset()
+    run()
+    assert_reset()
 
 
-# def test_passthru_regex(httpserver):
-#     httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
+def test_passthru_regex(httpserver):
+    httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
 
-#     @responses.activate
-#     def run():
-#         responses.add_passthru(re.compile("{}/\\w+".format(httpserver.url)))
-#         responses.add(responses.GET, "{}/one".format(httpserver.url), body="one")
-#         responses.add(responses.GET, "http://example.com/two", body="two")
+    @responses.activate
+    def run():
+        responses.add_passthru(re.compile("{}/\\w+".format(httpserver.url)))
+        responses.add(responses.GET, "{}/one".format(httpserver.url), body="one")
+        responses.add(responses.GET, "http://example.com/two", body="two")
 
-#         resp = requests.get("http://example.com/two")
-#         assert_response(resp, "two")
-#         resp = requests.get("{}/one".format(httpserver.url))
-#         assert_response(resp, "one")
-#         resp = requests.get("{}/two".format(httpserver.url))
-#         assert_response(resp, "OK")
-#         resp = requests.get("{}/three".format(httpserver.url))
-#         assert_response(resp, "OK")
+        resp = requests.get("http://example.com/two")
+        assert_response(resp, "two")
+        resp = requests.get("{}/one".format(httpserver.url))
+        assert_response(resp, "one")
+        resp = requests.get("{}/two".format(httpserver.url))
+        assert_response(resp, "OK")
+        resp = requests.get("{}/three".format(httpserver.url))
+        assert_response(resp, "OK")
 
-#     run()
-#     assert_reset()
+    run()
+    assert_reset()
 
 
 def test_method_named_param():
@@ -1164,7 +1176,11 @@ def test_request_param_with_multiple_values_for_the_same_key():
     def run():
         url = "http://example.com"
         params = {"key1": ["one", "two"], "key2": "three"}
-        responses.add(method=responses.GET, url=url, body="test")
+        responses.add(
+            method=responses.GET,
+            url=url,
+            body="test",
+        )
         resp = requests.get(url, params=params)
         assert_response(resp, "test")
         assert resp.request.params == params

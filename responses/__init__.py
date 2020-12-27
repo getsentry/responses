@@ -1,5 +1,4 @@
 from __future__ import absolute_import, print_function, division, unicode_literals
-from typing import List
 
 import _io
 import inspect
@@ -194,10 +193,6 @@ def get_wrapped(func, responses):
     wrapper = evaldict["wrapper"]
     update_wrapper(wrapper, func)
     return wrapper
-
-
-calls_2: List[Call] = []
-bar = iter(calls_2)
 
 
 class CallList(Sequence, Sized):

@@ -16,7 +16,7 @@ from responses import BaseResponse, Response
 try:
     from mock import patch, Mock
 except ImportError:
-    from unittest.mock import patch, Mock
+    from unittest.mock import patch, Mock # type: ignore
 
 
 def assert_reset():
@@ -32,6 +32,12 @@ def assert_response(resp, body=None, content_type="text/plain"):
     else:
         assert "Content-Type" not in resp.headers
     assert resp.text == body
+
+
+def assert_params(resp, expected):
+    assert hasattr(resp, 'request'), "Missing request"
+    assert hasattr(resp.request, "params"), "Missing params on request that responses should add"
+    assert getattr(resp.request, "params") == expected, "Incorrect parameters"
 
 
 def test_response():
@@ -802,7 +808,7 @@ def test_response_callback():
             resp = requests.get("http://example.com")
             assert resp.text == "test"
             assert hasattr(resp, "_is_mocked")
-            assert resp._is_mocked is True
+            assert getattr(resp, "_is_mocked") is True
 
     run()
     assert_reset()
@@ -813,8 +819,8 @@ def test_response_filebody():
 
     def run():
         with responses.RequestsMock() as m:
-            with open("README.rst", "rb") as out:
-                m.add(responses.GET, "http://example.com", body=out, stream=True)
+            with open("README.rst", "r") as out:
+                m.add(responses.GET, "http://example.com", body=out.read(), stream=True)
                 resp = requests.get("http://example.com")
             with open("README.rst", "r") as out:
                 assert resp.text == out.read()
@@ -963,7 +969,7 @@ def test_handles_buffered_reader_body():
 
     @responses.activate
     def run():
-        responses.add(responses.GET, url, body=BufferedReader(BytesIO(b"test")))
+        responses.add(responses.GET, url, body=BufferedReader(BytesIO(b"test"))) # type: ignore
 
         resp = requests.get(url)
 
@@ -1161,11 +1167,11 @@ def test_request_param(url):
         )
         resp = requests.get(url, params=params)
         assert_response(resp, "test")
-        assert resp.request.params == params
+        assert_params(resp, params)
 
         resp = requests.get(url)
         assert_response(resp, "test")
-        assert resp.request.params == {}
+        assert_params(resp, {})
 
     run()
     assert_reset()
@@ -1183,7 +1189,7 @@ def test_request_param_with_multiple_values_for_the_same_key():
         )
         resp = requests.get(url, params=params)
         assert_response(resp, "test")
-        assert resp.request.params == params
+        assert_params(resp, params)
 
     run()
     assert_reset()

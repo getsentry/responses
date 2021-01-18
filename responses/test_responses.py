@@ -16,7 +16,7 @@ from responses import BaseResponse, Response
 try:
     from mock import patch, Mock
 except ImportError:
-    from unittest.mock import patch, Mock # type: ignore
+    from unittest.mock import patch, Mock  # type: ignore
 
 
 def assert_reset():
@@ -35,8 +35,10 @@ def assert_response(resp, body=None, content_type="text/plain"):
 
 
 def assert_params(resp, expected):
-    assert hasattr(resp, 'request'), "Missing request"
-    assert hasattr(resp.request, "params"), "Missing params on request that responses should add"
+    assert hasattr(resp, "request"), "Missing request"
+    assert hasattr(
+        resp.request, "params"
+    ), "Missing params on request that responses should add"
     assert getattr(resp.request, "params") == expected, "Incorrect parameters"
 
 
@@ -969,7 +971,7 @@ def test_handles_buffered_reader_body():
 
     @responses.activate
     def run():
-        responses.add(responses.GET, url, body=BufferedReader(BytesIO(b"test"))) # type: ignore
+        responses.add(responses.GET, url, body=BufferedReader(BytesIO(b"test")))  # type: ignore
 
         resp = requests.get(url)
 

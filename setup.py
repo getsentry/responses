@@ -34,7 +34,7 @@ tests_require = [
     "pytest-cov",
     "pytest-localserver",
     "flake8",
-    "mypy"
+    "mypy; python_version >= 3.5"
 ]
 
 extras_require = {"tests": tests_require}

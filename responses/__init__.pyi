@@ -159,7 +159,7 @@ class RequestsMock:
     ) -> None: ...
     def reset(self) -> None: ...
     add: _Add
-    def add_passthru(self, prefix: str) -> None: ...
+    add_passthru: _AddPassthru
     def remove(
         self,
         method_or_response: Optional[Union[str, Response]] = ...,
@@ -184,7 +184,7 @@ class _Activate(Protocol):
 class _Add(Protocol):
     def __call__(
         self,
-        method: Optional[str] = ...,
+        method: Optional[Union[str, BaseResponse]] = ...,
         url: Optional[Union[Pattern[str], str]] = ...,
         body: _Body = ...,
         json: Optional[Any] = ...,
@@ -207,17 +207,22 @@ class _AddCallback(Protocol):
         content_type: Optional[str] = ...,
     ) -> None: ...
 
+class _AddPassthru(Protocol):
+    def __call__(
+        self, prefix: Union[Pattern[str], str]
+    ) -> None: ...
+
 class _Remove(Protocol):
     def __call__(
         self,
-        method_or_response: Optional[Union[str, Response]] = ...,
+        method_or_response: Optional[Union[str, BaseResponse]] = ...,
         url: Optional[Union[Pattern[str], str]] = ...,
     ) -> None: ...
 
 class _Replace(Protocol):
     def __call__(
         self,
-        method_or_response: Optional[Union[str, Response]] = ...,
+        method_or_response: Optional[Union[str, BaseResponse]] = ...,
         url: Optional[Union[Pattern[str], str]] = ...,
         body: _Body = ...,
         json: Optional[Any] = ...,
@@ -233,7 +238,7 @@ class _Replace(Protocol):
 activate: _Activate
 add: _Add
 add_callback: _AddCallback
-add_passthru: Callable[[str], None]
+add_passthru: _AddPassthru
 assert_all_requests_are_fired: bool
 assert_call_count: Callable[[str, int], bool]
 calls: CallList

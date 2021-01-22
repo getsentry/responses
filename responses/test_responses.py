@@ -172,6 +172,77 @@ def test_replace_response_object_error():
     assert_reset()
 
 
+@pytest.mark.parametrize(
+    "original,replacement",
+    [
+        ("http://example.com/two", "http://example.com/two"),
+        (
+            Response(method=responses.GET, url="http://example.com/two"),
+            Response(
+                method=responses.GET, url="http://example.com/two", body="testtwo"
+            ),
+        ),
+        (
+            re.compile(r"http://example\.com/two"),
+            re.compile(r"http://example\.com/two"),
+        ),
+    ],
+)
+def test_upsert_replace(original, replacement):
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com/one", body="test1")
+
+        if isinstance(original, BaseResponse):
+            responses.add(original)
+        else:
+            responses.add(responses.GET, original, body="test2")
+
+        if isinstance(replacement, BaseResponse):
+            responses.upsert(replacement)
+        else:
+            responses.upsert(responses.GET, replacement, body="testtwo")
+
+        resp = requests.get("http://example.com/two")
+        assert_response(resp, "testtwo")
+
+    run()
+    assert_reset()
+
+
+@pytest.mark.parametrize(
+    "original,replacement",
+    [
+        ("http://example.com/two", "http://example.com/two"),
+        (
+            Response(method=responses.GET, url="http://example.com/two"),
+            Response(
+                method=responses.GET, url="http://example.com/two", body="testtwo"
+            ),
+        ),
+        (
+            re.compile(r"http://example\.com/two"),
+            re.compile(r"http://example\.com/two"),
+        ),
+    ],
+)
+def test_upsert_add(original, replacement):
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com/one", body="test1")
+
+        if isinstance(replacement, BaseResponse):
+            responses.upsert(replacement)
+        else:
+            responses.upsert(responses.GET, replacement, body="testtwo")
+
+        resp = requests.get("http://example.com/two")
+        assert_response(resp, "testtwo")
+
+    run()
+    assert_reset()
+
+
 def test_remove():
     @responses.activate
     def run():

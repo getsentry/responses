@@ -666,6 +666,9 @@ class RequestsMock(object):
             )
         )
 
+    def list(self):
+        return self._matches
+
     @property
     def calls(self):
         return self._calls

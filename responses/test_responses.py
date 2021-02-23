@@ -1445,3 +1445,32 @@ def test_response_representations(response_params, expected_str, expected_repr):
 
     assert response.__str__() == expected_str
     assert response.__repr__() == expected_repr
+
+
+def test_mocked_responses_list():
+    @responses.activate
+    def run():
+        first_response = Response(
+            responses.GET,
+            "http://example.com/",
+            body="",
+            headers={"X-Test": "foo"},
+            status=404,
+        )
+        second_response = Response(
+            responses.GET, "http://example.com/", body="", headers={"X-Test": "foo"}
+        )
+        third_response = Response(
+            responses.POST, "http://anotherdomain.com/", body={"field": "value"}
+        )
+        responses.add(first_response)
+        responses.add(second_response)
+        responses.add(third_response)
+
+        mocks_list = responses.mock.list()
+
+        assert mocks_list == responses.mock._matches
+        assert mocks_list == [first_response, second_response, third_response]
+
+    run()
+    assert_reset()

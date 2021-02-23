@@ -1397,3 +1397,51 @@ def test_fail_request_error():
 
     run()
     assert_reset()
+
+
+@pytest.mark.parametrize(
+    "response_params, expected_str, expected_repr",
+    [
+        (
+            {"method": responses.GET, "url": "http://example.com/"},
+            (
+                '{"url": "http://example.com/", "content_type": "text/plain", '
+                '"headers": null, "status": 200}'
+            ),
+            "<responses.Response: http://example.com/>",
+        ),
+        (
+            {
+                "method": responses.POST,
+                "url": "http://another-domain.com/",
+                "content_type": "application/json",
+                "status": 404,
+            },
+            (
+                '{"url": "http://another-domain.com/", "content_type": "application/json", '
+                '"headers": null, "status": 404}'
+            ),
+            "<responses.Response: http://another-domain.com/>",
+        ),
+        (
+            {
+                "method": responses.PUT,
+                "url": "http://abcd.com/",
+                "content_type": "text/html",
+                "status": 500,
+                "headers": {"X-Test": "foo"},
+                "body": {"it_wont_be": "considered"},
+            },
+            (
+                '{"url": "http://abcd.com/", "content_type": "text/html", '
+                '"headers": {"X-Test": "foo"}, "status": 500}'
+            ),
+            "<responses.Response: http://abcd.com/>",
+        ),
+    ],
+)
+def test_response_representations(response_params, expected_str, expected_repr):
+    response = Response(**response_params)
+
+    assert response.__str__() == expected_str
+    assert response.__repr__() == expected_repr

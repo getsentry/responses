@@ -1447,7 +1447,7 @@ def test_response_representations(response_params, expected_str, expected_repr):
     assert response.__repr__() == expected_repr
 
 
-def test_mocked_responses_list():
+def test_mocked_responses_list_registered():
     @responses.activate
     def run():
         first_response = Response(
@@ -1468,7 +1468,7 @@ def test_mocked_responses_list():
         responses.add(second_response)
         responses.add(third_response)
 
-        mocks_list = responses.mock.list()
+        mocks_list = responses.mock.registered()
 
         assert mocks_list == responses.mock._matches
         assert mocks_list == [first_response, second_response, third_response]

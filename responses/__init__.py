@@ -667,7 +667,7 @@ class RequestsMock(object):
             )
         )
 
-    def list(self):
+    def registered(self):
         return self._matches
 
     @property
@@ -849,12 +849,12 @@ calls = _default_mock.calls
 DELETE = _default_mock.DELETE
 GET = _default_mock.GET
 HEAD = _default_mock.HEAD
-list = _default_mock.list
 OPTIONS = _default_mock.OPTIONS
 passthru_prefixes = _default_mock.passthru_prefixes
 PATCH = _default_mock.PATCH
 POST = _default_mock.POST
 PUT = _default_mock.PUT
+registered = _default_mock.registered
 remove = _default_mock.remove
 replace = _default_mock.replace
 reset = _default_mock.reset

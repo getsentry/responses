@@ -1405,8 +1405,8 @@ def test_fail_request_error():
         (
             {"method": responses.GET, "url": "http://example.com/"},
             (
-                '{"url": "http://example.com/", "content_type": "text/plain", '
-                '"headers": null, "status": 200}'
+                '{"content_type": "text/plain", "headers": null, '
+                '"status": 200, "url": "http://example.com/"}'
             ),
             "<responses.Response: http://example.com/>",
         ),
@@ -1418,8 +1418,8 @@ def test_fail_request_error():
                 "status": 404,
             },
             (
-                '{"url": "http://another-domain.com/", "content_type": "application/json", '
-                '"headers": null, "status": 404}'
+                '{"content_type": "application/json", '
+                '"headers": null, "status": 404, "url": "http://another-domain.com/"}'
             ),
             "<responses.Response: http://another-domain.com/>",
         ),
@@ -1433,8 +1433,8 @@ def test_fail_request_error():
                 "body": {"it_wont_be": "considered"},
             },
             (
-                '{"url": "http://abcd.com/", "content_type": "text/html", '
-                '"headers": {"X-Test": "foo"}, "status": 500}'
+                '{"content_type": "text/html", "headers": {"X-Test": "foo"}, '
+                '"status": 500, "url": "http://abcd.com/"}'
             ),
             "<responses.Response: http://abcd.com/>",
         ),

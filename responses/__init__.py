@@ -422,11 +422,12 @@ class Response(BaseResponse):
         return str(
             json_module.dumps(
                 {
-                    "url": self.url,
                     "content_type": self.content_type,
                     "headers": self.headers,
                     "status": self.status,
+                    "url": self.url,
                 },
+                sort_keys=True,
             )
         )
 

@@ -1461,7 +1461,8 @@ def test_mocked_responses_list():
             responses.GET, "http://example.com/", body="", headers={"X-Test": "foo"}
         )
         third_response = Response(
-            responses.POST, "http://anotherdomain.com/", body={"field": "value"}
+            responses.POST,
+            "http://anotherdomain.com/",
         )
         responses.add(first_response)
         responses.add(second_response)

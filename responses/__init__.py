@@ -418,21 +418,16 @@ class Response(BaseResponse):
             preload_content=False,
         )
 
-    def __str__(self):
-        return str(
-            json_module.dumps(
-                {
-                    "content_type": self.content_type,
-                    "headers": self.headers,
-                    "status": self.status,
-                    "url": self.url,
-                },
-                sort_keys=True,
+    def __repr__(self):
+        return (
+            "<Response(url='{url}' status={status} "
+            "content_type='{content_type}' headers='{headers}')>".format(
+                url=self.url,
+                status=self.status,
+                content_type=self.content_type,
+                headers=json_module.dumps(self.headers),
             )
         )
-
-    def __repr__(self):
-        return "<{0}.{1}: {2}>".format(self.__module__, type(self).__name__, self.url)
 
 
 class CallbackResponse(BaseResponse):

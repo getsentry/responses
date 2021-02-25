@@ -1400,15 +1400,14 @@ def test_fail_request_error():
 
 
 @pytest.mark.parametrize(
-    "response_params, expected_str, expected_repr",
+    "response_params, expected_representation",
     [
         (
             {"method": responses.GET, "url": "http://example.com/"},
             (
-                '{"content_type": "text/plain", "headers": null, '
-                '"status": 200, "url": "http://example.com/"}'
+                "<Response(url='http://example.com/' status=200 "
+                "content_type='text/plain' headers='null')>"
             ),
-            "<responses.Response: http://example.com/>",
         ),
         (
             {
@@ -1418,10 +1417,9 @@ def test_fail_request_error():
                 "status": 404,
             },
             (
-                '{"content_type": "application/json", '
-                '"headers": null, "status": 404, "url": "http://another-domain.com/"}'
+                "<Response(url='http://another-domain.com/' status=404 "
+                "content_type='application/json' headers='null')>"
             ),
-            "<responses.Response: http://another-domain.com/>",
         ),
         (
             {
@@ -1433,18 +1431,17 @@ def test_fail_request_error():
                 "body": {"it_wont_be": "considered"},
             },
             (
-                '{"content_type": "text/html", "headers": {"X-Test": "foo"}, '
-                '"status": 500, "url": "http://abcd.com/"}'
+                "<Response(url='http://abcd.com/' status=500 "
+                "content_type='text/html' headers='{\"X-Test\": \"foo\"}')>"
             ),
-            "<responses.Response: http://abcd.com/>",
         ),
     ],
 )
-def test_response_representations(response_params, expected_str, expected_repr):
+def test_response_representations(response_params, expected_representation):
     response = Response(**response_params)
 
-    assert response.__str__() == expected_str
-    assert response.__repr__() == expected_repr
+    assert str(response) == expected_representation
+    assert repr(response) == expected_representation
 
 
 def test_mocked_responses_list_registered():

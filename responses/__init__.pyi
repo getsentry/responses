@@ -235,6 +235,22 @@ class _Replace(Protocol):
         match: List[Any] = ...,
     ) -> None: ...
 
+class _Upsert(Protocol):
+    def __call__(
+        self,
+        method: Optional[Union[str, BaseResponse]] = ...,
+        url: Optional[Union[Pattern[str], str]] = ...,
+        body: _Body = ...,
+        json: Optional[Any] = ...,
+        status: int = ...,
+        headers: Optional[Mapping[str, str]] = ...,
+        stream: bool = ...,
+        content_type: Optional[str] = ...,
+        adding_headers: Optional[Mapping[str, str]] = ...,
+        match_querystring: bool = ...,
+        match: List[Any] = ...,
+    ) -> None: ...
+
 activate: _Activate
 add: _Add
 add_callback: _AddCallback
@@ -259,6 +275,7 @@ response_callback: Callable[[Any], Any]
 start: Callable[[], None]
 stop: Callable[..., None]
 target: Any
+upsert: _Upsert
 
 __all__ = [
     "CallbackResponse",
@@ -287,4 +304,5 @@ __all__ = [
     "start",
     "stop",
     "target",
+    "upsert"
 ]

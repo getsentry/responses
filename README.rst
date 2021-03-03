@@ -331,6 +331,31 @@ Responses as a pytest fixture
         resp = requests.get('http://twitter.com/api/1/foobar')
         assert resp.status_code == 200
 
+Responses inside a unittest setUp()
+-----------------------------------
+
+When run with unittest tests, this can be used to set up some
+generic class-level responses, that may be complemented by each test
+
+.. code-block:: python
+
+    def setUp():
+        self.responses = responses.RequestsMock()
+        self.responses.start()
+
+        # self.responses.add(...)
+
+        self.addCleanup(self.responses.stop)
+        self.addCleanup(self.responses.reset)
+
+    def test_api(self):
+        self.responses.add(
+            responses.GET, 'http://twitter.com/api/1/foobar',
+            body='{}', status=200,
+            content_type='application/json')
+        resp = requests.get('http://twitter.com/api/1/foobar')
+        assert resp.status_code == 200
+
 Assertions on declared responses
 --------------------------------
 

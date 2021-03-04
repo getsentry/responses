@@ -668,8 +668,8 @@ class RequestsMock(object):
     def activate(self, func):
         return get_wrapped(func, self)
 
-    def calls_for_request(self, request):
-        return len([call for call in self.calls if call.request.url == request.url])
+    def calls_for_match(self, match):
+        return len([call for call in self.calls if call.request.url == match.url])
 
     def _find_match(self, request):
         found = None
@@ -682,7 +682,7 @@ class RequestsMock(object):
                     found = i
                     found_match = match
                 else:
-                    if self.calls_for_request(request) > 0:
+                    if self.calls_for_match(found_match) > 0:
                         self._matches.remove(found_match)
                         found = i
                         found_match = match

@@ -1099,6 +1099,29 @@ def test_multiple_responses():
     assert_reset()
 
 
+def test_multiple_responses_out_of_order():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com", body="test")
+
+        resp = requests.get("http://example.com")
+        assert_response(resp, "test")
+
+        responses.add(responses.GET, "http://example.com", body="rest")
+        resp = requests.get("http://example.com")
+        assert_response(resp, "rest")
+
+        responses.add(responses.GET, "http://example.com", body="best")
+        resp = requests.get("http://example.com")
+        assert_response(resp, "best")
+        # After all responses are used, last response should be repeated
+        resp = requests.get("http://example.com")
+        assert_response(resp, "best")
+
+    run()
+    assert_reset()
+
+
 def test_multiple_urls():
     @responses.activate
     def run():

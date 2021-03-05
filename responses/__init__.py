@@ -683,10 +683,10 @@ class RequestsMock(object):
                     found_match = match
                 else:
                     if self.calls_for_match(found_match) > 0:
+                        # Multiple matches found, remove previously found matches
                         self._matches.remove(found_match)
                         found = i
                         found_match = match
-                    # Multiple matches found.  Remove & return the first match.
                     else:
                         return self._matches.pop(found), match_failed_reasons
             else:

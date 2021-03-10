@@ -475,9 +475,9 @@ Regex can be used like:
 Viewing/Modifying registered responses
 --------------------------------------
 
-Registered responses are available as a private attribute of the RequestMock
+Registered responses are available as a public method of the RequestMock
 instance. It is sometimes useful for debugging purposes to view the stack of
-registered responses which can be accessed via ``responses.mock._matches``.
+registered responses which can be accessed via ``responses.mock.registered()``.
 
 The ``replace`` function allows a previously registered ``response`` to be
 changed. The method signature is identical to ``add``. ``response`` s are

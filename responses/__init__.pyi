@@ -252,6 +252,10 @@ class _Upsert(Protocol):
         match: List[Any] = ...,
     ) -> None: ...
 
+class _Registered(Protocol):
+    def __call__(self) -> List[Response]: ...
+
+
 activate: _Activate
 add: _Add
 add_callback: _AddCallback
@@ -269,6 +273,7 @@ passthru_prefixes: Tuple[str, ...]
 PATCH: Literal["PATCH"]
 POST: Literal["POST"]
 PUT: Literal["PUT"]
+registered: _Registered
 remove: _Remove
 replace: _Replace
 reset: Callable[[], None]
@@ -298,6 +303,7 @@ __all__ = [
     "PATCH",
     "POST",
     "PUT",
+    "registered",
     "remove",
     "replace",
     "reset",

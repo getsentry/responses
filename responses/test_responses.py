@@ -1465,7 +1465,7 @@ def test_mocked_responses_list_registered():
         responses.add(second_response)
         responses.add(third_response)
 
-        mocks_list = responses.mock.registered()
+        mocks_list = responses.registered()
 
         assert mocks_list == responses.mock._matches
         assert mocks_list == [first_response, second_response, third_response]

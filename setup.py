@@ -71,7 +71,7 @@ setup(
     tests_require=tests_require,
     setup_requires=setup_requires,
     cmdclass={"test": PyTest},
-    package_data={"responses": ["py.typed"]},
+    package_data={"responses": ["py.typed", "__init__.pyi"]},
     include_package_data=True,
     classifiers=[
         "Intended Audience :: Developers",

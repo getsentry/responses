@@ -418,6 +418,17 @@ class Response(BaseResponse):
             preload_content=False,
         )
 
+    def __repr__(self):
+        return (
+            "<Response(url='{url}' status={status} "
+            "content_type='{content_type}' headers='{headers}')>".format(
+                url=self.url,
+                status=self.status,
+                content_type=self.content_type,
+                headers=json_module.dumps(self.headers),
+            )
+        )
+
 
 class CallbackResponse(BaseResponse):
     def __init__(
@@ -651,6 +662,9 @@ class RequestsMock(object):
             )
         )
 
+    def registered(self):
+        return self._matches
+
     @property
     def calls(self):
         return self._calls
@@ -809,6 +823,7 @@ __all__ = [
     "PATCH",
     "POST",
     "PUT",
+    "registered",
     "remove",
     "replace",
     "reset",
@@ -834,6 +849,7 @@ passthru_prefixes = _default_mock.passthru_prefixes
 PATCH = _default_mock.PATCH
 POST = _default_mock.POST
 PUT = _default_mock.PUT
+registered = _default_mock.registered
 remove = _default_mock.remove
 replace = _default_mock.replace
 reset = _default_mock.reset

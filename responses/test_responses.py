@@ -1397,3 +1397,78 @@ def test_fail_request_error():
 
     run()
     assert_reset()
+
+
+@pytest.mark.parametrize(
+    "response_params, expected_representation",
+    [
+        (
+            {"method": responses.GET, "url": "http://example.com/"},
+            (
+                "<Response(url='http://example.com/' status=200 "
+                "content_type='text/plain' headers='null')>"
+            ),
+        ),
+        (
+            {
+                "method": responses.POST,
+                "url": "http://another-domain.com/",
+                "content_type": "application/json",
+                "status": 404,
+            },
+            (
+                "<Response(url='http://another-domain.com/' status=404 "
+                "content_type='application/json' headers='null')>"
+            ),
+        ),
+        (
+            {
+                "method": responses.PUT,
+                "url": "http://abcd.com/",
+                "content_type": "text/html",
+                "status": 500,
+                "headers": {"X-Test": "foo"},
+                "body": {"it_wont_be": "considered"},
+            },
+            (
+                "<Response(url='http://abcd.com/' status=500 "
+                "content_type='text/html' headers='{\"X-Test\": \"foo\"}')>"
+            ),
+        ),
+    ],
+)
+def test_response_representations(response_params, expected_representation):
+    response = Response(**response_params)
+
+    assert str(response) == expected_representation
+    assert repr(response) == expected_representation
+
+
+def test_mocked_responses_list_registered():
+    @responses.activate
+    def run():
+        first_response = Response(
+            responses.GET,
+            "http://example.com/",
+            body="",
+            headers={"X-Test": "foo"},
+            status=404,
+        )
+        second_response = Response(
+            responses.GET, "http://example.com/", body="", headers={"X-Test": "foo"}
+        )
+        third_response = Response(
+            responses.POST,
+            "http://anotherdomain.com/",
+        )
+        responses.add(first_response)
+        responses.add(second_response)
+        responses.add(third_response)
+
+        mocks_list = responses.registered()
+
+        assert mocks_list == responses.mock._matches
+        assert mocks_list == [first_response, second_response, third_response]
+
+    run()
+    assert_reset()

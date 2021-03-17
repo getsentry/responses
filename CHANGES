@@ -1,5 +1,14 @@
-0.12.2
+0.13.0
 ------
+
+* `responses.upsert()` was added. This method will `add()` a response if one
+  has not already been registered for a URL, or `replace()` an existing
+  response.
+* `responses.registered()` was added. The method allows you to get a list of
+  the currently registered responses. This formalizes the previously private
+  `responses.mock._matches` method.
+* A more useful `__repr__` has been added to `Response`.
+* Error messages have been improved.
 
 0.12.1
 ------

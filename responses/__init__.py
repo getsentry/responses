@@ -669,7 +669,7 @@ class RequestsMock(object):
         return get_wrapped(func, self)
 
     def calls_for_match(self, match):
-        return len([call for call in self.calls if call.request.url == match.url])
+        return len([call for call in self.calls if match.matches(call.request)])
 
     def _find_match(self, request):
         found = None

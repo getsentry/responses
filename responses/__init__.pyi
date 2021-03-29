@@ -203,7 +203,7 @@ class _AddCallback(Protocol):
         self,
         method: str,
         url: Union[Pattern[str], str],
-        callback: Callable[..., str],
+        callback: Callable[[PreparedRequest], Union[Exception, Tuple[int, Mapping[str, str], _Body]]],
         match_querystring: bool = ...,
         content_type: Optional[str] = ...,
     ) -> None: ...

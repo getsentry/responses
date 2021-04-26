@@ -1,10 +1,10 @@
 minVersion: "0.21.0"
 github:
   owner: getsentry
-  repo: pytest-responses
+  repo: responses
 changelog: CHANGES
 targets:
   - name: github
   - name: pypi
 requireNames:
-  - /^pytest_responses-.+-py2.py3-none-any.whl$/
+  - /^responses-.+-py2.py3-none-any.whl$/

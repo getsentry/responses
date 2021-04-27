@@ -19,7 +19,7 @@ jobs:
 
       - run: |
           pip install wheel
-          python setup.py bdist_wheel
+          python setup.py bdist_wheel sdist --formats=gztar
       - uses: actions/upload-artifact@v2
         with:
           name: ${{ github.sha }}

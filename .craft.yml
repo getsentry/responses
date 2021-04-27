@@ -4,8 +4,8 @@ github:
   repo: responses
 changelog: CHANGES
 targets:
-  - name: github
   - name: pypi
+  - name: github
 requireNames:
   - /^responses-.+-py2.py3-none-any.whl$/
   - /^responses-.+.tar.gz$/

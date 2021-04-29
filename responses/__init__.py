@@ -682,7 +682,7 @@ class RequestsMock(object):
                     found = i
                     found_match = match
                 else:
-                    if self.calls_for_match(found_match) > 0:
+                    if self._calls_for_match(found_match) > 0:
                         # Multiple matches found, remove previously found matches
                         self._matches.remove(found_match)
                         found = i

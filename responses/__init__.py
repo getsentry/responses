@@ -668,7 +668,7 @@ class RequestsMock(object):
     def activate(self, func):
         return get_wrapped(func, self)
 
-    def calls_for_match(self, match):
+    def _calls_for_match(self, match):
         return len([call for call in self.calls if match.matches(call.request)])
 
     def _find_match(self, request):

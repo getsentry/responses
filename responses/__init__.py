@@ -439,6 +439,9 @@ class CallbackResponse(BaseResponse):
         self.content_type = content_type
         super(CallbackResponse, self).__init__(method, url, **kwargs)
 
+    def __repr__(self):
+        return "<CallbackResponse(url='%s')>" % self.url
+
     def get_response(self, request):
         headers = self.get_headers()
 

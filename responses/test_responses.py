@@ -1141,7 +1141,7 @@ def test_passthru(httpserver):
         resp = requests.get("http://example.com/two")
         assert_response(resp, "two")
         resp = requests.get("{}/one".format(httpserver.url))
-        assert_response(resp, "one")
+        assert_response(resp, "OK")
         resp = requests.get(httpserver.url)
         assert_response(resp, "OK")
 
@@ -1161,10 +1161,38 @@ def test_passthru_regex(httpserver):
         resp = requests.get("http://example.com/two")
         assert_response(resp, "two")
         resp = requests.get("{}/one".format(httpserver.url))
-        assert_response(resp, "one")
+        assert_response(resp, "OK")
         resp = requests.get("{}/two".format(httpserver.url))
         assert_response(resp, "OK")
         resp = requests.get("{}/three".format(httpserver.url))
+        assert_response(resp, "OK")
+
+    run()
+    assert_reset()
+
+
+def test_passthru_inside_callback(httpserver):
+    httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
+
+    def callback(request):
+        if request.path_url == "/two":
+            responses.add_passthru(request.url)
+            resp = requests.get(request.url)
+            return (resp.status_code, dict(resp.headers), resp.content)
+        return (200, {"Content-Type": "text/plain"}, request.path_url[1:])
+
+    @responses.activate
+    def run():
+        responses.add_callback(
+            responses.GET,
+            re.compile("{}/\\w+".format(httpserver.url)),
+            callback=callback,
+            content_type="text/plain",
+        )
+
+        resp = requests.get("{}/one".format(httpserver.url))
+        assert_response(resp, "one")
+        resp = requests.get("{}/two".format(httpserver.url))
         assert_response(resp, "OK")
 
     run()

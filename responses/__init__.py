@@ -712,19 +712,18 @@ class RequestsMock(object):
         match, match_failed_reasons = self._find_match(request)
         resp_callback = self.response_callback
         request.params = self._parse_request_params(request.path_url)
+        if any(
+            [
+                p.match(request.url)
+                if isinstance(p, Pattern)
+                else request.url.startswith(p)
+                for p in self.passthru_prefixes
+            ]
+        ):
+            logger.info("request.allowed-passthru", extra={"url": request.url})
+            return _real_send(adapter, request, **kwargs)
 
         if match is None:
-            if any(
-                [
-                    p.match(request.url)
-                    if isinstance(p, Pattern)
-                    else request.url.startswith(p)
-                    for p in self.passthru_prefixes
-                ]
-            ):
-                logger.info("request.allowed-passthru", extra={"url": request.url})
-                return _real_send(adapter, request, **kwargs)
-
             error_msg = (
                 "Connection refused by Responses - the call doesn't "
                 "match any registered mock.\n\n"

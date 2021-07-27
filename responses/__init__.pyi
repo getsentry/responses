@@ -37,7 +37,7 @@ def get_wrapped(
     func: Callable[..., Any], responses: RequestsMock
 ) -> Callable[..., Any]: ...
 def json_params_matcher(
-    params: Optional[Dict[str, Dict[str, str]]]
+    params: Optional[Dict]
 ) -> Callable[..., Any]: ...
 def urlencoded_params_matcher(
     params: Optional[Dict[str, str]]

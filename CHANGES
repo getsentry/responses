@@ -1,3 +1,9 @@
+0.13.4
+------
+
+* Improve typing support
+* Use URLs with normalized hostnames when comparing URLs.
+
 0.13.3
 ------
 

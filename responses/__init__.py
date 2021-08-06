@@ -329,15 +329,15 @@ class BaseResponse(object):
                     other = other.encode("ascii").decode("utf8")
 
             if match_querystring:
-                rfc_compliant_url = parse_url(url).url
-                return self._url_matches_strict(rfc_compliant_url, other)
+                normalize_url = parse_url(url).url
+                return self._url_matches_strict(normalize_url, other)
 
             else:
                 url_without_qs = url.split("?", 1)[0]
                 other_without_qs = other.split("?", 1)[0]
-                rfc_compliant_url_without_qs = parse_url(url_without_qs).url
+                normalized_url_without_qs = parse_url(url_without_qs).url
 
-                return rfc_compliant_url_without_qs == other_without_qs
+                return normalized_url_without_qs == other_without_qs
 
         elif isinstance(url, Pattern) and url.match(other):
             return True

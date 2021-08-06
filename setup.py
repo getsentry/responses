@@ -34,7 +34,9 @@ tests_require = [
     "pytest-cov",
     "pytest-localserver",
     "flake8",
+    "types-mock",
     "types-requests",
+    "types-six",
     "mypy; python_version >= '3.5'",
 ]
 

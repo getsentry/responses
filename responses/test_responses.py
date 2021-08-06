@@ -1472,3 +1472,23 @@ def test_mocked_responses_list_registered():
 
     run()
     assert_reset()
+
+
+@pytest.mark.parametrize(
+    "url,other_url",
+    [
+        ("http://service-A/foo?q=fizz", "http://service-a/foo?q=fizz"),
+        ("http://service-a/foo", "http://service-A/foo"),
+        ("http://someHost-AwAy/", "http://somehost-away/"),
+        ("http://fizzbuzz/foo", "http://fizzbuzz/foo"),
+    ],
+)
+def test_rfc_compliance(url, other_url):
+    @responses.activate
+    def run():
+        responses.add(method=responses.GET, url=url)
+        resp = requests.request("GET", other_url)
+        assert_response(resp, "")
+
+    run()
+    assert_reset()

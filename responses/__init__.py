@@ -29,6 +29,10 @@ try:
     from requests.packages.urllib3.connection import HTTPHeaderDict
 except ImportError:
     from urllib3.response import HTTPHeaderDict
+try:
+    from requests.packages.urllib3.util.url import parse_url
+except ImportError:
+    from urllib3.util.url import parse_url
 
 if six.PY2:
     from urlparse import urlparse, parse_qsl, urlsplit, urlunsplit
@@ -323,13 +327,17 @@ class BaseResponse(object):
                 url = _clean_unicode(url)
                 if not isinstance(other, six.text_type):
                     other = other.encode("ascii").decode("utf8")
+
             if match_querystring:
-                return self._url_matches_strict(url, other)
+                rfc_compliant_url = parse_url(url).url
+                return self._url_matches_strict(rfc_compliant_url, other)
 
             else:
                 url_without_qs = url.split("?", 1)[0]
                 other_without_qs = other.split("?", 1)[0]
-                return url_without_qs == other_without_qs
+                rfc_compliant_url_without_qs = parse_url(url_without_qs).url
+
+                return rfc_compliant_url_without_qs == other_without_qs
 
         elif isinstance(url, Pattern) and url.match(other):
             return True

@@ -13,7 +13,7 @@ from collections import namedtuple
 from functools import update_wrapper
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
-from requests.sessions import REDIRECT_STATI
+from requests.sessions import ChunkedEncodingError, REDIRECT_STATI
 from requests.utils import cookiejar_from_dict
 
 try:
@@ -502,6 +502,11 @@ class OriginalResponseShim(object):
 
     def isclosed(self):
         return True
+
+    def close(self):
+        raise ChunkedEncodingError(
+            "Connection broken: Incomplete Read, Content-length mismatch with body"
+        )
 
 
 class RequestsMock(object):

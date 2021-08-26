@@ -161,6 +161,35 @@ If your application uses other encodings you can build your own matcher that
 returns ``True`` or ``False`` if the request parameters match. Your matcher can
 expect a ``request_body`` parameter to be provided by responses.
 
+Similarly, you can use the ``matchers.query_param_matcher`` function to match
+against the ``params`` request parameter.
+Note, you must set ``match_querystring=False``
+
+.. code-block:: python
+
+    import responses
+    import requests
+    from responses import matchers
+
+    @responses.activate
+    def test_calc_api():
+        url = "http://example.com/test"
+        params = {"hello": "world", "I am": "a big test"}
+        responses.add(
+            method=responses.GET,
+            url=url,
+            body="test",
+            match=[matchers.query_param_matcher(params)],
+            match_querystring=False,
+        )
+
+        resp = requests.get(url, params=params)
+
+        constructed_url = r"http://example.com/test?I+am=a+big+test&hello=world"
+        assert resp.url == constructed_url
+        assert resp.request.url == constructed_url
+        assert resp.request.params == params
+
 Dynamic Responses
 -----------------
 

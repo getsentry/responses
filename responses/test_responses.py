@@ -1378,6 +1378,35 @@ def test_request_matches_empty_body():
     assert_reset()
 
 
+def test_request_matches_params():
+    @responses.activate
+    def run():
+        url = "http://example.com/test"
+        params = {"hello": "world", "I am": "a big test"}
+        responses.add(
+            method=responses.GET,
+            url=url,
+            body="test",
+            match=[matchers.query_param_matcher(params)],
+            match_querystring=False,
+        )
+
+        # exchange parameter places for the test
+        params = {
+            "I am": "a big test",
+            "hello": "world",
+        }
+        resp = requests.get(url, params=params)
+
+        constructed_url = r"http://example.com/test?I+am=a+big+test&hello=world"
+        assert resp.url == constructed_url
+        assert resp.request.url == constructed_url
+        assert resp.request.params == params
+
+    run()
+    assert_reset()
+
+
 def test_fail_request_error():
     @responses.activate
     def run():

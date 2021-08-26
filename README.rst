@@ -142,6 +142,7 @@ other formats.
 
     import responses
     import requests
+    from responses import matchers
 
     @responses.activate
     def test_calc_api():
@@ -150,12 +151,12 @@ other formats.
             url='http://calc.com/sum',
             body="4",
             match=[
-                responses.urlencoded_params_matcher({"left": "1", "right": "3"})
+                matchers.urlencoded_params_matcher({"left": "1", "right": "3"})
             ]
         )
         requests.post("http://calc.com/sum", data={"left": 1, "right": 3})
 
-Matching JSON encoded data can be done with ``responses.json_params_matcher()``.
+Matching JSON encoded data can be done with ``matchers.json_params_matcher()``.
 If your application uses other encodings you can build your own matcher that
 returns ``True`` or ``False`` if the request parameters match. Your matcher can
 expect a ``request_body`` parameter to be provided by responses.

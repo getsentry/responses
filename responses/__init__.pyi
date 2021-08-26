@@ -5,16 +5,18 @@ from typing import (
     Iterator,
     Mapping,
     Optional,
-    Pattern,
     NamedTuple,
     Protocol,
     TypeVar,
+    Dict,
+    List,
+    Tuple,
+    Union
 )
 from io import BufferedReader, BytesIO
 from re import Pattern
 from requests.adapters import HTTPResponse, PreparedRequest
 from requests.cookies import RequestsCookieJar
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from typing_extensions import Literal
 from unittest import mock as std_mock
 from urllib.parse import quote as quote
@@ -36,12 +38,7 @@ def _is_string(s: Union[Pattern[str], str]) -> bool: ...
 def get_wrapped(
     func: Callable[..., Any], responses: RequestsMock
 ) -> Callable[..., Any]: ...
-def json_params_matcher(
-    params: Optional[Dict[str, Any]]
-) -> Callable[..., Any]: ...
-def urlencoded_params_matcher(
-    params: Optional[Dict[str, str]]
-) -> Callable[..., Any]: ...
+
 
 class Call(NamedTuple):
     request: PreparedRequest

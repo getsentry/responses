@@ -11,7 +11,8 @@ import pytest
 import requests
 import responses
 from requests.exceptions import ConnectionError, HTTPError
-from responses import BaseResponse, Response
+from responses import BaseResponse, Response, matchers
+
 
 try:
     from mock import patch, Mock
@@ -1310,7 +1311,7 @@ def test_request_matches_post_params():
             url="http://example.com/",
             body="one",
             match=[
-                responses.json_params_matcher(
+                matchers.json_params_matcher(
                     {"page": {"name": "first", "type": "json"}}
                 )
             ],
@@ -1320,7 +1321,7 @@ def test_request_matches_post_params():
             url="http://example.com/",
             body="two",
             match=[
-                responses.urlencoded_params_matcher(
+                matchers.urlencoded_params_matcher(
                     {"page": "second", "type": "urlencoded"}
                 )
             ],
@@ -1353,14 +1354,14 @@ def test_request_matches_empty_body():
             method=responses.POST,
             url="http://example.com/",
             body="one",
-            match=[responses.json_params_matcher(None)],
+            match=[matchers.json_params_matcher(None)],
         )
 
         responses.add(
             method=responses.POST,
             url="http://example.com/",
             body="two",
-            match=[responses.urlencoded_params_matcher(None)],
+            match=[matchers.urlencoded_params_matcher(None)],
         )
 
         resp = requests.request("POST", "http://example.com/")
@@ -1385,7 +1386,7 @@ def test_fail_request_error():
         responses.add(
             "POST",
             "http://example.com",
-            match=[responses.urlencoded_params_matcher({"foo": "bar"})],
+            match=[matchers.urlencoded_params_matcher({"foo": "bar"})],
         )
 
         with pytest.raises(ConnectionError) as excinfo:

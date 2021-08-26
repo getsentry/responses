@@ -318,12 +318,14 @@ class BaseResponse(object):
         else:
             return False
 
-    def _body_matches(self, match, request_body):
+    @staticmethod
+    def _req_attr_matches(match, request):
         for matcher in match:
-            if not matcher(request_body):
-                return False
+            valid, reason = matcher(request)
+            if not valid:
+                return False, reason
 
-        return True
+        return True, ""
 
     def get_headers(self):
         headers = HTTPHeaderDict()  # Duplicate headers are legal
@@ -343,8 +345,9 @@ class BaseResponse(object):
         if not self._url_matches(self.url, request.url, self.match_querystring):
             return False, "URL does not match"
 
-        if not self._body_matches(self.match, request.body):
-            return False, "Parameters do not match"
+        valid, reason = self._req_attr_matches(self.match, request)
+        if not valid:
+            return False, "Parameters do not match. " + reason
 
         return True, ""
 
@@ -690,9 +693,9 @@ class RequestsMock(object):
         return params
 
     def _on_request(self, adapter, request, **kwargs):
+        request.params = self._parse_request_params(request.path_url)
         match, match_failed_reasons = self._find_match(request)
         resp_callback = self.response_callback
-        request.params = self._parse_request_params(request.path_url)
 
         if match is None:
             if any(

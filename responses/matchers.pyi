@@ -12,3 +12,7 @@ def json_params_matcher(
 def urlencoded_params_matcher(
     params: Optional[Dict[str, str]]
 ) -> Callable[..., Any]: ...
+
+def query_param_matcher(
+    params: Optional[Dict[str, str]]
+) -> Callable[..., Any]: ...

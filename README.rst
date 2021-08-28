@@ -159,7 +159,7 @@ other formats.
 Matching JSON encoded data can be done with ``matchers.json_params_matcher()``.
 If your application uses other encodings you can build your own matcher that
 returns ``True`` or ``False`` if the request parameters match. Your matcher can
-expect a ``request_body`` parameter to be provided by responses.
+expect a ``request`` parameter to be provided by responses.
 
 Similarly, you can use the ``matchers.query_param_matcher`` function to match
 against the ``params`` request parameter.

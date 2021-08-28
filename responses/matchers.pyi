@@ -5,6 +5,9 @@ from typing import (
     Dict,
 )
 
+JSONDecodeError = ValueError
+
+
 def json_params_matcher(
     params: Optional[Dict[str, Any]]
 ) -> Callable[..., Any]: ...

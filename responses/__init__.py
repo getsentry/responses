@@ -15,6 +15,9 @@ from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 from requests.sessions import REDIRECT_STATI
 from requests.utils import cookiejar_from_dict
+from responses.matchers import json_params_matcher as _json_params_matcher
+from responses.matchers import urlencoded_params_matcher as _urlencoded_params_matcher
+from warnings import warn
 
 try:
     from collections.abc import Sequence, Sized
@@ -59,11 +62,6 @@ except AttributeError:
     # Python 3.7
     Pattern = re.Pattern
 
-try:
-    from json.decoder import JSONDecodeError
-except ImportError:
-    JSONDecodeError = ValueError
-
 UNSET = object()
 
 Call = namedtuple("Call", ["request", "response"])
@@ -71,6 +69,22 @@ Call = namedtuple("Call", ["request", "response"])
 _real_send = HTTPAdapter.send
 
 logger = logging.getLogger("responses")
+
+
+def urlencoded_params_matcher(params):
+    warn(
+        "Function is deprecated. Use 'from responses.matchers import urlencoded_params_matcher'",
+        DeprecationWarning,
+    )
+    return _urlencoded_params_matcher(params)
+
+
+def json_params_matcher(params):
+    warn(
+        "Function is deprecated. Use 'from responses.matchers import json_params_matcher'",
+        DeprecationWarning,
+    )
+    return _json_params_matcher(params)
 
 
 def _is_string(s):

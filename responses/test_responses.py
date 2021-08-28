@@ -1305,26 +1305,25 @@ def test_assert_call_count(url):
 
 def test_request_matches_post_params():
     @responses.activate
-    def run():
+    def run(deprecated):
+        if deprecated:
+            json_params_matcher = responses.json_params_matcher
+            urlencoded_params_matcher = responses.urlencoded_params_matcher
+        else:
+            json_params_matcher = matchers.json_params_matcher
+            urlencoded_params_matcher = matchers.urlencoded_params_matcher
+
         responses.add(
             method=responses.POST,
             url="http://example.com/",
             body="one",
-            match=[
-                matchers.json_params_matcher(
-                    {"page": {"name": "first", "type": "json"}}
-                )
-            ],
+            match=[json_params_matcher({"page": {"name": "first", "type": "json"}})],
         )
         responses.add(
             method=responses.POST,
             url="http://example.com/",
             body="two",
-            match=[
-                matchers.urlencoded_params_matcher(
-                    {"page": "second", "type": "urlencoded"}
-                )
-            ],
+            match=[urlencoded_params_matcher({"page": "second", "type": "urlencoded"})],
         )
 
         resp = requests.request(
@@ -1343,8 +1342,9 @@ def test_request_matches_post_params():
         )
         assert_response(resp, "one")
 
-    run()
-    assert_reset()
+    for depr in [True, False]:
+        run(deprecated=depr)
+        assert_reset()
 
 
 def test_request_matches_empty_body():

@@ -21,8 +21,8 @@ from typing_extensions import Literal
 from unittest import mock as std_mock
 from urllib.parse import quote as quote
 from urllib3.response import HTTPHeaderDict
+from .matchers import urlencoded_params_matcher, json_params_matcher
 
-JSONDecodeError = ValueError
 
 def _clean_unicode(url: str) -> str: ...
 def _cookies_from_headers(headers: Dict[str, str]) -> RequestsCookieJar: ...

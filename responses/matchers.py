@@ -1,10 +1,19 @@
 import json as json_module
 from urllib.parse import parse_qsl
 
-from responses import JSONDecodeError
+try:
+    from json.decoder import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
 
 
 def urlencoded_params_matcher(params):
+    """
+    Matches URL encoded data
+    :param params: (dict) data provided to 'data' arg of request
+    :return: (func) matcher
+    """
+
     def match(request):
         request_body = request.body
         valid = (
@@ -21,6 +30,12 @@ def urlencoded_params_matcher(params):
 
 
 def json_params_matcher(params):
+    """
+    Matches JSON encoded data
+    :param params: (dict) JSON data provided to 'json' arg of request
+    :return: (func) matcher
+    """
+
     def match(request):
         request_body = request.body
         try:
@@ -42,6 +57,12 @@ def json_params_matcher(params):
 
 
 def query_param_matcher(params):
+    """
+    Matcher to match 'params' argument in request
+    :param params: (dict), same as provided to request
+    :return: (func) matcher
+    """
+
     def match(request):
         request_params = request.params
         valid = (

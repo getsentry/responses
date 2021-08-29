@@ -387,6 +387,7 @@ class Response(BaseResponse):
         headers=None,
         stream=False,
         content_type=UNSET,
+        auto_calculate_content_length=False,
         **kwargs
     ):
         # if we were passed a `json` argument,
@@ -408,6 +409,7 @@ class Response(BaseResponse):
         self.headers = headers
         self.stream = stream
         self.content_type = content_type
+        self.auto_calculate_content_length = auto_calculate_content_length
         super(Response, self).__init__(method, url, **kwargs)
 
     def get_response(self, request):
@@ -417,6 +419,15 @@ class Response(BaseResponse):
         headers = self.get_headers()
         status = self.status
         body = _handle_body(self.body)
+
+        if (
+            self.auto_calculate_content_length
+            and isinstance(body, BufferIO)
+            and "Content-Length" not in headers
+        ):
+            content_length = len(body.getvalue())
+            headers["Content-Length"] = str(content_length)
+
         return HTTPResponse(
             status=status,
             reason=six.moves.http_client.responses.get(status),

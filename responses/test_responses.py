@@ -1424,13 +1424,48 @@ def test_fail_request_error():
             "http://example.com",
             match=[matchers.urlencoded_params_matcher({"foo": "bar"})],
         )
+        responses.add(
+            "POST",
+            "http://example.com",
+            match=[matchers.json_params_matcher({"fail": "json"})],
+        )
 
         with pytest.raises(ConnectionError) as excinfo:
             requests.post("http://example.com", data={"id": "bad"})
         msg = str(excinfo.value)
         assert "- POST http://example1.com/ URL does not match" in msg
         assert "- GET http://example.com/ Method does not match" in msg
-        assert "- POST http://example.com/ Parameters do not match" in msg
+        assert "Parameters do not match. id=bad doesn't match {'foo': 'bar'}" in msg
+        assert (
+            "Parameters do not match. JSONDecodeError: Cannot parse request.body" in msg
+        )
+
+        # test query parameters
+        responses.add(
+            "GET",
+            "http://111.com",
+            match=[matchers.query_param_matcher({"my": "params"})],
+        )
+
+        responses.add(
+            method=responses.GET,
+            url="http://111.com/",
+            body="two",
+            match=[matchers.json_params_matcher({"page": "one"})],
+        )
+
+        with pytest.raises(ConnectionError) as excinfo:
+            requests.get("http://111.com", params={"id": "bad"}, json={"page": "two"})
+
+        msg = str(excinfo.value)
+        assert (
+            "Parameters do not match. [('id', 'bad')] doesn't match [('my', 'params')]"
+            in msg
+        )
+        assert (
+            """Parameters do not match. {"page": "two"} doesn't match {'page': 'one'}"""
+            in msg
+        )
 
     run()
     assert_reset()

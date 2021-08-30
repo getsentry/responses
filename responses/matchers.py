@@ -56,7 +56,7 @@ def json_params_matcher(params):
 
             return valid, ""
         except JSONDecodeError:
-            return False, ""
+            return False, "JSONDecodeError: Cannot parse request.body"
 
     return match
 

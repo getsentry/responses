@@ -1,5 +1,10 @@
+import six
 import json as json_module
-from urllib.parse import parse_qsl
+
+if six.PY2:
+    from urlparse import parse_qsl
+else:
+    from urllib.parse import parse_qsl
 
 try:
     from json.decoder import JSONDecodeError

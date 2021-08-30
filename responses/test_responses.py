@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function, division, unicode_literals
 
 import inspect
+import os
 import re
 import six
 from io import BufferedReader, BytesIO
@@ -531,8 +532,8 @@ def test_callback():
     }
     url = "http://example.com/"
 
-    def request_callback(request):
-        return (status, headers, body)
+    def request_callback(_request):
+        return status, headers, body
 
     @responses.activate
     def run():
@@ -574,7 +575,7 @@ def test_callback_exception_body():
     url = "http://example.com/"
 
     def request_callback(request):
-        return (200, {}, body)
+        return 200, {}, body
 
     @responses.activate
     def run():
@@ -596,8 +597,8 @@ def test_callback_no_content_type():
     headers = {"foo": "bar"}
     url = "http://example.com/"
 
-    def request_callback(request):
-        return (status, headers, body)
+    def request_callback(_request):
+        return status, headers, body
 
     @responses.activate
     def run():
@@ -892,12 +893,16 @@ def test_response_filebody():
     """ Adds the possibility to use actual (binary) files as responses """
 
     def run():
+        current_file = os.path.abspath(__file__)
         with responses.RequestsMock() as m:
-            with open("README.rst", "r") as out:
+            with open(current_file, "r") as out:
                 m.add(responses.GET, "http://example.com", body=out.read(), stream=True)
                 resp = requests.get("http://example.com")
-            with open("README.rst", "r") as out:
+            with open(current_file, "r") as out:
                 assert resp.text == out.read()
+
+    run()
+    assert_reset()
 
 
 def test_assert_all_requests_are_fired():
@@ -1307,8 +1312,8 @@ def test_request_matches_post_params():
     @responses.activate
     def run(deprecated):
         if deprecated:
-            json_params_matcher = responses.json_params_matcher
-            urlencoded_params_matcher = responses.urlencoded_params_matcher
+            json_params_matcher = getattr(responses, "json_params_matcher")
+            urlencoded_params_matcher = getattr(responses, "urlencoded_params_matcher")
         else:
             json_params_matcher = matchers.json_params_matcher
             urlencoded_params_matcher = matchers.urlencoded_params_matcher
@@ -1401,7 +1406,9 @@ def test_request_matches_params():
         constructed_url = r"http://example.com/test?I+am=a+big+test&hello=world"
         assert resp.url == constructed_url
         assert resp.request.url == constructed_url
-        assert resp.request.params == params
+
+        resp_params = getattr(resp.request, "params")
+        assert resp_params == params
 
     run()
     assert_reset()

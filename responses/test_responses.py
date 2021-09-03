@@ -7,6 +7,7 @@ import os
 import re
 import six
 from io import BufferedReader, BytesIO
+from sys import version_info
 
 import pytest
 import requests
@@ -889,6 +890,7 @@ def test_response_callback():
     assert_reset()
 
 
+@pytest.mark.skipif(six.PY2, reason="re.compile works differntly in PY2")
 def test_response_filebody():
     """ Adds the possibility to use actual (binary) files as responses """
 
@@ -1403,9 +1405,11 @@ def test_request_matches_params():
         }
         resp = requests.get(url, params=params)
 
-        constructed_url = r"http://example.com/test?I+am=a+big+test&hello=world"
-        assert resp.url == constructed_url
-        assert resp.request.url == constructed_url
+        if six.PY3 and version_info[1] >= 7:
+            # only after py 3.7 dictionaries are ordered, so we can check URL
+            constructed_url = r"http://example.com/test?I+am=a+big+test&hello=world"
+            assert resp.url == constructed_url
+            assert resp.request.url == constructed_url
 
         resp_params = getattr(resp.request, "params")
         assert resp_params == params
@@ -1432,10 +1436,18 @@ def test_fail_request_error():
 
         with pytest.raises(ConnectionError) as excinfo:
             requests.post("http://example.com", data={"id": "bad"})
+
         msg = str(excinfo.value)
         assert "- POST http://example1.com/ URL does not match" in msg
         assert "- GET http://example.com/ Method does not match" in msg
-        assert "Parameters do not match. id=bad doesn't match {'foo': 'bar'}" in msg
+
+        if six.PY3:
+            assert "Parameters do not match. id=bad doesn't match {'foo': 'bar'}" in msg
+        else:
+            assert (
+                "Parameters do not match. id=bad doesn't match {u'foo': u'bar'}" in msg
+            )
+
         assert (
             "Parameters do not match. JSONDecodeError: Cannot parse request.body" in msg
         )
@@ -1458,14 +1470,24 @@ def test_fail_request_error():
             requests.get("http://111.com", params={"id": "bad"}, json={"page": "two"})
 
         msg = str(excinfo.value)
-        assert (
-            "Parameters do not match. [('id', 'bad')] doesn't match [('my', 'params')]"
-            in msg
-        )
-        assert (
-            """Parameters do not match. {"page": "two"} doesn't match {'page': 'one'}"""
-            in msg
-        )
+        if six.PY3:
+            assert (
+                "Parameters do not match. [('id', 'bad')] doesn't match [('my', 'params')]"
+                in msg
+            )
+            assert (
+                """Parameters do not match. {"page": "two"} doesn't match {'page': 'one'}"""
+                in msg
+            )
+        else:
+            assert (
+                "Parameters do not match. [('id', 'bad')] doesn't match [(u'my', u'params')]"
+                in msg
+            )
+            assert (
+                """Parameters do not match. {"page": "two"} doesn't match {u'page': u'one'}"""
+                in msg
+            )
 
     run()
     assert_reset()

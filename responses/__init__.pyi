@@ -92,6 +92,7 @@ class Response(BaseResponse):
     headers: Optional[Mapping[str, str]] = ...
     stream: bool = ...
     content_type: Optional[str] = ...
+    auto_calculate_content_length: bool = ...
     def __init__(
         self,
         method: str,
@@ -102,6 +103,7 @@ class Response(BaseResponse):
         headers: Optional[Mapping[str, str]] = ...,
         stream: bool = ...,
         content_type: Optional[str] = ...,
+        auto_calculate_content_length: bool = ...,
         match_querystring: bool = ...,
         match: List[Any] = ...,
     ) -> None: ...
@@ -190,6 +192,7 @@ class _Add(Protocol):
         headers: Optional[Mapping[str, str]] = ...,
         stream: bool = ...,
         content_type: Optional[str] = ...,
+        auto_calculate_content_length: bool = ...,
         adding_headers: Optional[Mapping[str, str]] = ...,
         match_querystring: bool = ...,
         match: List[Any] = ...,

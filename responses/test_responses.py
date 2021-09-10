@@ -1089,6 +1089,114 @@ def test_legacy_adding_headers():
     assert_reset()
 
 
+def test_auto_calculate_content_length_string_body():
+    @responses.activate
+    def run():
+        url = "http://example.com/"
+        responses.add(
+            responses.GET, url, body="test", auto_calculate_content_length=True
+        )
+        resp = requests.get(url)
+        assert_response(resp, "test")
+        assert resp.headers["Content-Length"] == "4"
+
+    run()
+    assert_reset()
+
+
+def test_auto_calculate_content_length_bytes_body():
+    @responses.activate
+    def run():
+        url = "http://example.com/"
+        responses.add(
+            responses.GET, url, body=b"test bytes", auto_calculate_content_length=True
+        )
+        resp = requests.get(url)
+        assert_response(resp, "test bytes")
+        assert resp.headers["Content-Length"] == "10"
+
+    run()
+    assert_reset()
+
+
+def test_auto_calculate_content_length_json_body():
+    @responses.activate
+    def run():
+        content_type = "application/json"
+
+        url = "http://example.com/"
+        responses.add(
+            responses.GET,
+            url,
+            json={"message": "success"},
+            auto_calculate_content_length=True,
+        )
+        resp = requests.get(url)
+        assert_response(resp, '{"message": "success"}', content_type)
+        assert resp.headers["Content-Length"] == "22"
+
+        url = "http://example.com/1/"
+        responses.add(responses.GET, url, json=[], auto_calculate_content_length=True)
+        resp = requests.get(url)
+        assert_response(resp, "[]", content_type)
+        assert resp.headers["Content-Length"] == "2"
+
+    run()
+    assert_reset()
+
+
+def test_auto_calculate_content_length_unicode_body():
+    @responses.activate
+    def run():
+        url = "http://example.com/test"
+        responses.add(
+            responses.GET, url, body="михољско лето", auto_calculate_content_length=True
+        )
+        resp = requests.get(url)
+        assert_response(resp, "михољско лето", content_type="text/plain; charset=utf-8")
+        assert resp.headers["Content-Length"] == "25"
+
+    run()
+    assert_reset()
+
+
+def test_auto_calculate_content_length_doesnt_work_for_buffered_reader_body():
+    @responses.activate
+    def run():
+        url = "http://example.com/test"
+        responses.add(
+            responses.GET,
+            url,
+            body=BufferedReader(BytesIO(b"testing")),  # type: ignore
+            auto_calculate_content_length=True,
+        )
+        resp = requests.get(url)
+        assert_response(resp, "testing")
+        assert "Content-Length" not in resp.headers
+
+    run()
+    assert_reset()
+
+
+def test_auto_calculate_content_length_doesnt_override_existing_value():
+    @responses.activate
+    def run():
+        url = "http://example.com/"
+        responses.add(
+            responses.GET,
+            url,
+            body="test",
+            headers={"Content-Length": "2"},
+            auto_calculate_content_length=True,
+        )
+        resp = requests.get(url)
+        assert_response(resp, "test")
+        assert resp.headers["Content-Length"] == "2"
+
+    run()
+    assert_reset()
+
+
 def test_multiple_responses():
     @responses.activate
     def run():

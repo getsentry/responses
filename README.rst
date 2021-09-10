@@ -125,6 +125,9 @@ headers (``dict``)
 stream (``bool``)
     Disabled by default. Indicates the response should use the streaming API.
 
+auto_calculate_content_length (``bool``)
+    Disabled by default. Automatically calculates the length of a supplied string or JSON body.
+
 match (``list``)
     A list of callbacks to match requests based on request body contents.
 

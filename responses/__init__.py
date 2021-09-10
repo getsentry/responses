@@ -5,7 +5,6 @@ import inspect
 import json as json_module
 import logging
 import re
-import warnings
 from itertools import groupby
 
 import six

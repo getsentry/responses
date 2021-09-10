@@ -24,6 +24,10 @@ try:
     from collections.abc import Sequence, Sized
 except ImportError:
     from collections import Sequence, Sized
+try:
+    from enum import IntFlag
+except ImportError:
+    from enum import IntEnum as IntFlag
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -66,6 +70,18 @@ except AttributeError:
 UNSET = object()
 
 Call = namedtuple("Call", ["request", "response"])
+
+
+class HTTPMethod(IntFlag):
+    DELETE = 2**0
+    GET = 2**1
+    HEAD = 2**2
+    OPTIONS = 2**3
+    PATCH = 2**4
+    POST = 2**5
+    PUT = 2**6
+    ANY = DELETE | GET | HEAD | OPTIONS | PATCH | POST | PUT
+
 
 _real_send = HTTPAdapter.send
 
@@ -263,6 +279,8 @@ class BaseResponse(object):
     stream = False
 
     def __init__(self, method, url, match_querystring=_unspecified, match=[]):
+        if not isinstance(method, HTTPMethod):
+            method = HTTPMethod[method.upper()]
         self.method = method
         # ensure the url has a default path set if the url is a string
         self.url = _ensure_url_default_path(url)
@@ -355,7 +373,8 @@ class BaseResponse(object):
         raise NotImplementedError
 
     def matches(self, request):
-        if request.method != self.method:
+        request_method = HTTPMethod[request.method.upper()]
+        if not (request_method & self.method):
             return False, "Method does not match"
 
         if not self._url_matches(self.url, request.url, self.match_querystring):
@@ -512,13 +531,14 @@ class OriginalResponseShim(object):
 
 
 class RequestsMock(object):
-    DELETE = "DELETE"
-    GET = "GET"
-    HEAD = "HEAD"
-    OPTIONS = "OPTIONS"
-    PATCH = "PATCH"
-    POST = "POST"
-    PUT = "PUT"
+    DELETE = HTTPMethod.DELETE
+    GET = HTTPMethod.GET
+    HEAD = HTTPMethod.HEAD
+    OPTIONS = HTTPMethod.OPTIONS
+    PATCH = HTTPMethod.PATCH
+    POST = HTTPMethod.POST
+    PUT = HTTPMethod.PUT
+    ANY = HTTPMethod.ANY
     response_callback = None
 
     def __init__(
@@ -754,7 +774,7 @@ class RequestsMock(object):
             )
             for i, m in enumerate(self._matches):
                 error_msg += "- {} {} {}\n".format(
-                    m.method, m.url, match_failed_reasons[i]
+                    m.method.name, m.url, match_failed_reasons[i]
                 )
 
             response = ConnectionError(error_msg)
@@ -803,7 +823,7 @@ class RequestsMock(object):
         if not_called:
             raise AssertionError(
                 "Not all requests have been executed {0!r}".format(
-                    [(match.method, match.url) for match in not_called]
+                    [(match.method.name, match.url) for match in not_called]
                 )
             )
 
@@ -847,6 +867,7 @@ __all__ = [
     "PATCH",
     "POST",
     "PUT",
+    "ANY",
     "registered",
     "remove",
     "replace",
@@ -873,6 +894,7 @@ passthru_prefixes = _default_mock.passthru_prefixes
 PATCH = _default_mock.PATCH
 POST = _default_mock.POST
 PUT = _default_mock.PUT
+ANY = _default_mock.ANY
 registered = _default_mock.registered
 remove = _default_mock.remove
 replace = _default_mock.replace

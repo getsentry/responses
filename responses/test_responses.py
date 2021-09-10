@@ -1256,6 +1256,30 @@ def test_multiple_methods():
     assert_reset()
 
 
+def test_passthrough_flag(httpserver):
+    httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
+    response = Response(responses.GET, httpserver.url, body="MOCK")
+
+    @responses.activate
+    def run_passthrough():
+        responses.add(response)
+        resp = requests.get(httpserver.url)
+        assert_response(resp, "OK")
+
+    @responses.activate
+    def run_mocked():
+        responses.add(response)
+        resp = requests.get(httpserver.url)
+        assert_response(resp, "MOCK")
+
+    run_mocked()
+    assert_reset()
+
+    response.passthrough = True
+    run_passthrough()
+    assert_reset()
+
+
 def test_passthrough_response(httpserver):
     httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
 

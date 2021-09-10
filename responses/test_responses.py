@@ -3,15 +3,18 @@
 from __future__ import absolute_import, print_function, division, unicode_literals
 
 import inspect
+import os
 import re
 import six
 from io import BufferedReader, BytesIO
+from sys import version_info
 
 import pytest
 import requests
 import responses
 from requests.exceptions import ConnectionError, HTTPError
-from responses import BaseResponse, Response
+from responses import BaseResponse, Response, matchers
+
 
 try:
     from mock import patch, Mock
@@ -530,8 +533,8 @@ def test_callback():
     }
     url = "http://example.com/"
 
-    def request_callback(request):
-        return (status, headers, body)
+    def request_callback(_request):
+        return status, headers, body
 
     @responses.activate
     def run():
@@ -573,7 +576,7 @@ def test_callback_exception_body():
     url = "http://example.com/"
 
     def request_callback(request):
-        return (200, {}, body)
+        return 200, {}, body
 
     @responses.activate
     def run():
@@ -595,8 +598,8 @@ def test_callback_no_content_type():
     headers = {"foo": "bar"}
     url = "http://example.com/"
 
-    def request_callback(request):
-        return (status, headers, body)
+    def request_callback(_request):
+        return status, headers, body
 
     @responses.activate
     def run():
@@ -887,16 +890,21 @@ def test_response_callback():
     assert_reset()
 
 
+@pytest.mark.skipif(six.PY2, reason="re.compile works differntly in PY2")
 def test_response_filebody():
     """ Adds the possibility to use actual (binary) files as responses """
 
     def run():
+        current_file = os.path.abspath(__file__)
         with responses.RequestsMock() as m:
-            with open("README.rst", "r") as out:
+            with open(current_file, "r") as out:
                 m.add(responses.GET, "http://example.com", body=out.read(), stream=True)
                 resp = requests.get("http://example.com")
-            with open("README.rst", "r") as out:
+            with open(current_file, "r") as out:
                 assert resp.text == out.read()
+
+    run()
+    assert_reset()
 
 
 def test_assert_all_requests_are_fired():
@@ -1304,26 +1312,25 @@ def test_assert_call_count(url):
 
 def test_request_matches_post_params():
     @responses.activate
-    def run():
+    def run(deprecated):
+        if deprecated:
+            json_params_matcher = getattr(responses, "json_params_matcher")
+            urlencoded_params_matcher = getattr(responses, "urlencoded_params_matcher")
+        else:
+            json_params_matcher = matchers.json_params_matcher
+            urlencoded_params_matcher = matchers.urlencoded_params_matcher
+
         responses.add(
             method=responses.POST,
             url="http://example.com/",
             body="one",
-            match=[
-                responses.json_params_matcher(
-                    {"page": {"name": "first", "type": "json"}}
-                )
-            ],
+            match=[json_params_matcher({"page": {"name": "first", "type": "json"}})],
         )
         responses.add(
             method=responses.POST,
             url="http://example.com/",
             body="two",
-            match=[
-                responses.urlencoded_params_matcher(
-                    {"page": "second", "type": "urlencoded"}
-                )
-            ],
+            match=[urlencoded_params_matcher({"page": "second", "type": "urlencoded"})],
         )
 
         resp = requests.request(
@@ -1342,8 +1349,9 @@ def test_request_matches_post_params():
         )
         assert_response(resp, "one")
 
-    run()
-    assert_reset()
+    for depr in [True, False]:
+        run(deprecated=depr)
+        assert_reset()
 
 
 def test_request_matches_empty_body():
@@ -1353,14 +1361,14 @@ def test_request_matches_empty_body():
             method=responses.POST,
             url="http://example.com/",
             body="one",
-            match=[responses.json_params_matcher(None)],
+            match=[matchers.json_params_matcher(None)],
         )
 
         responses.add(
             method=responses.POST,
             url="http://example.com/",
             body="two",
-            match=[responses.urlencoded_params_matcher(None)],
+            match=[matchers.urlencoded_params_matcher(None)],
         )
 
         resp = requests.request("POST", "http://example.com/")
@@ -1377,6 +1385,39 @@ def test_request_matches_empty_body():
     assert_reset()
 
 
+def test_request_matches_params():
+    @responses.activate
+    def run():
+        url = "http://example.com/test"
+        params = {"hello": "world", "I am": "a big test"}
+        responses.add(
+            method=responses.GET,
+            url=url,
+            body="test",
+            match=[matchers.query_param_matcher(params)],
+            match_querystring=False,
+        )
+
+        # exchange parameter places for the test
+        params = {
+            "I am": "a big test",
+            "hello": "world",
+        }
+        resp = requests.get(url, params=params)
+
+        if six.PY3 and version_info[1] >= 7:
+            # only after py 3.7 dictionaries are ordered, so we can check URL
+            constructed_url = r"http://example.com/test?I+am=a+big+test&hello=world"
+            assert resp.url == constructed_url
+            assert resp.request.url == constructed_url
+
+        resp_params = getattr(resp.request, "params")
+        assert resp_params == params
+
+    run()
+    assert_reset()
+
+
 def test_fail_request_error():
     @responses.activate
     def run():
@@ -1385,15 +1426,68 @@ def test_fail_request_error():
         responses.add(
             "POST",
             "http://example.com",
-            match=[responses.urlencoded_params_matcher({"foo": "bar"})],
+            match=[matchers.urlencoded_params_matcher({"foo": "bar"})],
+        )
+        responses.add(
+            "POST",
+            "http://example.com",
+            match=[matchers.json_params_matcher({"fail": "json"})],
         )
 
         with pytest.raises(ConnectionError) as excinfo:
             requests.post("http://example.com", data={"id": "bad"})
+
         msg = str(excinfo.value)
         assert "- POST http://example1.com/ URL does not match" in msg
         assert "- GET http://example.com/ Method does not match" in msg
-        assert "- POST http://example.com/ Parameters do not match" in msg
+
+        if six.PY3:
+            assert "Parameters do not match. id=bad doesn't match {'foo': 'bar'}" in msg
+        else:
+            assert (
+                "Parameters do not match. id=bad doesn't match {u'foo': u'bar'}" in msg
+            )
+
+        assert (
+            "Parameters do not match. JSONDecodeError: Cannot parse request.body" in msg
+        )
+
+        # test query parameters
+        responses.add(
+            "GET",
+            "http://111.com",
+            match=[matchers.query_param_matcher({"my": "params"})],
+        )
+
+        responses.add(
+            method=responses.GET,
+            url="http://111.com/",
+            body="two",
+            match=[matchers.json_params_matcher({"page": "one"})],
+        )
+
+        with pytest.raises(ConnectionError) as excinfo:
+            requests.get("http://111.com", params={"id": "bad"}, json={"page": "two"})
+
+        msg = str(excinfo.value)
+        if six.PY3:
+            assert (
+                "Parameters do not match. [('id', 'bad')] doesn't match [('my', 'params')]"
+                in msg
+            )
+            assert (
+                """Parameters do not match. {"page": "two"} doesn't match {'page': 'one'}"""
+                in msg
+            )
+        else:
+            assert (
+                "Parameters do not match. [('id', 'bad')] doesn't match [(u'my', u'params')]"
+                in msg
+            )
+            assert (
+                """Parameters do not match. {"page": "two"} doesn't match {u'page': u'one'}"""
+                in msg
+            )
 
     run()
     assert_reset()

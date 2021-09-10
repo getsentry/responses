@@ -5,6 +5,7 @@ import inspect
 import json as json_module
 import logging
 import re
+import warnings
 from itertools import groupby
 
 import six
@@ -255,6 +256,7 @@ _unspecified = object()
 
 
 class BaseResponse(object):
+    passthrough = False
     content_type = None
     headers = None
 
@@ -485,6 +487,10 @@ class CallbackResponse(BaseResponse):
         )
 
 
+class PassthroughResponse(BaseResponse):
+    passthrough = True
+
+
 class OriginalResponseShim(object):
     """
     Shim for compatibility with older versions of urllib3
@@ -599,6 +605,10 @@ class RequestsMock(object):
 
         >>> responses.add_passthru(re.compile('https://example.com/\\w+'))
         """
+        warnings.warn(
+            "This feature is deprecated in favor of using a PassthroughResponse",
+            PendingDeprecationWarning
+        )
         if not isinstance(prefix, Pattern) and _has_unicode(prefix):
             prefix = _clean_unicode(prefix)
         self.passthru_prefixes += (prefix,)
@@ -723,6 +733,7 @@ class RequestsMock(object):
         resp_callback = self.response_callback
 
         if match is None:
+            # These lines are obsolete. The feature is covered by a PassthroughResponse
             if any(
                 [
                     p.match(request.url)
@@ -752,6 +763,10 @@ class RequestsMock(object):
             self._calls.add(request, response)
             response = resp_callback(response) if resp_callback else response
             raise response
+
+        if match.passthrough:
+            logger.info("request.allowed-passthru", extra={"url": request.url})
+            return _real_send(adapter, request, **kwargs)
 
         try:
             response = adapter.build_response(request, match.get_response(request))

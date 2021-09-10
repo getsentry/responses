@@ -769,18 +769,6 @@ class RequestsMock(object):
         resp_callback = self.response_callback
 
         if match is None:
-            # These lines are obsolete. The feature is covered by a PassthroughResponse
-            if any(
-                [
-                    p.match(request.url)
-                    if isinstance(p, Pattern)
-                    else request.url.startswith(p)
-                    for p in self.passthru_prefixes
-                ]
-            ):
-                logger.info("request.allowed-passthru", extra={"url": request.url})
-                return _real_send(adapter, request, **kwargs)
-
             error_msg = (
                 "Connection refused by Responses - the call doesn't "
                 "match any registered mock.\n\n"

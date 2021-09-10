@@ -273,6 +273,7 @@ _unspecified = object()
 
 class BaseResponse(object):
     passthrough = False
+    check_fired = True
     content_type = None
     headers = None
 
@@ -540,6 +541,7 @@ class RequestsMock(object):
     PUT = HTTPMethod.PUT
     ANY = HTTPMethod.ANY
     response_callback = None
+    _passthru_prefixes = tuple()
 
     def __init__(
         self,
@@ -612,7 +614,7 @@ class RequestsMock(object):
 
         self._matches.append(Response(method=method, url=url, body=body, **kwargs))
 
-    def add_passthru(self, prefix):
+    def add_passthru(self, prefix, method="ANY", check_fired=False):
         """
         Register a URL prefix or regex to passthru any non-matching mock requests to.
 
@@ -625,13 +627,27 @@ class RequestsMock(object):
 
         >>> responses.add_passthru(re.compile('https://example.com/\\w+'))
         """
-        warnings.warn(
-            "This feature is deprecated in favor of using a PassthroughResponse",
-            PendingDeprecationWarning
-        )
         if not isinstance(prefix, Pattern) and _has_unicode(prefix):
             prefix = _clean_unicode(prefix)
-        self.passthru_prefixes += (prefix,)
+        self._passthru_prefixes += (prefix,)
+        response = PassthroughResponse(method, prefix)
+        response.check_fired = False
+        self.add(response)
+
+    @property
+    def passthru_prefixes(self):
+        return self._passthru_prefixes
+
+    @passthru_prefixes.setter
+    def passthru_prefixes(self, prefixes):
+        prev_prefixes = self._passthru_prefixes
+        for prefix in prefixes:
+            if prefix in prev_prefixes:
+                continue
+            response = PassthroughResponse(self.ANY, prefix)
+            response.check_fired = False
+            self.add(response)
+        self._passthru_prefixes = prefixes
 
     def remove(self, method_or_response=None, url=None):
         """
@@ -725,6 +741,7 @@ class RequestsMock(object):
         found = None
         found_match = None
         match_failed_reasons = []
+        self._matches.sort(key=lambda m: m.check_fired, reverse=True)
         for i, match in enumerate(self._matches):
             match_result, reason = match.matches(request)
             if match_result:
@@ -819,7 +836,7 @@ class RequestsMock(object):
         if not allow_assert:
             return
 
-        not_called = [m for m in self._matches if m.call_count == 0]
+        not_called = [m for m in self._matches if m.call_count == 0 and m.check_fired]
         if not_called:
             raise AssertionError(
                 "Not all requests have been executed {0!r}".format(

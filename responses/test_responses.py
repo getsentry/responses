@@ -1342,6 +1342,17 @@ def test_passthru_regex(httpserver):
     assert_reset()
 
 
+def test_passthru_check_fired():
+    @responses.activate
+    def run():
+        with pytest.raises(AssertionError):
+            with responses.RequestsMock() as m:
+                m.add_passthru("http://example.com", check_fired=True)
+
+    run()
+    assert_reset()
+
+
 def test_method_named_param():
     @responses.activate
     def run():

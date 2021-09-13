@@ -622,7 +622,7 @@ class RequestsMock(object):
             prefix = _clean_unicode(prefix)
         self._passthru_prefixes += (prefix,)
         response = PassthroughResponse(method, prefix)
-        response.check_fired = False
+        response.check_fired = check_fired
         response.priority = Priority.LOW
         self.add(response)
 

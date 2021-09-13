@@ -2,11 +2,11 @@
 ------
 
 * Added `responses.matchers`.
-* Moved `responses.json_params_matcher` to `responses.matchers.json_param_matcher`
+* Moved `responses.json_params_matcher` to `responses.matchers.json_params_matcher`
 * Moved `responses.urlencoded_params_matcher` to
-  `responses.matchers.urlencoded_param_matcher`
-* Added `responses.query_params_matcher`. This matcher allows you to match
-  query strings with a dictionary.
+  `responses.matchers.urlencoded_params_matcher`
+* Added `responses.matchers.query_param_matcher`. This matcher allows you
+  to match query strings with a dictionary.
 * Added `auto_calculate_content_length` option to `responses.add()`. When
   enabled, this option will generate a `Content-Length` header
   based on the number of bytes in the response body.

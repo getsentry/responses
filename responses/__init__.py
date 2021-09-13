@@ -528,6 +528,9 @@ class RequestsMock(object):
     POST = "POST"
     PUT = "PUT"
     response_callback = None
+
+    # This attribute stores passthru prefixes for backward compatibility.
+    # It should be removed, when passthru_prefixes are removed.
     _passthru_prefixes = tuple()
 
     def __init__(
@@ -541,8 +544,9 @@ class RequestsMock(object):
         self.reset()
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
         self.response_callback = response_callback
-        self.passthru_prefixes = tuple(passthru_prefixes)
         self.target = target
+        for passthru_prefix in passthru_prefixes:
+            self.add_passthru(prefix)
 
     def reset(self):
         self._matches = []
@@ -624,10 +628,19 @@ class RequestsMock(object):
 
     @property
     def passthru_prefixes(self):
+        warn(
+            "Direct access of passthru_prefixes is depricated. "
+            "Passthroughs are stored as PassthroughResponses.",
+            DeprecationWarning,
+        )
         return self._passthru_prefixes
 
     @passthru_prefixes.setter
     def passthru_prefixes(self, prefixes):
+        warn(
+            "Setting passthru_prefixes directly is depricated. Please use add_passthru",
+            DeprecationWarning,
+        )
         prev_prefixes = self._passthru_prefixes
         for prefix in prefixes:
             if prefix in prev_prefixes:

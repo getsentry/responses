@@ -5,6 +5,7 @@ import inspect
 import json as json_module
 import logging
 import re
+from enum import IntEnum
 from itertools import groupby
 
 import six
@@ -69,6 +70,12 @@ Call = namedtuple("Call", ["request", "response"])
 _real_send = HTTPAdapter.send
 
 logger = logging.getLogger("responses")
+
+
+class Priority(IntEnum):
+    HIGH = 30
+    NORMAL = 20
+    LOW = 10
 
 
 def urlencoded_params_matcher(params):
@@ -257,6 +264,7 @@ _unspecified = object()
 class BaseResponse(object):
     passthrough = False
     check_fired = True
+    priority = Priority.NORMAL
     content_type = None
     headers = None
 
@@ -355,7 +363,7 @@ class BaseResponse(object):
         raise NotImplementedError
 
     def matches(self, request):
-        if request.method != self.method:
+        if request.method != self.method and self.method != "ANY":
             return False, "Method does not match"
 
         if not self._url_matches(self.url, request.url, self.match_querystring):
@@ -611,6 +619,7 @@ class RequestsMock(object):
         self._passthru_prefixes += (prefix,)
         response = PassthroughResponse(method, prefix)
         response.check_fired = False
+        response.priority = Priority.LOW
         self.add(response)
 
     @property
@@ -623,7 +632,7 @@ class RequestsMock(object):
         for prefix in prefixes:
             if prefix in prev_prefixes:
                 continue
-            response = PassthroughResponse(self.ANY, prefix)
+            response = PassthroughResponse("ANY", prefix)
             response.check_fired = False
             self.add(response)
         self._passthru_prefixes = prefixes
@@ -720,7 +729,7 @@ class RequestsMock(object):
         found = None
         found_match = None
         match_failed_reasons = []
-        self._matches.sort(key=lambda m: m.check_fired, reverse=True)
+        self._matches.sort(key=lambda m: m.priority, reverse=True)
         for i, match in enumerate(self._matches):
             match_result, reason = match.matches(request)
             if match_result:

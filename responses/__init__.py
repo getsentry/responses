@@ -545,7 +545,7 @@ class RequestsMock(object):
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
         self.response_callback = response_callback
         self.target = target
-        for passthru_prefix in passthru_prefixes:
+        for prefix in passthru_prefixes:
             self.add_passthru(prefix)
 
     def reset(self):

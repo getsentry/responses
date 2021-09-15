@@ -1300,6 +1300,28 @@ def test_passthrough_response(httpserver):
     assert_reset()
 
 
+def test_passthru_prefixes(httpserver):
+    httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
+
+    @responses.activate
+    def run_constructor_argument():
+        with responses.RequestsMock(passthru_prefixes=[httpserver.url]):
+            resp = requests.get(httpserver.url)
+            assert_response(resp, "OK")
+
+    @responses.activate
+    def run_property_setter():
+        with responses.RequestsMock() as m:
+            m.passthru_prefixes = tuple([httpserver.url])
+            resp = requests.get(httpserver.url)
+            assert_response(resp, "OK")
+
+    run_constructor_argument()
+    assert_reset()
+    run_property_setter()
+    assert_reset()
+
+
 def test_passthru(httpserver):
     httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
 

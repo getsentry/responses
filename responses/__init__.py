@@ -629,17 +629,17 @@ class RequestsMock(object):
     @property
     def passthru_prefixes(self):
         warn(
-            "Direct access of passthru_prefixes is depricated. "
-            "Passthroughs are stored as PassthroughResponses.",
-            DeprecationWarning,
+            "Please avoid direct access of passthru_prefixes. Passthroughs are stored "
+            "as PassthroughResponses like other registered responses.",
+            PendingDeprecationWarning,
         )
         return self._passthru_prefixes
 
     @passthru_prefixes.setter
     def passthru_prefixes(self, prefixes):
         warn(
-            "Setting passthru_prefixes directly is depricated. Please use add_passthru",
-            DeprecationWarning,
+            "Please avoid setting passthru_prefixes directly. Please use add_passthru.",
+            PendingDeprecationWarning,
         )
         prev_prefixes = self._passthru_prefixes
         for prefix in prefixes:

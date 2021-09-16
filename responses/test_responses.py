@@ -907,6 +907,18 @@ def test_response_filebody():
     assert_reset()
 
 
+def test_use_stream_twice_to_double_raw_io():
+    @responses.activate
+    def run():
+        url = "http://example.com"
+        responses.add(responses.GET, url, body=b"42", stream=True)
+        resp = requests.get(url, stream=True)
+        assert resp.raw.read() == b"42"
+
+    run()
+    assert_reset()
+
+
 def test_assert_all_requests_are_fired():
     def request_callback(request):
         raise BaseException()

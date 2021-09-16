@@ -578,3 +578,17 @@ And run a single test by:
 .. code-block:: shell
 
     pytest -k '<test_function_name>'
+
+To verify ``type`` compliance, run `mypy <https://github.com/python/mypy>`_ linter:
+
+.. code-block:: shell
+
+    mypy --config-file=./mypy.ini -p responses
+
+To check code style and reformat it run:
+
+.. code-block:: shell
+
+    pre-commit run --all-files
+
+Note: on some OS, you have to use ``pre_commit``

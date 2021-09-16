@@ -1305,7 +1305,7 @@ def test_passthru_prefixes(httpserver):
 
     @responses.activate
     def run_constructor_argument():
-        with responses.RequestsMock(passthru_prefixes=[httpserver.url]):
+        with responses.RequestsMock(passthru_prefixes=(httpserver.url,)):
             resp = requests.get(httpserver.url)
             assert_response(resp, "OK")
 

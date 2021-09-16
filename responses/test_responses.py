@@ -1315,6 +1315,7 @@ def test_passthru_prefixes(httpserver):
             m.passthru_prefixes = tuple([httpserver.url])
             resp = requests.get(httpserver.url)
             assert_response(resp, "OK")
+            m.passthru_prefixes = tuple([httpserver.url])
 
     run_constructor_argument()
     assert_reset()
@@ -1353,6 +1354,9 @@ def test_passthru_regex(httpserver):
 
         resp = requests.get("http://example.com/two")
         assert_response(resp, "two")
+        resp = requests.get("{}/one".format(httpserver.url))
+        assert_response(resp, "one")
+        # re-request to check that this one remains
         resp = requests.get("{}/one".format(httpserver.url))
         assert_response(resp, "one")
         resp = requests.get("{}/two".format(httpserver.url))

@@ -749,7 +749,7 @@ class RequestsMock(object):
                 if found is None:
                     found = i
                     found_match = match
-                else:
+                elif match.priority == found_match.priority:
                     # Multiple matches found.  Remove & return the first match.
                     return self._matches.pop(found), match_failed_reasons
             else:

@@ -229,6 +229,89 @@ Note, only arguments provided to ``matchers.request_kwargs_matcher`` will be val
         # >>>  Arguments don't match: {stream: True, verify: True} doesn't match {stream: True, verify: False}
 
 
+Matching Request Headers
+------------------------
+
+When adding responses you can specify matchers to ensure that your code is
+sending the right headers and provide different responses based on the request
+headers.
+
+.. code-block:: python
+
+    import responses
+    import requests
+    from responses import matchers
+
+
+    @responses.activate
+    def test_content_type():
+        responses.add(
+            responses.GET,
+            url="http://example.com/",
+            body="hello world",
+            match=[
+                matchers.header_matcher({"Accept": "text/plain"})
+            ]
+        )
+
+        responses.add(
+            responses.GET,
+            url="http://example.com/",
+            json={"content": "hello world"},
+            match=[
+                matchers.header_matcher({"Accept": "application/json"})
+            ]
+        )
+
+        # request in reverse order to how they were added!
+        resp = requests.get("http://example.com/", headers={"Accept": "application/json"})
+        assert resp.json() == {"content": "hello world"}
+
+        resp = requests.get("http://example.com/", headers={"Accept": "text/plain"})
+        assert resp.text == "hello world"
+
+Because ``requests`` will send several standard headers in addition to what was
+specified by your code, request headers that are additional to the ones
+passed to the matcher are ignored by default. You can change this behaviour by
+passing ``strict_match=True`` to the matcher to ensure that only the headers
+that you're expecting are sent and no others. Note that you will probably have
+to use a ``PreparedRequest`` in your code to ensure that ``requests`` doesn't
+include any additional headers.
+
+.. code-block:: python
+
+    import responses
+    import requests
+    from responses import matchers
+
+    @responses.activate
+    def test_content_type():
+        responses.add(
+            responses.GET,
+            url="http://example.com/",
+            body="hello world",
+            match=[
+                matchers.header_matcher({"Accept": "text/plain"}, strict_match=True)
+            ]
+        )
+
+        # this will fail because requests adds its own headers
+        with pytest.raises(ConnectionError):
+            requests.get("http://example.com/", headers={"Accept": "text/plain"})
+
+        # a prepared request where you overwrite the headers before sending will work
+        session = requests.Session()
+        prepped = session.prepare_request(
+            requests.Request(
+                method="GET",
+                url="http://example.com/",
+            )
+        )
+        prepped.headers = {"Accept": "text/plain"}
+
+        resp = session.send(prepped)
+        assert resp.text == "hello world"
+
 
 Dynamic Responses
 -----------------

@@ -5,7 +5,6 @@ import inspect
 import json as json_module
 import logging
 import re
-from enum import IntEnum
 from itertools import groupby
 
 import six
@@ -70,12 +69,6 @@ Call = namedtuple("Call", ["request", "response"])
 _real_send = HTTPAdapter.send
 
 logger = logging.getLogger("responses")
-
-
-class Priority(IntEnum):
-    HIGH = 30
-    NORMAL = 20
-    LOW = 10
 
 
 def urlencoded_params_matcher(params):
@@ -263,8 +256,6 @@ _unspecified = object()
 
 class BaseResponse(object):
     passthrough = False
-    check_fired = True
-    priority = Priority.NORMAL
     content_type = None
     headers = None
 
@@ -363,7 +354,7 @@ class BaseResponse(object):
         raise NotImplementedError
 
     def matches(self, request):
-        if request.method != self.method and self.method != "ANY":
+        if request.method != self.method:
             return False, "Method does not match"
 
         if not self._url_matches(self.url, request.url, self.match_querystring):
@@ -529,10 +520,6 @@ class RequestsMock(object):
     PUT = "PUT"
     response_callback = None
 
-    # This attribute stores passthru prefixes for backward compatibility.
-    # It should be removed, when passthru_prefixes are removed.
-    _passthru_prefixes = tuple()
-
     def __init__(
         self,
         assert_all_requests_are_fired=True,
@@ -544,9 +531,8 @@ class RequestsMock(object):
         self.reset()
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
         self.response_callback = response_callback
+        self.passthru_prefixes = tuple(passthru_prefixes)
         self.target = target
-        for prefix in passthru_prefixes:
-            self.add_passthru(prefix)
 
     def reset(self):
         self._matches = []
@@ -605,7 +591,7 @@ class RequestsMock(object):
 
         self._matches.append(Response(method=method, url=url, body=body, **kwargs))
 
-    def add_passthru(self, prefix, method="ANY", check_fired=False):
+    def add_passthru(self, prefix):
         """
         Register a URL prefix or regex to passthru any non-matching mock requests to.
 
@@ -620,35 +606,7 @@ class RequestsMock(object):
         """
         if not isinstance(prefix, Pattern) and _has_unicode(prefix):
             prefix = _clean_unicode(prefix)
-        self._passthru_prefixes += (prefix,)
-        response = PassthroughResponse(method, prefix)
-        response.check_fired = check_fired
-        response.priority = Priority.LOW
-        self.add(response)
-
-    @property
-    def passthru_prefixes(self):
-        warn(
-            "Please avoid direct access of passthru_prefixes. Passthroughs are stored "
-            "as PassthroughResponses like other registered responses.",
-            PendingDeprecationWarning,
-        )
-        return self._passthru_prefixes
-
-    @passthru_prefixes.setter
-    def passthru_prefixes(self, prefixes):
-        warn(
-            "Please avoid setting passthru_prefixes directly. Please use add_passthru.",
-            PendingDeprecationWarning,
-        )
-        prev_prefixes = self._passthru_prefixes
-        for prefix in prefixes:
-            if prefix in prev_prefixes:
-                continue
-            response = PassthroughResponse("ANY", prefix)
-            response.check_fired = False
-            self.add(response)
-        self._passthru_prefixes = prefixes
+        self.passthru_prefixes += (prefix,)
 
     def remove(self, method_or_response=None, url=None):
         """
@@ -742,14 +700,13 @@ class RequestsMock(object):
         found = None
         found_match = None
         match_failed_reasons = []
-        self._matches.sort(key=lambda m: m.priority, reverse=True)
         for i, match in enumerate(self._matches):
             match_result, reason = match.matches(request)
             if match_result:
                 if found is None:
                     found = i
                     found_match = match
-                elif match.priority == found_match.priority:
+                else:
                     # Multiple matches found.  Remove & return the first match.
                     return self._matches.pop(found), match_failed_reasons
             else:
@@ -771,6 +728,17 @@ class RequestsMock(object):
         resp_callback = self.response_callback
 
         if match is None:
+            if any(
+                [
+                    p.match(request.url)
+                    if isinstance(p, Pattern)
+                    else request.url.startswith(p)
+                    for p in self.passthru_prefixes
+                ]
+            ):
+                logger.info("request.allowed-passthru", extra={"url": request.url})
+                return _real_send(adapter, request, **kwargs)
+
             error_msg = (
                 "Connection refused by Responses - the call doesn't "
                 "match any registered mock.\n\n"
@@ -791,7 +759,7 @@ class RequestsMock(object):
             raise response
 
         if match.passthrough:
-            logger.info("request.allowed-passthru", extra={"url": request.url})
+            logger.info("request.passthrough-response", extra={"url": request.url})
             return _real_send(adapter, request, **kwargs)
 
         try:
@@ -825,7 +793,7 @@ class RequestsMock(object):
         if not allow_assert:
             return
 
-        not_called = [m for m in self._matches if m.call_count == 0 and m.check_fired]
+        not_called = [m for m in self._matches if m.call_count == 0]
         if not_called:
             raise AssertionError(
                 "Not all requests have been executed {0!r}".format(

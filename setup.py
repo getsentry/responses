@@ -22,7 +22,6 @@ if "test" in sys.argv:
 install_requires = [
     "cookies; python_version < '3.4'",
     "mock; python_version < '3.3'",
-    "enum34; python_version < '3.4'",
     "requests>=2.0",
     "urllib3>=1.25.10",
     "six",

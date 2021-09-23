@@ -193,6 +193,34 @@ Note, you must set ``match_querystring=False``
         assert resp.request.url == constructed_url
         assert resp.request.params == params
 
+
+To validate request arguments use the ``matchers.request_kwargs_matcher`` function to match
+against the request kwargs.
+Note, only arguments provided to ``matchers.request_kwargs_matcher`` will be validated
+
+.. code-block:: python
+
+    import responses
+    import requests
+    from responses import matchers
+
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+        req_kwargs = {
+            "stream": True,
+            "verify": False,
+        }
+        rsps.add(
+            "GET",
+            "http://111.com",
+            match=[matchers.request_kwargs_matcher(req_kwargs)],
+        )
+
+        requests.get("http://111.com", stream=True)
+
+        # >>>  Arguments don't match: {stream=True, verify=True} doesn't match {stream=True, verify=False}
+
+
+
 Dynamic Responses
 -----------------
 

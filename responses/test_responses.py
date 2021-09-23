@@ -1558,7 +1558,6 @@ def test_request_matches_post_params():
 
 
 def test_request_matches_empty_body():
-    @responses.activate
     def run():
         with responses.RequestsMock(assert_all_requests_are_fired=True) as rsps:
             # test that both json and urlencoded body are empty in matcher and in request
@@ -1669,7 +1668,6 @@ def test_fail_request_error():
     :return:
     """
 
-    @responses.activate
     def run():
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
             rsps.add("POST", "http://example1.com")
@@ -1696,7 +1694,6 @@ def test_fail_matchers_error():
     :return: None
     """
 
-    @responses.activate
     def run():
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
             rsps.add(
@@ -1760,9 +1757,9 @@ def test_fail_matchers_error():
 
             msg = str(excinfo.value)
             assert (
+                "Arguments don't match: "
                 "{stream=True, verify=True} doesn't match {stream=True, verify=False}"
-                in msg
-            )
+            ) in msg
 
     run()
     assert_reset()

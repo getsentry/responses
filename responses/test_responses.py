@@ -898,7 +898,7 @@ def test_response_filebody():
         with responses.RequestsMock() as m:
             with open(current_file, "r") as out:
                 m.add(responses.GET, "http://example.com", body=out.read(), stream=True)
-                resp = requests.get("http://example.com")
+                resp = requests.get("http://example.com", stream=True)
             with open(current_file, "r") as out:
                 assert resp.text == out.read()
 
@@ -1622,28 +1622,55 @@ def test_request_matches_params():
 
 
 def test_fail_request_error():
+    """
+    Validate that exception is raised if request URL/Method/kwargs don't match
+    :return:
+    """
+
     @responses.activate
     def run():
-        responses.add("POST", "http://example1.com")
-        responses.add("GET", "http://example.com")
-        responses.add(
-            "POST",
-            "http://example.com",
-            match=[matchers.urlencoded_params_matcher({"foo": "bar"})],
-        )
-        responses.add(
-            "POST",
-            "http://example.com",
-            match=[matchers.json_params_matcher({"fail": "json"})],
-        )
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+            rsps.add("POST", "http://example1.com")
+            rsps.add("GET", "http://example.com")
 
-        with pytest.raises(ConnectionError) as excinfo:
-            requests.post("http://example.com", data={"id": "bad"})
+            with pytest.raises(ConnectionError) as excinfo:
+                requests.post("http://example.com", data={"id": "bad"})
+
+            msg = str(excinfo.value)
+            assert "- POST http://example1.com/ URL does not match" in msg
+            assert "- GET http://example.com/ Method does not match" in msg
+
+    run()
+    assert_reset()
+
+
+def test_fail_matchers_error():
+    """
+    Validate that Exception is raised if request does not match responses.matchers
+        validate matchers.urlencoded_params_matcher
+        validate matchers.json_params_matcher
+        validate matchers.query_param_matcher
+    :return: None
+    """
+
+    @responses.activate
+    def run():
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+            rsps.add(
+                "POST",
+                "http://example.com",
+                match=[matchers.urlencoded_params_matcher({"foo": "bar"})],
+            )
+            rsps.add(
+                "POST",
+                "http://example.com",
+                match=[matchers.json_params_matcher({"fail": "json"})],
+            )
+
+            with pytest.raises(ConnectionError) as excinfo:
+                requests.post("http://example.com", data={"id": "bad"})
 
         msg = str(excinfo.value)
-        assert "- POST http://example1.com/ URL does not match" in msg
-        assert "- GET http://example.com/ Method does not match" in msg
-
         if six.PY3:
             assert "Parameters do not match. id=bad doesn't match {'foo': 'bar'}" in msg
         else:
@@ -1655,22 +1682,24 @@ def test_fail_request_error():
             "Parameters do not match. JSONDecodeError: Cannot parse request.body" in msg
         )
 
-        # test query parameters
-        responses.add(
-            "GET",
-            "http://111.com",
-            match=[matchers.query_param_matcher({"my": "params"})],
-        )
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+            rsps.add(
+                "GET",
+                "http://111.com",
+                match=[matchers.query_param_matcher({"my": "params"})],
+            )
 
-        responses.add(
-            method=responses.GET,
-            url="http://111.com/",
-            body="two",
-            match=[matchers.json_params_matcher({"page": "one"})],
-        )
+            rsps.add(
+                method=responses.GET,
+                url="http://111.com/",
+                body="two",
+                match=[matchers.json_params_matcher({"page": "one"})],
+            )
 
-        with pytest.raises(ConnectionError) as excinfo:
-            requests.get("http://111.com", params={"id": "bad"}, json={"page": "two"})
+            with pytest.raises(ConnectionError) as excinfo:
+                requests.get(
+                    "http://111.com", params={"id": "bad"}, json={"page": "two"}
+                )
 
         msg = str(excinfo.value)
         if six.PY3:

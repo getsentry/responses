@@ -1560,29 +1560,71 @@ def test_request_matches_post_params():
 def test_request_matches_empty_body():
     @responses.activate
     def run():
-        responses.add(
-            method=responses.POST,
-            url="http://example.com/",
-            body="one",
-            match=[matchers.json_params_matcher(None)],
-        )
+        with responses.RequestsMock(assert_all_requests_are_fired=True) as rsps:
+            # test that both json and urlencoded body are empty in matcher and in request
+            rsps.add(
+                method=responses.POST,
+                url="http://example.com/",
+                body="one",
+                match=[matchers.json_params_matcher(None)],
+            )
 
-        responses.add(
-            method=responses.POST,
-            url="http://example.com/",
-            body="two",
-            match=[matchers.urlencoded_params_matcher(None)],
-        )
+            rsps.add(
+                method=responses.POST,
+                url="http://example.com/",
+                body="two",
+                match=[matchers.urlencoded_params_matcher(None)],
+            )
 
-        resp = requests.request("POST", "http://example.com/")
-        assert_response(resp, "one")
+            resp = requests.request("POST", "http://example.com/")
+            assert_response(resp, "one")
 
-        resp = requests.request(
-            "POST",
-            "http://example.com/",
-            headers={"Content-Type": "x-www-form-urlencoded"},
-        )
-        assert_response(resp, "two")
+            resp = requests.request(
+                "POST",
+                "http://example.com/",
+                headers={"Content-Type": "x-www-form-urlencoded"},
+            )
+            assert_response(resp, "two")
+
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+            # test exception raise if matcher body is None but request data is not None
+            rsps.add(
+                method=responses.POST,
+                url="http://example.com/",
+                body="one",
+                match=[matchers.json_params_matcher(None)],
+            )
+
+            with pytest.raises(ConnectionError) as excinfo:
+                resp = requests.request(
+                    "POST",
+                    "http://example.com/",
+                    json={"my": "data"},
+                    headers={"Content-Type": "application/json"},
+                )
+
+            msg = str(excinfo.value)
+            assert "request.body doesn't match: {my=data} doesn't match {}" in msg
+
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+            rsps.add(
+                method=responses.POST,
+                url="http://example.com/",
+                body="two",
+                match=[matchers.urlencoded_params_matcher(None)],
+            )
+            with pytest.raises(ConnectionError) as excinfo:
+                resp = requests.request(
+                    "POST",
+                    "http://example.com/",
+                    headers={"Content-Type": "x-www-form-urlencoded"},
+                    data={"page": "second", "type": "urlencoded"},
+                )
+            msg = str(excinfo.value)
+            assert (
+                "request.body doesn't match: {page=second, type=urlencoded} doesn't match {}"
+                in msg
+            )
 
     run()
     assert_reset()
@@ -1650,6 +1692,7 @@ def test_fail_matchers_error():
         validate matchers.urlencoded_params_matcher
         validate matchers.json_params_matcher
         validate matchers.query_param_matcher
+        validate matchers.request_kwargs_matcher
     :return: None
     """
 
@@ -1671,15 +1714,11 @@ def test_fail_matchers_error():
                 requests.post("http://example.com", data={"id": "bad"})
 
         msg = str(excinfo.value)
-        if six.PY3:
-            assert "Parameters do not match. id=bad doesn't match {'foo': 'bar'}" in msg
-        else:
-            assert (
-                "Parameters do not match. id=bad doesn't match {u'foo': u'bar'}" in msg
-            )
+        assert "request.body doesn't match: {id=bad} doesn't match {foo=bar}" in msg
 
         assert (
-            "Parameters do not match. JSONDecodeError: Cannot parse request.body" in msg
+            "request.body doesn't match: JSONDecodeError: Cannot parse request.body"
+            in msg
         )
 
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
@@ -1702,22 +1741,26 @@ def test_fail_matchers_error():
                 )
 
         msg = str(excinfo.value)
-        if six.PY3:
-            assert (
-                "Parameters do not match. [('id', 'bad')] doesn't match [('my', 'params')]"
-                in msg
+        assert "Parameters do not match. {id=bad} doesn't match {my=params}" in msg
+        assert "request.body doesn't match: {page=two} doesn't match {page=one}" in msg
+
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+            req_kwargs = {
+                "stream": True,
+                "verify": False,
+            }
+            rsps.add(
+                "GET",
+                "http://111.com",
+                match=[matchers.request_kwargs_matcher(req_kwargs)],
             )
+
+            with pytest.raises(ConnectionError) as excinfo:
+                requests.get("http://111.com", stream=True)
+
+            msg = str(excinfo.value)
             assert (
-                """Parameters do not match. {"page": "two"} doesn't match {'page': 'one'}"""
-                in msg
-            )
-        else:
-            assert (
-                "Parameters do not match. [('id', 'bad')] doesn't match [(u'my', u'params')]"
-                in msg
-            )
-            assert (
-                """Parameters do not match. {"page": "two"} doesn't match {u'page': u'one'}"""
+                "{stream=True, verify=True} doesn't match {stream=True, verify=False}"
                 in msg
             )
 

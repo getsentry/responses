@@ -347,7 +347,7 @@ class BaseResponse(object):
 
         valid, reason = self._req_attr_matches(self.match, request)
         if not valid:
-            return False, "Parameters do not match. " + reason
+            return False, reason
 
         return True, ""
 
@@ -716,7 +716,11 @@ class RequestsMock(object):
         return params
 
     def _on_request(self, adapter, request, **kwargs):
+        # add attributes params and req_kwargs to 'request' object for further match comparison
+        # original request object does not have these attributes
         request.params = self._parse_request_params(request.path_url)
+        request.req_kwargs = kwargs
+
         match, match_failed_reasons = self._find_match(request)
         resp_callback = self.response_callback
 

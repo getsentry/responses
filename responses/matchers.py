@@ -12,6 +12,18 @@ except ImportError:
     JSONDecodeError = ValueError
 
 
+def _create_key_val_str(input_dict):
+    """
+    Returns string of format {'key': val, 'key2': val2}
+    :param input_dict: dictionary to transform
+    :return: (str) reformatted string
+    """
+    key_val_str = "{{{}}}".format(
+        ", ".join(["{}={}".format(key, val) for key, val in sorted(input_dict.items())])
+    )
+    return key_val_str
+
+
 def urlencoded_params_matcher(params):
     """
     Matches URL encoded data
@@ -20,16 +32,17 @@ def urlencoded_params_matcher(params):
     """
 
     def match(request):
+        reason = ""
         request_body = request.body
-        valid = (
-            params is None
-            if request_body is None
-            else sorted(params.items()) == sorted(parse_qsl(request_body))
-        )
+        qsl_body = dict(parse_qsl(request_body)) if request_body else {}
+        params_dict = params or {}
+        valid = params is None if request_body is None else params_dict == qsl_body
         if not valid:
-            return False, "%s doesn't match %s" % (request_body, params)
+            reason = "request.body doesn't match: {} doesn't match {}".format(
+                _create_key_val_str(qsl_body), _create_key_val_str(params_dict)
+            )
 
-        return valid, ""
+        return valid, reason
 
     return match
 
@@ -42,21 +55,28 @@ def json_params_matcher(params):
     """
 
     def match(request):
+        reason = ""
         request_body = request.body
+        params_dict = params or {}
         try:
             if isinstance(request_body, bytes):
                 request_body = request_body.decode("utf-8")
-            valid = (
-                params is None
-                if request_body is None
-                else params == json_module.loads(request_body)
-            )
-            if not valid:
-                return False, "%s doesn't match %s" % (request_body, params)
+            json_body = json_module.loads(request_body) if request_body else {}
 
-            return valid, ""
+            valid = params is None if request_body is None else params_dict == json_body
+
+            if not valid:
+                reason = "request.body doesn't match: {} doesn't match {}".format(
+                    _create_key_val_str(json_body), _create_key_val_str(params_dict)
+                )
+
         except JSONDecodeError:
-            return False, "JSONDecodeError: Cannot parse request.body"
+            valid = False
+            reason = (
+                "request.body doesn't match: JSONDecodeError: Cannot parse request.body"
+            )
+
+        return valid, reason
 
     return match
 
@@ -69,19 +89,53 @@ def query_param_matcher(params):
     """
 
     def match(request):
+        reason = ""
         request_params = request.params
+        request_params_dict = request_params or {}
+        params_dict = params or {}
         valid = (
             params is None
             if request_params is None
-            else sorted(params.items()) == sorted(request_params.items())
+            else params_dict == request_params_dict
         )
 
         if not valid:
-            return False, "%s doesn't match %s" % (
-                sorted(request_params.items()),
-                sorted(params.items()),
+            reason = "Parameters do not match. {} doesn't match {}".format(
+                _create_key_val_str(request_params_dict),
+                _create_key_val_str(params_dict),
             )
 
-        return valid, ""
+        return valid, reason
+
+    return match
+
+
+def request_kwargs_matcher(kwargs):
+    """
+    Matcher to match keyword arguments provided to request
+    :param kwargs: (dict), keyword arguments, same as provided to request
+    :return: (func) matcher
+    """
+
+    def match(request):
+        reason = ""
+        kwargs_dict = kwargs or {}
+        # validate only kwargs that were requested for comparison, skip defaults
+        request_kwargs = {
+            k: v for k, v in request.req_kwargs.items() if k in kwargs_dict
+        }
+
+        valid = (
+            not kwargs_dict
+            if not request_kwargs
+            else sorted(kwargs.items()) == sorted(request_kwargs.items())
+        )
+
+        if not valid:
+            reason = "{} doesn't match {}".format(
+                _create_key_val_str(request_kwargs), _create_key_val_str(kwargs_dict)
+            )
+
+        return valid, reason
 
     return match

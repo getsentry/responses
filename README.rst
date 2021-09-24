@@ -129,7 +129,16 @@ auto_calculate_content_length (``bool``)
     Disabled by default. Automatically calculates the length of a supplied string or JSON body.
 
 match (``list``)
-    A list of callbacks to match requests based on request body contents.
+    A list of callbacks to match requests based on request attributes.
+    Current module provides multiple matchers that you can use:
+
+    * body contents in JSON format
+    * body contents in URL encoded data format
+    * request query parameters
+    * kwargs provided to request eg stream, verify
+
+    Alternatively user can create custom matcher.
+    Read more `Matching Request Parameters`_
 
 
 Matching Request Parameters

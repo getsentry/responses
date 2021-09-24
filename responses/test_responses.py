@@ -1710,13 +1710,13 @@ def test_fail_matchers_error():
             with pytest.raises(ConnectionError) as excinfo:
                 requests.post("http://example.com", data={"id": "bad"})
 
-        msg = str(excinfo.value)
-        assert "request.body doesn't match: {id=bad} doesn't match {foo=bar}" in msg
+            msg = str(excinfo.value)
+            assert "request.body doesn't match: {id=bad} doesn't match {foo=bar}" in msg
 
-        assert (
-            "request.body doesn't match: JSONDecodeError: Cannot parse request.body"
-            in msg
-        )
+            assert (
+                "request.body doesn't match: JSONDecodeError: Cannot parse request.body"
+                in msg
+            )
 
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
             rsps.add(
@@ -1737,9 +1737,11 @@ def test_fail_matchers_error():
                     "http://111.com", params={"id": "bad"}, json={"page": "two"}
                 )
 
-        msg = str(excinfo.value)
-        assert "Parameters do not match. {id=bad} doesn't match {my=params}" in msg
-        assert "request.body doesn't match: {page=two} doesn't match {page=one}" in msg
+            msg = str(excinfo.value)
+            assert "Parameters do not match. {id=bad} doesn't match {my=params}" in msg
+            assert (
+                "request.body doesn't match: {page=two} doesn't match {page=one}" in msg
+            )
 
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
             req_kwargs = {

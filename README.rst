@@ -495,15 +495,30 @@ and hit a real server. This can be done with the ``add_passthru`` methods:
     def test_my_api():
         responses.add_passthru('https://percy.io')
 
-This will allow any requests matching that prefix, that is otherwise not registered
-as a mock response, to passthru using the standard behavior.
+This will allow any requests matching that prefix, that is otherwise not
+registered as a mock response, to passthru using the standard behavior.
 
-Regex can be used like:
+Pass through endpoints can be configured with regex patterns if you
+need to allow an entire domain or path subtree to send requests:
 
 .. code-block:: python
 
     responses.add_passthru(re.compile('https://percy.io/\\w+'))
 
+
+Lastly, you can use the `response.passthrough` attribute on `BaseResponse` or
+use ``PassthroughResponse`` to enable a response to behave as a pass through.
+
+.. code-block:: python
+
+    # Enable passthrough for a single response
+    response = Response(responses.GET, 'http://example.com', body='not used')
+    response.passthrough = True
+    responses.add(response)
+
+    # Use PassthroughResponse
+    response = PassthroughResponse(responses.GET, 'http://example.com')
+    responses.add(response)
 
 Viewing/Modifying registered responses
 --------------------------------------

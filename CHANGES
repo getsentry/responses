@@ -1,3 +1,9 @@
+0.15.0
+
+* Added `responses.PassthroughResponse` and
+  `reponses.BaseResponse.passthrough`. These features make building passthrough
+  responses more compatible with dynamcially generated response objects.
+
 0.14.0
 ------
 

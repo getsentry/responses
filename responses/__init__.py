@@ -255,6 +255,7 @@ _unspecified = object()
 
 
 class BaseResponse(object):
+    passthrough = False
     content_type = None
     headers = None
 
@@ -483,6 +484,10 @@ class CallbackResponse(BaseResponse):
             original_response=OriginalResponseShim(headers),
             preload_content=False,
         )
+
+
+class PassthroughResponse(BaseResponse):
+    passthrough = True
 
 
 class OriginalResponseShim(object):
@@ -752,6 +757,10 @@ class RequestsMock(object):
             self._calls.add(request, response)
             response = resp_callback(response) if resp_callback else response
             raise response
+
+        if match.passthrough:
+            logger.info("request.passthrough-response", extra={"url": request.url})
+            return _real_send(adapter, request, **kwargs)
 
         try:
             response = adapter.build_response(request, match.get_response(request))

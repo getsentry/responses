@@ -13,8 +13,7 @@ import pytest
 import requests
 import responses
 from requests.exceptions import ConnectionError, HTTPError
-from responses import BaseResponse, Response, matchers
-
+from responses import BaseResponse, Response, PassthroughResponse, matchers
 
 try:
     from mock import patch, Mock
@@ -1254,6 +1253,72 @@ def test_multiple_methods():
         assert_response(resp, "posted")
 
     run()
+    assert_reset()
+
+
+def test_passthrough_flag(httpserver):
+    httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
+    response = Response(responses.GET, httpserver.url, body="MOCK")
+
+    @responses.activate
+    def run_passthrough():
+        responses.add(response)
+        resp = requests.get(httpserver.url)
+        assert_response(resp, "OK")
+
+    @responses.activate
+    def run_mocked():
+        responses.add(response)
+        resp = requests.get(httpserver.url)
+        assert_response(resp, "MOCK")
+
+    run_mocked()
+    assert_reset()
+
+    response.passthrough = True
+    run_passthrough()
+    assert_reset()
+
+
+def test_passthrough_response(httpserver):
+    httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
+
+    @responses.activate
+    def run():
+        responses.add(PassthroughResponse(responses.GET, httpserver.url))
+        responses.add(responses.GET, "{}/one".format(httpserver.url), body="one")
+        responses.add(responses.GET, "http://example.com/two", body="two")
+
+        resp = requests.get("http://example.com/two")
+        assert_response(resp, "two")
+        resp = requests.get("{}/one".format(httpserver.url))
+        assert_response(resp, "one")
+        resp = requests.get(httpserver.url)
+        assert_response(resp, "OK")
+
+    run()
+    assert_reset()
+
+
+def test_passthru_prefixes(httpserver):
+    httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
+
+    @responses.activate
+    def run_constructor_argument():
+        with responses.RequestsMock(passthru_prefixes=(httpserver.url,)):
+            resp = requests.get(httpserver.url)
+            assert_response(resp, "OK")
+
+    @responses.activate
+    def run_property_setter():
+        with responses.RequestsMock() as m:
+            m.passthru_prefixes = tuple([httpserver.url])
+            resp = requests.get(httpserver.url)
+            assert_response(resp, "OK")
+
+    run_constructor_argument()
+    assert_reset()
+    run_property_setter()
     assert_reset()
 
 

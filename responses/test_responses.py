@@ -1285,7 +1285,8 @@ def test_passthrough_response(httpserver):
 
     @responses.activate
     def run():
-        responses.add(PassthroughResponse(responses.GET, httpserver.url))
+        passthrough = PassthroughResponse(responses.GET, httpserver.url)
+        responses.add(passthrough)
         responses.add(responses.GET, "{}/one".format(httpserver.url), body="one")
         responses.add(responses.GET, "http://example.com/two", body="two")
 
@@ -1295,6 +1296,9 @@ def test_passthrough_response(httpserver):
         assert_response(resp, "one")
         resp = requests.get(httpserver.url)
         assert_response(resp, "OK")
+
+        assert len(responses.calls) == 3
+        responses.assert_call_count(httpserver.url, 1)
 
     run()
     assert_reset()

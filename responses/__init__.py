@@ -13,7 +13,6 @@ from collections import namedtuple
 from functools import update_wrapper
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
-from requests.sessions import REDIRECT_STATI
 from requests.utils import cookiejar_from_dict
 from responses.matchers import json_params_matcher as _json_params_matcher
 from responses.matchers import urlencoded_params_matcher as _urlencoded_params_matcher
@@ -117,20 +116,6 @@ def _clean_unicode(url):
             chars[i] = quote(x)
 
     return "".join(chars)
-
-
-def _is_redirect(response):
-    try:
-        # 2.0.0 <= requests <= 2.2
-        return response.is_redirect
-
-    except AttributeError:
-        # requests > 2.2
-        return (
-            # use request.sessions conditional
-            response.status_code in REDIRECT_STATI
-            and "location" in response.headers
-        )
 
 
 def _ensure_str(s):

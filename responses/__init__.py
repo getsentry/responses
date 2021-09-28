@@ -760,18 +760,22 @@ class RequestsMock(object):
 
         if match.passthrough:
             logger.info("request.passthrough-response", extra={"url": request.url})
-            return _real_send(adapter, request, **kwargs)
-
-        try:
-            response = adapter.build_response(request, match.get_response(request))
-        except BaseException as response:
-            match.call_count += 1
-            self._calls.add(request, response)
-            response = resp_callback(response) if resp_callback else response
-            raise
+            response = _real_send(adapter, request, **kwargs)
+        else:
+            try:
+                response = adapter.build_response(request, match.get_response(request))
+            except BaseException as response:
+                match.call_count += 1
+                self._calls.add(request, response)
+                response = resp_callback(response) if resp_callback else response
+                raise
 
         if not match.stream:
-            response.content  # NOQA
+            content = response.content
+            if kwargs.get("stream"):
+                response.raw = BufferIO(content)
+            else:
+                response.close()
 
         response = resp_callback(response) if resp_callback else response
         match.call_count += 1

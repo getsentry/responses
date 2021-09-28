@@ -8,7 +8,7 @@ from typing import (
 JSONDecodeError = ValueError
 
 
-def _create_key_val_str(input_dict: Dict[str, Any]) -> str: ...
+def _create_key_val_str(input_dict: Dict[Any, Any]) -> str: ...
 
 def json_params_matcher(
     params: Optional[Dict[str, Any]]

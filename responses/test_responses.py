@@ -1603,7 +1603,7 @@ def test_request_matches_empty_body():
                 )
 
             msg = str(excinfo.value)
-            assert "request.body doesn't match: {my=data} doesn't match {}" in msg
+            assert "request.body doesn't match: {my: data} doesn't match {}" in msg
 
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
             rsps.add(
@@ -1621,7 +1621,7 @@ def test_request_matches_empty_body():
                 )
             msg = str(excinfo.value)
             assert (
-                "request.body doesn't match: {page=second, type=urlencoded} doesn't match {}"
+                "request.body doesn't match: {page: second, type: urlencoded} doesn't match {}"
                 in msg
             )
 
@@ -1711,7 +1711,9 @@ def test_fail_matchers_error():
                 requests.post("http://example.com", data={"id": "bad"})
 
             msg = str(excinfo.value)
-            assert "request.body doesn't match: {id=bad} doesn't match {foo=bar}" in msg
+            assert (
+                "request.body doesn't match: {id: bad} doesn't match {foo: bar}" in msg
+            )
 
             assert (
                 "request.body doesn't match: JSONDecodeError: Cannot parse request.body"
@@ -1738,9 +1740,12 @@ def test_fail_matchers_error():
                 )
 
             msg = str(excinfo.value)
-            assert "Parameters do not match. {id=bad} doesn't match {my=params}" in msg
             assert (
-                "request.body doesn't match: {page=two} doesn't match {page=one}" in msg
+                "Parameters do not match. {id: bad} doesn't match {my: params}" in msg
+            )
+            assert (
+                "request.body doesn't match: {page: two} doesn't match {page: one}"
+                in msg
             )
 
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
@@ -1760,7 +1765,7 @@ def test_fail_matchers_error():
             msg = str(excinfo.value)
             assert (
                 "Arguments don't match: "
-                "{stream=True, verify=True} doesn't match {stream=True, verify=False}"
+                "{stream: True, verify: True} doesn't match {stream: True, verify: False}"
             ) in msg
 
     run()
@@ -1860,3 +1865,27 @@ def test_rfc_compliance(url, other_url):
 
     run()
     assert_reset()
+
+
+def test_matchers_create_key_val_str():
+    """
+    Test that matchers._create_key_val_str does recursive conversion
+    """
+    data = {
+        "my_list": [
+            1,
+            2,
+            "a",
+            {"key1": "val1", "key2": 2, 3: "test"},
+            "!",
+            [["list", "nested"], {"nested": "dict"}],
+        ],
+        1: 4,
+        "test": "val",
+    }
+    conv_str = matchers._create_key_val_str(data)
+    reference = (
+        "{1: 4, my_list: [!, 1, 2, [[list, nested], {nested: dict}], a, {3: test, "
+        "key1: val1, key2: 2}], test: val}"
+    )
+    assert conv_str == reference

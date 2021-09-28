@@ -226,7 +226,7 @@ Note, only arguments provided to ``matchers.request_kwargs_matcher`` will be val
 
         requests.get("http://111.com", stream=True)
 
-        # >>>  Arguments don't match: {stream=True, verify=True} doesn't match {stream=True, verify=False}
+        # >>>  Arguments don't match: {stream: True, verify: True} doesn't match {stream: True, verify: False}
 
 
 

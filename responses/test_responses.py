@@ -1285,8 +1285,7 @@ def test_passthrough_response(httpserver):
 
     @responses.activate
     def run():
-        passthrough = PassthroughResponse(responses.GET, httpserver.url)
-        responses.add(passthrough)
+        responses.add(PassthroughResponse(responses.GET, httpserver.url))
         responses.add(responses.GET, "{}/one".format(httpserver.url), body="one")
         responses.add(responses.GET, "http://example.com/two", body="two")
 
@@ -1299,6 +1298,21 @@ def test_passthrough_response(httpserver):
 
         assert len(responses.calls) == 3
         responses.assert_call_count(httpserver.url, 1)
+
+    run()
+    assert_reset()
+
+
+def test_passthrough_response_stream(httpserver):
+    httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
+
+    @responses.activate
+    def run():
+        responses.add(PassthroughResponse(responses.GET, httpserver.url))
+        content_1 = requests.get(httpserver.url).content
+        with requests.get(httpserver.url, stream=True) as resp:
+            content_2 = resp.raw.read()
+        assert content_1 == content_2
 
     run()
     assert_reset()

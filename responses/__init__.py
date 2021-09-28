@@ -772,7 +772,7 @@ class RequestsMock(object):
 
         if not match.stream:
             content = response.content
-            if kwargs.get('stream'):
+            if kwargs.get("stream"):
                 response.raw = BufferIO(content)
             else:
                 response.close()

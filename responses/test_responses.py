@@ -1882,10 +1882,11 @@ def test_matchers_create_key_val_str():
         ],
         1: 4,
         "test": "val",
+        "high": {"nested": "nested_dict"},
     }
     conv_str = matchers._create_key_val_str(data)
     reference = (
-        "{1: 4, my_list: [!, 1, 2, [[list, nested], {nested: dict}], a, {3: test, "
-        "key1: val1, key2: 2}], test: val}"
+        "{1: 4, high: {nested: nested_dict}, my_list: [!, 1, 2, [[list, nested], {nested: dict}], "
+        "a, {3: test, key1: val1, key2: 2}], test: val}"
     )
     assert conv_str == reference

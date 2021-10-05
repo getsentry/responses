@@ -680,6 +680,10 @@ class RequestsMock(object):
         return self._matches
 
     @property
+    def registry(self):
+        return self._matches
+
+    @property
     def calls(self):
         return self._calls
 
@@ -696,22 +700,24 @@ class RequestsMock(object):
     def activate(self, func):
         return get_wrapped(func, self)
 
+    def _matching_sequence(self):
+        for response in self.registry:
+            if response.call_count == 0:
+                yield response
+        for response in reversed(self.registry):
+            if response.call_count > 0:
+                yield response
+
     def _find_match(self, request):
-        found = None
-        found_match = None
-        match_failed_reasons = []
-        for i, match in enumerate(self._matches):
-            match_result, reason = match.matches(request)
-            if match_result:
-                if found is None:
-                    found = i
-                    found_match = match
-                else:
-                    # Multiple matches found.  Remove & return the first match.
-                    return self._matches.pop(found), match_failed_reasons
-            else:
-                match_failed_reasons.append(reason)
-        return found_match, match_failed_reasons
+        match = None
+        fails = []
+        for response in self._matching_sequence():
+            success, reason = response.matches(request)
+            if success:
+                match = response
+                break
+            fails.append((response, reason))
+        return match, fails
 
     def _parse_request_params(self, url):
         params = {}
@@ -746,10 +752,8 @@ class RequestsMock(object):
                 "- %s %s\n\n"
                 "Available matches:\n" % (request.method, request.url)
             )
-            for i, m in enumerate(self._matches):
-                error_msg += "- {} {} {}\n".format(
-                    m.method, m.url, match_failed_reasons[i]
-                )
+            for m, reason in match_failed_reasons:
+                error_msg += "- {} {} {}\n".format(m.method, m.url, reason)
 
             response = ConnectionError(error_msg)
             response.request = request

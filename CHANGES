@@ -1,8 +1,10 @@
 0.15.0
+------
 
 * Added `responses.PassthroughResponse` and
   `reponses.BaseResponse.passthrough`. These features make building passthrough
   responses more compatible with dynamcially generated response objects.
+* Removed the unused ``_is_redirect()`` function from responses internals.
 
 0.14.0
 ------

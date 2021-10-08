@@ -137,6 +137,29 @@ def test_replace(original, replacement):
     assert_reset()
 
 
+def test_replace_order():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com", body="1")
+        responses.add(responses.GET, "http://example.com", body="2")
+
+        resp = requests.get("http://example.com")
+        assert_response(resp, "1")
+        resp = requests.get("http://example.com")
+        assert_response(resp, "2")
+
+        responses.replace(responses.GET, "http://example.com", body="3")
+        resp = requests.get("http://example.com")
+        assert_response(resp, "3")
+
+        # check that it remains the fallback response.
+        resp = requests.get("http://example.com")
+        assert_response(resp, "3")
+
+    run()
+    assert_reset()
+
+
 @pytest.mark.parametrize(
     "original,replacement",
     [
@@ -891,7 +914,7 @@ def test_response_callback():
 
 @pytest.mark.skipif(six.PY2, reason="re.compile works differntly in PY2")
 def test_response_filebody():
-    """ Adds the possibility to use actual (binary) files as responses """
+    """Adds the possibility to use actual (binary) files as responses"""
 
     def run():
         current_file = os.path.abspath(__file__)

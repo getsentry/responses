@@ -640,9 +640,10 @@ class RequestsMock(object):
         else:
             response = Response(method=method_or_response, url=url, body=body, **kwargs)
 
-        try:
-            index = self._matches.index(response)
-        except ValueError:
+        for index, match in self._matching_sequence():
+            if match == response:
+                break
+        else:
             raise ValueError("Response is not registered for URL %s" % url)
         self._matches[index] = response
 
@@ -701,17 +702,20 @@ class RequestsMock(object):
         return get_wrapped(func, self)
 
     def _matching_sequence(self):
+        index = 0
         for response in self.registry:
             if response.call_count == 0:
-                yield response
+                yield index, response
+            index += 1
         for response in reversed(self.registry):
+            index -= 1
             if response.call_count > 0:
-                yield response
+                yield index, response
 
     def _find_match(self, request):
         match = None
         fails = []
-        for response in self._matching_sequence():
+        for index, response in self._matching_sequence():
             success, reason = response.matches(request)
             if success:
                 match = response

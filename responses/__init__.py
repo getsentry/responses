@@ -684,8 +684,8 @@ class RequestsMock(object):
     def _find_match(self, request):
         """
         Iterates through all available matches and validates if any of them matches the request
+
         :param request: (PreparedRequest), request object
-        :param kwargs: kwargs, provided to requests method
         :return:
             (Response) found match. If multiple found, then remove & return the first match.
             (list) list with reasons why other matches don't match

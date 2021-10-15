@@ -135,7 +135,7 @@ match (``list``)
     * body contents in JSON format
     * body contents in URL encoded data format
     * request query parameters
-    * kwargs provided to request eg stream, verify
+    * kwargs provided to request e.g. ``stream``, ``verify``
 
     Alternatively user can create custom matcher.
     Read more `Matching Request Parameters`_

@@ -16,13 +16,14 @@ def _create_key_val_str(input_dict):
     """
     Returns string of format {'key': val, 'key2': val2}
     Function is called recursively for nested dictionaries
+
     :param input_dict: dictionary to transform
     :return: (str) reformatted string
     """
 
     def list_to_str(input_list):
         """
-        Covert all list items to string.
+        Convert all list items to string.
         Function is called recursively for nested lists
         """
         converted_list = []
@@ -53,6 +54,7 @@ def _create_key_val_str(input_dict):
 def urlencoded_params_matcher(params):
     """
     Matches URL encoded data
+
     :param params: (dict) data provided to 'data' arg of request
     :return: (func) matcher
     """
@@ -76,6 +78,7 @@ def urlencoded_params_matcher(params):
 def json_params_matcher(params):
     """
     Matches JSON encoded data
+
     :param params: (dict) JSON data provided to 'json' arg of request
     :return: (func) matcher
     """
@@ -110,6 +113,7 @@ def json_params_matcher(params):
 def query_param_matcher(params):
     """
     Matcher to match 'params' argument in request
+
     :param params: (dict), same as provided to request
     :return: (func) matcher
     """
@@ -139,6 +143,7 @@ def query_param_matcher(params):
 def request_kwargs_matcher(kwargs):
     """
     Matcher to match keyword arguments provided to request
+
     :param kwargs: (dict), keyword arguments, same as provided to request
     :return: (func) matcher
     """

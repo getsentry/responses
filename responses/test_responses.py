@@ -1552,9 +1552,12 @@ def test_request_matches_post_params():
         )
         assert_response(resp, "one")
 
-    for depr in [True, False]:
-        run(deprecated=depr)
+    with pytest.deprecated_call():
+        run(deprecated=True)
         assert_reset()
+
+    run(deprecated=False)
+    assert_reset()
 
 
 def test_request_matches_empty_body():

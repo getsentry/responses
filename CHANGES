@@ -9,6 +9,7 @@
   to match additional request arguments like `stream`.
 * Changed all matchers output message in case of mismatch. Now message is aligned
   between Python2 and Python3 versions
+* Deprecate ``stream`` argument in ``Response`` and ``CallbackResponse``
 
 0.14.0
 ------

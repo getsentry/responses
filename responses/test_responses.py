@@ -1869,7 +1869,7 @@ def test_fail_multipart_matcher():
                 requests.post("http://httpbin.org/post")
 
             msg = str(excinfo.value)
-            assert "Request is missing 'Content-Type' header" in msg
+            assert "Request is missing the 'Content-Type' header" in msg
 
     run()
     assert_reset()

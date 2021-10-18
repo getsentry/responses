@@ -206,7 +206,7 @@ def multipart_matcher(files, data=None):
     def match(request):
         reason = "multipart/form-data doesn't match. "
         if "Content-Type" not in request.headers:
-            return False, reason + "Request is missing 'Content-Type' header"
+            return False, reason + "Request is missing the 'Content-Type' header"
 
         request_boundary = get_boundary(request.headers["Content-Type"])
         prepared_boundary = get_boundary(prepared.headers["Content-Type"])
@@ -241,7 +241,7 @@ def multipart_matcher(files, data=None):
 
         body_valid = prepared_body == request_body
         if not body_valid:
-            return False, reason + "Request body differs. {} not equal {}".format(
+            return False, reason + "Request body differs. {} aren't equal {}".format(
                 request_body, prepared_body
             )
 

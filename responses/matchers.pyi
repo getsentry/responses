@@ -8,6 +8,8 @@ from typing import (
 JSONDecodeError = ValueError
 
 
+def _create_key_val_str(input_dict: Dict[Any, Any]) -> str: ...
+
 def json_params_matcher(
     params: Optional[Dict[str, Any]]
 ) -> Callable[..., Any]: ...
@@ -18,6 +20,10 @@ def urlencoded_params_matcher(
 
 def query_param_matcher(
     params: Optional[Dict[str, str]]
+) -> Callable[..., Any]: ...
+
+def request_kwargs_matcher(
+    kwargs: Optional[Dict[str, Any]]
 ) -> Callable[..., Any]: ...
 
 def multipart_matcher(data: Dict[str, str], files: Dict[str, Any]) -> Callable[..., Any]: ...

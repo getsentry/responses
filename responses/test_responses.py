@@ -93,6 +93,9 @@ def test_response_with_instance():
         assert len(responses.calls) == 2
         assert responses.calls[1].request.url == "http://example.com/?foo=bar"
 
+    run()
+    assert_reset()
+
 
 @pytest.mark.parametrize(
     "original,replacement",

@@ -7,6 +7,8 @@
 * Removed the unused ``_is_redirect()`` function from responses internals.
 * Added `responses.matchers.request_kwargs_matcher`. This matcher allows you
   to match additional request arguments like `stream`.
+* Added `responses.matchers.multipart_matcher`. This matcher allows you
+  to match request body and headers for ``multipart/form-data`` data
 * Changed all matchers output message in case of mismatch. Now message is aligned
   between Python2 and Python3 versions
 

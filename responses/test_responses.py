@@ -1680,7 +1680,7 @@ def test_multipart_matcher():
             responses.add(
                 responses.POST,
                 url="http://httpbin.org/post",
-                match=[multipart_matcher(files={})],
+                match=[multipart_matcher(files={}, data=None)],
             )
 
     run()
@@ -1862,7 +1862,7 @@ def test_fail_multipart_matcher():
             rsps.add(
                 responses.POST,
                 url="http://httpbin.org/post",
-                match=[multipart_matcher(req_files)],
+                match=[multipart_matcher(req_files, data=None)],
             )
 
             with pytest.raises(ConnectionError) as excinfo:

@@ -1671,7 +1671,7 @@ def test_multipart_matcher():
         responses.add(
             responses.POST,
             url="http://httpbin.org/post",
-            match=[multipart_matcher(req_data, req_files)],
+            match=[multipart_matcher(req_files, data=req_data)],
         )
         resp = requests.post("http://httpbin.org/post", data=req_data, files=req_files)
         assert resp.status_code == 200
@@ -1680,7 +1680,7 @@ def test_multipart_matcher():
             responses.add(
                 responses.POST,
                 url="http://httpbin.org/post",
-                match=[multipart_matcher(req_data, files={})],
+                match=[multipart_matcher(files={})],
             )
 
     run()
@@ -1800,7 +1800,7 @@ def test_fail_matchers_error():
             rsps.add(
                 responses.POST,
                 url="http://httpbin.org/post",
-                match=[multipart_matcher(req_data, req_files)],
+                match=[multipart_matcher(req_files, data=req_data)],
             )
 
             with pytest.raises(ConnectionError) as excinfo:
@@ -1828,7 +1828,7 @@ def test_fail_matchers_error():
             rsps.add(
                 responses.POST,
                 url="http://httpbin.org/post",
-                match=[multipart_matcher(req_data, req_files)],
+                match=[multipart_matcher(req_files, data=req_data)],
             )
 
             with pytest.raises(ConnectionError) as excinfo:
@@ -1846,12 +1846,11 @@ def test_fail_matchers_error():
 
         # empty body request
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
-            req_data = {"some": "other", "data": "fields"}
             req_files = {"file_name": b"Old World!"}
             rsps.add(
                 responses.POST,
                 url="http://httpbin.org/post",
-                match=[multipart_matcher(None, req_files)],
+                match=[multipart_matcher(req_files)],
             )
 
             with pytest.raises(ConnectionError) as excinfo:

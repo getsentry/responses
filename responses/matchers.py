@@ -225,12 +225,6 @@ def multipart_matcher(data, files, encoding="utf-8"):
             bytes(prepared_boundary, encoding), bytes(request_boundary, encoding)
         )
 
-        body_valid = prepared_body == request_body
-        if not body_valid:
-            return False, reason + "Request body differs. {} not equal {}".format(
-                request_body, prepared_body
-            )
-
         headers_valid = prepared_content_type == request_content_type
         if not headers_valid:
             return (
@@ -239,6 +233,12 @@ def multipart_matcher(data, files, encoding="utf-8"):
                 + "Request headers['Content-Type'] is different. {} isn't equal to {}".format(
                     request_content_type, prepared_content_type
                 ),
+            )
+
+        body_valid = prepared_body == request_body
+        if not body_valid:
+            return False, reason + "Request body differs. {} not equal {}".format(
+                request_body, prepared_body
             )
 
         return True, ""

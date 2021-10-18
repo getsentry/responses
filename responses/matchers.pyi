@@ -27,5 +27,5 @@ def request_kwargs_matcher(
 ) -> Callable[..., Any]: ...
 
 def multipart_matcher(
-        data: Dict[str, str], files: Dict[str, Any], encoding: str
+        files: Dict[str, Any], data: Optional[Dict[str, str]], encoding: str
 ) -> Callable[..., Any]: ...

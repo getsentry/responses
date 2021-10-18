@@ -5,6 +5,10 @@
   `reponses.BaseResponse.passthrough`. These features make building passthrough
   responses more compatible with dynamcially generated response objects.
 * Removed the unused ``_is_redirect()`` function from responses internals.
+* Added `responses.matchers.request_kwargs_matcher`. This matcher allows you
+  to match additional request arguments like `stream`.
+* Changed all matchers output message in case of mismatch. Now message is aligned
+  between Python2 and Python3 versions
 
 0.14.0
 ------

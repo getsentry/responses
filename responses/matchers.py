@@ -1,6 +1,8 @@
 import six
 import json as json_module
 
+from requests import PreparedRequest
+
 if six.PY2:
     from urlparse import parse_qsl
 else:
@@ -82,6 +84,66 @@ def query_param_matcher(params):
                 sorted(params.items()),
             )
 
+        return valid, ""
+
+    return match
+
+
+def multipart_matcher(data, files, encoding="utf-8"):
+    """
+    Matcher to match 'params' argument in request
+    :param params: (dict), same as provided to request
+    :return: (func) matcher
+    """
+    if not files:
+        raise TypeError("files argument cannot be empty")
+
+    prepared = PreparedRequest()
+    prepared.headers = {"Content-Type": ""}
+    prepared.prepare_body(data=data, files=files)
+
+    def get_boundary(content_type):
+        if "boundary=" not in content_type:
+            return ""
+
+        boundary = content_type.split("boundary=")[1]
+        return boundary
+
+    def match(request):
+        if "Content-Type" not in request.headers:
+            return False, "Request misses 'Content-Type' in headers"
+
+        request_boundary = get_boundary(request.headers["Content-Type"])
+        prepared_boundary = get_boundary(prepared.headers["Content-Type"])
+
+        request_content_type = request.headers["Content-Type"]
+        prepared_content_type = prepared.headers["Content-Type"].replace(
+            prepared_boundary, request_boundary
+        )
+
+        request_body = request.body
+        prepared_body = prepared.body.replace(
+            bytes(prepared_boundary, encoding), bytes(request_boundary, encoding)
+        )
+
+        body_valid = prepared_body == request_body
+
+        if not body_valid:
+            return False, "Request body is different. {} not equal {}".format(
+                request_body, prepared_body
+            )
+        else:
+            headers_valid = prepared_content_type == request_content_type
+
+            if not headers_valid:
+                return (
+                    False,
+                    "Request headers['Content-Type'] is different. {} not equal {}".format(
+                        request_content_type, prepared_content_type
+                    ),
+                )
+
+        valid = body_valid and headers_valid
         return valid, ""
 
     return match

@@ -1793,6 +1793,18 @@ def test_fail_matchers_error():
                 "{stream: True, verify: True} doesn't match {stream: True, verify: False}"
             ) in msg
 
+    run()
+    assert_reset()
+
+
+def test_fail_multipart_matcher():
+    """
+    Validate that Exception is raised if request does not match responses.matchers
+        validate matchers.multipart_matcher
+    :return: None
+    """
+
+    def run():
         # different file contents
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
             req_data = {"some": "other", "data": "fields"}
@@ -1813,12 +1825,12 @@ def test_fail_matchers_error():
             msg = str(excinfo.value)
             assert "multipart/form-data doesn't match. Request body differs." in msg
             assert (
-                r'\r\nContent-Disposition: form-data; name="file_name"; '
-                r'filename="file_name"\r\n\r\nOld World!\r\n'
+                '\r\nContent-Disposition: form-data; name="file_name"; '
+                'filename="file_name"\r\n\r\nOld World!\r\n'
             ) in msg
             assert (
-                r'\r\nContent-Disposition: form-data; name="file_name"; '
-                r'filename="file_name"\r\n\r\nNew World!\r\n'
+                '\r\nContent-Disposition: form-data; name="file_name"; '
+                'filename="file_name"\r\n\r\nNew World!\r\n'
             ) in msg
 
         # x-www-form-urlencoded request
@@ -1840,7 +1852,7 @@ def test_fail_matchers_error():
                 in msg
             )
             assert (
-                r"application/x-www-form-urlencoded isn't equal to multipart/form-data; boundary="
+                "application/x-www-form-urlencoded isn't equal to multipart/form-data; boundary="
                 in msg
             )
 

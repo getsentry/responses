@@ -174,7 +174,7 @@ def request_kwargs_matcher(kwargs):
     return match
 
 
-def multipart_matcher(files, data=None, encoding="utf-8"):
+def multipart_matcher(files, data=None):
     """
     Matcher to match 'multipart/form-data' content-type.
     Function constructs request body and headers from provided 'data' and 'files' arguments
@@ -182,7 +182,6 @@ def multipart_matcher(files, data=None, encoding="utf-8"):
 
     :param files: (dict), same as provided to request
     :param data: (dict), same as provided to request
-    :param encoding: (str), encoding used in request body. Default: UTF-8
     :return: (func) matcher
     """
     if not files:
@@ -221,9 +220,14 @@ def multipart_matcher(files, data=None, encoding="utf-8"):
         )
 
         request_body = request.body
-        prepared_body = prepared.body.replace(
-            bytes(prepared_boundary, encoding), bytes(request_boundary, encoding)
-        )
+        if isinstance(request_body, bytes):
+            request_body = request_body.decode("utf-8")
+
+        prepared_body = prepared.body
+        if isinstance(prepared_body, bytes):
+            prepared_body = prepared_body.decode("utf-8")
+
+        prepared_body = prepared_body.replace(prepared_boundary, request_boundary)
 
         headers_valid = prepared_content_type == request_content_type
         if not headers_valid:

@@ -9,6 +9,7 @@
   to match additional request arguments like `stream`.
 * Changed all matchers output message in case of mismatch. Now message is aligned
   between Python2 and Python3 versions
+* Added Python 3.10 support
 
 0.14.0
 ------

@@ -1810,7 +1810,7 @@ def test_query_string_matcher_raises():
             )
 
             with pytest.raises(ConnectionError) as excinfo:
-                requests.get("http://111.com", params={"test": 1, "didi": "pro"})
+                requests.get("http://111.com", params={"test": "1", "didi": "pro"})
 
             msg = str(excinfo.value)
             assert (

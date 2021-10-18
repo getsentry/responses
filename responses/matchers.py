@@ -8,8 +8,8 @@ else:
 
 try:
     from requests.packages.urllib3.util.url import parse_url
-except ImportError:
-    from urllib3.util.url import parse_url
+except ImportError:  # pragma: no cover
+    from urllib3.util.url import parse_url  # pragma: no cover
 
 try:
     from json.decoder import JSONDecodeError

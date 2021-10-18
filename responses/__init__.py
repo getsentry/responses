@@ -25,16 +25,16 @@ except ImportError:
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
-except ImportError:
-    from urllib3.response import HTTPResponse
+except ImportError:  # pragma: no cover
+    from urllib3.response import HTTPResponse  # pragma: no cover
 try:
     from requests.packages.urllib3.connection import HTTPHeaderDict
-except ImportError:
-    from urllib3.response import HTTPHeaderDict
+except ImportError:  # pragma: no cover
+    from urllib3.response import HTTPHeaderDict  # pragma: no cover
 try:
     from requests.packages.urllib3.util.url import parse_url
-except ImportError:
-    from urllib3.util.url import parse_url
+except ImportError:  # pragma: no cover
+    from urllib3.util.url import parse_url  # pragma: no cover
 
 if six.PY2:
     from urlparse import urlparse, parse_qsl, urlsplit, urlunsplit

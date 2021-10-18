@@ -386,7 +386,8 @@ class Response(BaseResponse):
 
         if stream is not None:
             warn(
-                "stream argument is deprecated. Use stream parameter in request directly"
+                "stream argument is deprecated. Use stream parameter in request directly",
+                DeprecationWarning,
             )
 
         self.stream = stream
@@ -439,7 +440,8 @@ class CallbackResponse(BaseResponse):
 
         if stream is not None:
             warn(
-                "stream argument is deprecated. Use stream parameter in request directly"
+                "stream argument is deprecated. Use stream parameter in request directly",
+                DeprecationWarning,
             )
         self.stream = stream
         self.content_type = content_type

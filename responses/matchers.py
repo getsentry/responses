@@ -176,8 +176,13 @@ def request_kwargs_matcher(kwargs):
 
 def multipart_matcher(data, files, encoding="utf-8"):
     """
-    Matcher to match 'params' argument in request
-    :param params: (dict), same as provided to request
+    Matcher to match 'multipart/form-data' content-type.
+    Function constructs request body and headers from provided 'data' and 'files' arguments
+    and compares to actual request
+
+    :param data: (dict), same as provided to request
+    :param files: (dict), same as provided to request
+    :param encoding: (str), encoding used in request body. Default: UTF-8
     :return: (func) matcher
     """
     if not files:
@@ -188,19 +193,28 @@ def multipart_matcher(data, files, encoding="utf-8"):
     prepared.prepare_body(data=data, files=files)
 
     def get_boundary(content_type):
+        """
+        Parse 'boundary' value from header.
+
+        :param content_type: (str) headers["Content-Type"] value
+        :return: (str) boundary value
+        """
         if "boundary=" not in content_type:
             return ""
 
-        boundary = content_type.split("boundary=")[1]
-        return boundary
+        return content_type.split("boundary=")[1]
 
     def match(request):
+        reason = "multipart/form-data doesn't match. "
         if "Content-Type" not in request.headers:
-            return False, "Request misses 'Content-Type' in headers"
+            return False, reason + "Request is missing 'Content-Type' header"
 
         request_boundary = get_boundary(request.headers["Content-Type"])
         prepared_boundary = get_boundary(prepared.headers["Content-Type"])
 
+        # replace boundary value in header and in body, since by default
+        # urllib3.filepost.encode_multipart_formdata dynamically calculates
+        # random boundary alphanumeric value
         request_content_type = request.headers["Content-Type"]
         prepared_content_type = prepared.headers["Content-Type"].replace(
             prepared_boundary, request_boundary
@@ -212,23 +226,21 @@ def multipart_matcher(data, files, encoding="utf-8"):
         )
 
         body_valid = prepared_body == request_body
-
         if not body_valid:
-            return False, "Request body is different. {} not equal {}".format(
+            return False, reason + "Request body differs. {} not equal {}".format(
                 request_body, prepared_body
             )
-        else:
-            headers_valid = prepared_content_type == request_content_type
 
-            if not headers_valid:
-                return (
-                    False,
-                    "Request headers['Content-Type'] is different. {} not equal {}".format(
-                        request_content_type, prepared_content_type
-                    ),
-                )
+        headers_valid = prepared_content_type == request_content_type
+        if not headers_valid:
+            return (
+                False,
+                reason
+                + "Request headers['Content-Type'] is different. {} isn't equal to {}".format(
+                    request_content_type, prepared_content_type
+                ),
+            )
 
-        valid = body_valid and headers_valid
-        return valid, ""
+        return True, ""
 
     return match

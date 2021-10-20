@@ -14,7 +14,7 @@ import requests
 import responses
 from requests.exceptions import ConnectionError, HTTPError
 from responses import BaseResponse, Response, PassthroughResponse, matchers
-from responses.matchers import multipart_matcher
+
 
 try:
     from mock import patch, Mock
@@ -1671,7 +1671,7 @@ def test_multipart_matcher():
         responses.add(
             responses.POST,
             url="http://httpbin.org/post",
-            match=[multipart_matcher(req_files, data=req_data)],
+            match=[matchers.multipart_matcher(req_files, data=req_data)],
         )
         resp = requests.post("http://httpbin.org/post", data=req_data, files=req_files)
         assert resp.status_code == 200
@@ -1680,7 +1680,7 @@ def test_multipart_matcher():
             responses.add(
                 responses.POST,
                 url="http://httpbin.org/post",
-                match=[multipart_matcher(files={}, data=None)],
+                match=[matchers.multipart_matcher(files={})],
             )
 
     run()
@@ -1812,7 +1812,7 @@ def test_fail_multipart_matcher():
             rsps.add(
                 responses.POST,
                 url="http://httpbin.org/post",
-                match=[multipart_matcher(req_files, data=req_data)],
+                match=[matchers.multipart_matcher(req_files, data=req_data)],
             )
 
             with pytest.raises(ConnectionError) as excinfo:
@@ -1840,7 +1840,7 @@ def test_fail_multipart_matcher():
             rsps.add(
                 responses.POST,
                 url="http://httpbin.org/post",
-                match=[multipart_matcher(req_files, data=req_data)],
+                match=[matchers.multipart_matcher(req_files, data=req_data)],
             )
 
             with pytest.raises(ConnectionError) as excinfo:
@@ -1862,7 +1862,7 @@ def test_fail_multipart_matcher():
             rsps.add(
                 responses.POST,
                 url="http://httpbin.org/post",
-                match=[multipart_matcher(req_files, data=None)],
+                match=[matchers.multipart_matcher(req_files)],
             )
 
             with pytest.raises(ConnectionError) as excinfo:

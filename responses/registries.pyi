@@ -1,18 +1,8 @@
 from typing import (
-    Any,
-    Callable,
-    Iterator,
-    Mapping,
-    Optional,
-    NamedTuple,
-    Protocol,
-    TypeVar,
-    Dict,
     List,
     Tuple,
-    Union
 )
-from requests.adapters import HTTPResponse, PreparedRequest
+from requests.adapters import PreparedRequest
 from responses import BaseResponse
 
 class BaseRegistry:

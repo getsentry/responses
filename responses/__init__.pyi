@@ -154,7 +154,7 @@ class RequestsMock:
     passthru_prefixes: Tuple[str, ...] = ...
     target: Any = ...
     _matches: List[Any]
-    registry: BaseRegistry = ...
+    REGISTRY: BaseRegistry = ...
     def __init__(
         self,
         assert_all_requests_are_fired: bool = ...,
@@ -279,6 +279,7 @@ passthru_prefixes: Tuple[str, ...]
 PATCH: Literal["PATCH"]
 POST: Literal["POST"]
 PUT: Literal["PUT"]
+REGISTRY: BaseRegistry
 registered: _Registered
 remove: _Remove
 replace: _Replace
@@ -309,6 +310,7 @@ __all__ = [
     "PATCH",
     "POST",
     "PUT",
+    "REGISTRY",
     "registered",
     "remove",
     "replace",

@@ -518,7 +518,6 @@ class RequestsMock(object):
     POST = "POST"
     PUT = "PUT"
     response_callback = None
-    REGISTRY = DefaultRegistry
 
     def __init__(
         self,
@@ -526,15 +525,24 @@ class RequestsMock(object):
         response_callback=None,
         passthru_prefixes=(),
         target="requests.adapters.HTTPAdapter.send",
-        registry=REGISTRY,
+        registry=DefaultRegistry,
     ):
         self._calls = CallList()
-        self.registry = registry()
+        self._registry = registry()
         self.reset()
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
         self.response_callback = response_callback
         self.passthru_prefixes = tuple(passthru_prefixes)
         self.target = target
+
+    def get_registry(self):
+        return self._registry
+
+    def set_registry(self, new_registry):
+        self.reset()
+        self._registry = new_registry()
+
+    registry = property(get_registry, set_registry, None, "Registry property")
 
     def reset(self):
         self.registry.reset()
@@ -873,3 +881,5 @@ start = _default_mock.start
 stop = _default_mock.stop
 target = _default_mock.target
 upsert = _default_mock.upsert
+registry = _default_mock.registry
+set_registry = _default_mock.set_registry

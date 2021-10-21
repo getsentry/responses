@@ -29,7 +29,7 @@ except ImportError:
 
 
 def assert_reset():
-    assert len(responses._default_mock._matches) == 0
+    assert len(responses._default_mock.registered()) == 0
     assert len(responses.calls) == 0
 
 
@@ -979,24 +979,24 @@ def test_assert_all_requests_are_fired():
         # check that assert_all_requests_are_fired=True doesn't remove urls
         with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
             m.add(responses.GET, "http://example.com", body=b"test")
-            assert len(m._matches) == 1
+            assert len(m.registered()) == 1
             requests.get("http://example.com")
-            assert len(m._matches) == 1
+            assert len(m.registered()) == 1
 
         # check that assert_all_requests_are_fired=True counts mocked errors
         with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
             m.add(responses.GET, "http://example.com", body=Exception())
-            assert len(m._matches) == 1
+            assert len(m.registered()) == 1
             with pytest.raises(Exception):
                 requests.get("http://example.com")
-            assert len(m._matches) == 1
+            assert len(m.registered()) == 1
 
         with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
             m.add_callback(responses.GET, "http://example.com", request_callback)
-            assert len(m._matches) == 1
+            assert len(m.registered()) == 1
             with pytest.raises(BaseException):
                 requests.get("http://example.com")
-            assert len(m._matches) == 1
+            assert len(m.registered()) == 1
 
     run()
     assert_reset()
@@ -2117,7 +2117,7 @@ def test_mocked_responses_list_registered():
 
         mocks_list = responses.registered()
 
-        assert mocks_list == responses.mock._matches
+        assert mocks_list == responses.mock.registered()
         assert mocks_list == [first_response, second_response, third_response]
 
     run()

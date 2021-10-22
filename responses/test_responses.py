@@ -1835,7 +1835,7 @@ def test_query_string_matcher_raises():
                 in msg
             )
 
-            
+
 def test_request_matches_headers():
     @responses.activate
     def run():

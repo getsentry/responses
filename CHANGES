@@ -13,6 +13,9 @@
   between Python2 and Python3 versions
 * Added Python 3.10 support
 * Deprecate ``stream`` argument in ``Response`` and ``CallbackResponse``
+* Added `responses.matchers.header_matcher()`. This matcher allows you to match
+  request headers. By default only headers supplied to `header_matcher()` are checked.
+  You can make header matching exhaustive by passing `strict_match=True` to `header_matcher()`.
 
 
 0.14.0

@@ -203,6 +203,27 @@ Note, you must set ``match_querystring=False``
         assert resp.request.params == params
 
 
+As alternative, you can use query string value in ``matchers.query_string_matcher``
+
+.. code-block:: python
+
+    import requests
+    import responses
+    from responses import matchers
+
+    @responses.activate
+    def my_func():
+        responses.add(
+            responses.GET,
+            "https://httpbin.org/get",
+            match=[matchers.query_string_matcher("didi=pro&test=1")],
+        )
+        resp = requests.get("https://httpbin.org/get", params={"test": 1, "didi": "pro"})
+
+    my_func()
+
+
+
 To validate request arguments use the ``matchers.request_kwargs_matcher`` function to match
 against the request kwargs.
 Note, only arguments provided to ``matchers.request_kwargs_matcher`` will be validated

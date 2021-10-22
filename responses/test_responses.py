@@ -99,6 +99,9 @@ def test_response_with_instance():
         assert len(responses.calls) == 2
         assert responses.calls[1].request.url == "http://example.com/?foo=bar"
 
+    run()
+    assert_reset()
+
 
 @pytest.mark.parametrize(
     "original,replacement",
@@ -328,6 +331,27 @@ def test_match_querystring():
     def run():
         url = "http://example.com?test=1&foo=bar"
         responses.add(responses.GET, url, match_querystring=True, body=b"test")
+        resp = requests.get("http://example.com?test=1&foo=bar")
+        assert_response(resp, "test")
+        resp = requests.get("http://example.com?foo=bar&test=1")
+        assert_response(resp, "test")
+        resp = requests.get("http://example.com/?foo=bar&test=1")
+        assert_response(resp, "test")
+
+    run()
+    assert_reset()
+
+
+def test_query_string_matcher():
+    @responses.activate
+    def run():
+        url = "http://example.com?test=1&foo=bar"
+        responses.add(
+            responses.GET,
+            url,
+            body=b"test",
+            match=[matchers.query_string_matcher("test=1&foo=bar")],
+        )
         resp = requests.get("http://example.com?test=1&foo=bar")
         assert_response(resp, "test")
         resp = requests.get("http://example.com?foo=bar&test=1")
@@ -1786,6 +1810,32 @@ def test_fail_matchers_error():
     assert_reset()
 
 
+def test_query_string_matcher_raises():
+    """
+    Validate that Exception is raised if request does not match responses.matchers
+        validate matchers.query_string_matcher
+    :return: None
+    """
+
+    def run():
+
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+            rsps.add(
+                "GET",
+                "http://111.com",
+                match=[matchers.query_string_matcher("didi=pro")],
+            )
+
+            with pytest.raises(ConnectionError) as excinfo:
+                requests.get("http://111.com", params={"test": "1", "didi": "pro"})
+
+            msg = str(excinfo.value)
+            assert (
+                "Query string doesn't match. {didi: pro, test: 1} doesn't match {didi: pro}"
+                in msg
+            )
+
+            
 def test_request_matches_headers():
     @responses.activate
     def run():

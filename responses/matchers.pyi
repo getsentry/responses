@@ -22,6 +22,10 @@ def query_param_matcher(
     params: Optional[Dict[str, str]]
 ) -> Callable[..., Any]: ...
 
+def query_string_matcher(
+    query: Optional[str]
+) -> Callable[..., Any]: ...
+
 def request_kwargs_matcher(
     kwargs: Optional[Dict[str, Any]]
 ) -> Callable[..., Any]: ...

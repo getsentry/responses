@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           token: ${{ secrets.GH_RELEASE_PAT }}
+          fetch-depth: 0
 
       - name: Prepare release
         uses: getsentry/action-prepare-release@v1

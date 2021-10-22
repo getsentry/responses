@@ -13,7 +13,13 @@ import pytest
 import requests
 import responses
 from requests.exceptions import ConnectionError, HTTPError
-from responses import BaseResponse, Response, PassthroughResponse, matchers
+from responses import (
+    BaseResponse,
+    Response,
+    PassthroughResponse,
+    matchers,
+    CallbackResponse,
+)
 
 try:
     from mock import patch, Mock
@@ -548,6 +554,11 @@ def test_callback():
 
     run()
     assert_reset()
+
+
+def test_callback_deprecated_argument():
+    with pytest.deprecated_call():
+        CallbackResponse(responses.GET, "url", lambda x: x, stream=False)
 
 
 def test_callback_exception_result():

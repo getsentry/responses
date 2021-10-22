@@ -123,7 +123,7 @@ headers (``dict``)
     Response headers.
 
 stream (``bool``)
-    Disabled by default. Indicates the response should use the streaming API.
+    DEPRECATED
 
 auto_calculate_content_length (``bool``)
     Disabled by default. Automatically calculates the length of a supplied string or JSON body.

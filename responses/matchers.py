@@ -9,6 +9,11 @@ else:
     from urllib.parse import parse_qsl
 
 try:
+    from requests.packages.urllib3.util.url import parse_url
+except ImportError:  # pragma: no cover
+    from urllib3.util.url import parse_url  # pragma: no cover
+
+try:
     from json.decoder import JSONDecodeError
 except ImportError:
     JSONDecodeError = ValueError
@@ -142,6 +147,35 @@ def query_param_matcher(params):
     return match
 
 
+def query_string_matcher(query):
+    """
+    Matcher to match query string part of request
+
+    :param query: (str), same as constructed by request
+    :return: (func) matcher
+    """
+
+    def match(request):
+        reason = ""
+        data = parse_url(request.url)
+        request_query = data.query
+
+        request_qsl = sorted(parse_qsl(request_query))
+        matcher_qsl = sorted(parse_qsl(query))
+
+        valid = not query if request_query is None else request_qsl == matcher_qsl
+
+        if not valid:
+            reason = "Query string doesn't match. {} doesn't match {}".format(
+                _create_key_val_str(dict(request_qsl)),
+                _create_key_val_str(dict(matcher_qsl)),
+            )
+
+        return valid, reason
+
+    return match
+
+
 def request_kwargs_matcher(kwargs):
     """
     Matcher to match keyword arguments provided to request
@@ -177,8 +211,8 @@ def request_kwargs_matcher(kwargs):
 def multipart_matcher(files, data=None):
     """
     Matcher to match 'multipart/form-data' content-type.
-    Function constructs request body and headers from provided 'data' and 'files' arguments
-    and compares to actual request
+    This function constructs request body and headers from provided 'data' and 'files' 
+    arguments and compares to actual request
 
     :param files: (dict), same as provided to request
     :param data: (dict), same as provided to request
@@ -234,7 +268,7 @@ def multipart_matcher(files, data=None):
             return (
                 False,
                 reason
-                + "Request headers['Content-Type'] is different. {} isn't equal to {}".format(
+                + "Request headers['Content-Type'] are different. {} isn't equal to {}".format(
                     request_content_type, prepared_content_type
                 ),
             )
@@ -247,4 +281,37 @@ def multipart_matcher(files, data=None):
 
         return True, ""
 
+    return match
+
+      
+def header_matcher(headers, strict_match=False):
+    """
+    Matcher to match 'headers' argument in request using the responses library.
+
+    Because ``requests`` will send several standard headers in addition to what
+    was specified by your code, request headers that are additional to the ones
+    passed to the matcher are ignored by default. You can change this behaviour
+    by passing ``strict_match=True``.
+
+    :param headers: (dict), same as provided to request
+    :param strict_match: (bool), whether headers in addition to those specified
+                         in the matcher should cause the match to fail.
+    :return: (func) matcher
+    """
+
+    def match(request):
+        request_headers = request.headers or {}
+
+        if not strict_match:
+            # filter down to just the headers specified in the matcher
+            request_headers = {k: v for k, v in request_headers.items() if k in headers}
+
+        valid = sorted(headers.items()) == sorted(request_headers.items())
+
+        if not valid:
+            return False, "Headers do not match: {} doesn't match {}".format(
+                _create_key_val_str(request_headers), _create_key_val_str(headers)
+            )
+
+        return valid, ""
     return match

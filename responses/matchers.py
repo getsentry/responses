@@ -1,6 +1,8 @@
 import six
 import json as json_module
 
+from requests import PreparedRequest
+
 if six.PY2:
     from urlparse import parse_qsl
 else:
@@ -206,6 +208,82 @@ def request_kwargs_matcher(kwargs):
     return match
 
 
+def multipart_matcher(files, data=None):
+    """
+    Matcher to match 'multipart/form-data' content-type.
+    This function constructs request body and headers from provided 'data' and 'files' 
+    arguments and compares to actual request
+
+    :param files: (dict), same as provided to request
+    :param data: (dict), same as provided to request
+    :return: (func) matcher
+    """
+    if not files:
+        raise TypeError("files argument cannot be empty")
+
+    prepared = PreparedRequest()
+    prepared.headers = {"Content-Type": ""}
+    prepared.prepare_body(data=data, files=files)
+
+    def get_boundary(content_type):
+        """
+        Parse 'boundary' value from header.
+
+        :param content_type: (str) headers["Content-Type"] value
+        :return: (str) boundary value
+        """
+        if "boundary=" not in content_type:
+            return ""
+
+        return content_type.split("boundary=")[1]
+
+    def match(request):
+        reason = "multipart/form-data doesn't match. "
+        if "Content-Type" not in request.headers:
+            return False, reason + "Request is missing the 'Content-Type' header"
+
+        request_boundary = get_boundary(request.headers["Content-Type"])
+        prepared_boundary = get_boundary(prepared.headers["Content-Type"])
+
+        # replace boundary value in header and in body, since by default
+        # urllib3.filepost.encode_multipart_formdata dynamically calculates
+        # random boundary alphanumeric value
+        request_content_type = request.headers["Content-Type"]
+        prepared_content_type = prepared.headers["Content-Type"].replace(
+            prepared_boundary, request_boundary
+        )
+
+        request_body = request.body
+        if isinstance(request_body, bytes):
+            request_body = request_body.decode("utf-8")
+
+        prepared_body = prepared.body
+        if isinstance(prepared_body, bytes):
+            prepared_body = prepared_body.decode("utf-8")
+
+        prepared_body = prepared_body.replace(prepared_boundary, request_boundary)
+
+        headers_valid = prepared_content_type == request_content_type
+        if not headers_valid:
+            return (
+                False,
+                reason
+                + "Request headers['Content-Type'] are different. {} isn't equal to {}".format(
+                    request_content_type, prepared_content_type
+                ),
+            )
+
+        body_valid = prepared_body == request_body
+        if not body_valid:
+            return False, reason + "Request body differs. {} aren't equal {}".format(
+                request_body, prepared_body
+            )
+
+        return True, ""
+
+    return match
+
+      
 def header_matcher(headers, strict_match=False):
     """
     Matcher to match 'headers' argument in request using the responses library.
@@ -236,5 +314,4 @@ def header_matcher(headers, strict_match=False):
             )
 
         return valid, ""
-
     return match

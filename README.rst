@@ -222,8 +222,6 @@ As alternative, you can use query string value in ``matchers.query_string_matche
 
     my_func()
 
-
-
 To validate request arguments use the ``matchers.request_kwargs_matcher`` function to match
 against the request kwargs.
 Note, only arguments provided to ``matchers.request_kwargs_matcher`` will be validated
@@ -249,6 +247,28 @@ Note, only arguments provided to ``matchers.request_kwargs_matcher`` will be val
 
         # >>>  Arguments don't match: {stream: True, verify: True} doesn't match {stream: True, verify: False}
 
+To validate request body and headers for ``multipart/form-data`` data you can use
+``matchers.multipart_matcher``. The ``data``, and ``files`` parameters provided will be compared 
+to the request:
+
+.. code-block:: python
+
+    import requests
+    import responses
+    from responses.matchers import multipart_matcher
+
+    @responses.activate
+    def my_func():
+        req_data = {"some": "other", "data": "fields"}
+        req_files = {"file_name": b"Old World!"}
+        responses.add(
+            responses.POST, url="http://httpbin.org/post",
+            match=[multipart_matcher(req_data, req_files)]
+        )
+        resp = requests.post("http://httpbin.org/post", files={"file_name": b"New World!"})
+
+    my_func()
+    # >>> raises ConnectionError: multipart/form-data doesn't match. Request body differs.
 
 Matching Request Headers
 ------------------------
@@ -332,7 +352,6 @@ include any additional headers.
 
         resp = session.send(prepped)
         assert resp.text == "hello world"
-
 
 Dynamic Responses
 -----------------

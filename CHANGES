@@ -7,16 +7,17 @@
 * Removed the unused ``_is_redirect()`` function from responses internals.
 * Added `responses.matchers.request_kwargs_matcher`. This matcher allows you
   to match additional request arguments like `stream`.
+* Added `responses.matchers.multipart_matcher`. This matcher allows you
+  to match request body and headers for ``multipart/form-data`` data
 * Added `responses.matchers.query_string_matcher`. This matcher allows you
   to match request query string, similar to `responses.matchers.query_param_matcher`.
-* Changed all matchers output message in case of mismatch. Now message is aligned
-  between Python2 and Python3 versions
-* Added Python 3.10 support
-* Deprecate ``stream`` argument in ``Response`` and ``CallbackResponse``
 * Added `responses.matchers.header_matcher()`. This matcher allows you to match
   request headers. By default only headers supplied to `header_matcher()` are checked.
   You can make header matching exhaustive by passing `strict_match=True` to `header_matcher()`.
-
+* Changed all matchers output message in case of mismatch. Now message is aligned
+  between Python2 and Python3 versions
+* Deprecate ``stream`` argument in ``Response`` and ``CallbackResponse``
+* Added Python 3.10 support
 
 0.14.0
 ------

@@ -21,6 +21,7 @@ from responses import (
     CallbackResponse,
 )
 
+
 try:
     from mock import patch, Mock
 except ImportError:
@@ -1700,6 +1701,30 @@ def test_request_matches_params():
     assert_reset()
 
 
+def test_multipart_matcher():
+    @responses.activate
+    def run():
+        req_data = {"some": "other", "data": "fields"}
+        req_files = {"file_name": b"Old World!"}
+        responses.add(
+            responses.POST,
+            url="http://httpbin.org/post",
+            match=[matchers.multipart_matcher(req_files, data=req_data)],
+        )
+        resp = requests.post("http://httpbin.org/post", data=req_data, files=req_files)
+        assert resp.status_code == 200
+
+        with pytest.raises(TypeError):
+            responses.add(
+                responses.POST,
+                url="http://httpbin.org/post",
+                match=[matchers.multipart_matcher(files={})],
+            )
+
+    run()
+    assert_reset()
+
+
 def test_fail_request_error():
     """
     Validate that exception is raised if request URL/Method/kwargs don't match
@@ -1810,15 +1835,88 @@ def test_fail_matchers_error():
     assert_reset()
 
 
-def test_query_string_matcher_raises():
+def test_fail_multipart_matcher():
     """
     Validate that Exception is raised if request does not match responses.matchers
-        validate matchers.query_string_matcher
+        validate matchers.multipart_matcher
     :return: None
     """
 
     def run():
+        # different file contents
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+            req_data = {"some": "other", "data": "fields"}
+            req_files = {"file_name": b"Old World!"}
+            rsps.add(
+                responses.POST,
+                url="http://httpbin.org/post",
+                match=[matchers.multipart_matcher(req_files, data=req_data)],
+            )
 
+            with pytest.raises(ConnectionError) as excinfo:
+                requests.post(
+                    "http://httpbin.org/post",
+                    data=req_data,
+                    files={"file_name": b"New World!"},
+                )
+
+            msg = str(excinfo.value)
+            assert "multipart/form-data doesn't match. Request body differs." in msg
+            assert (
+                '\r\nContent-Disposition: form-data; name="file_name"; '
+                'filename="file_name"\r\n\r\nOld World!\r\n'
+            ) in msg
+            assert (
+                '\r\nContent-Disposition: form-data; name="file_name"; '
+                'filename="file_name"\r\n\r\nNew World!\r\n'
+            ) in msg
+
+        # x-www-form-urlencoded request
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+            req_data = {"some": "other", "data": "fields"}
+            req_files = {"file_name": b"Old World!"}
+            rsps.add(
+                responses.POST,
+                url="http://httpbin.org/post",
+                match=[matchers.multipart_matcher(req_files, data=req_data)],
+            )
+
+            with pytest.raises(ConnectionError) as excinfo:
+                requests.post("http://httpbin.org/post", data=req_data)
+
+            msg = str(excinfo.value)
+            assert (
+                "multipart/form-data doesn't match. Request headers['Content-Type'] is different."
+                in msg
+            )
+            assert (
+                "application/x-www-form-urlencoded isn't equal to multipart/form-data; boundary="
+                in msg
+            )
+
+        # empty body request
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+            req_files = {"file_name": b"Old World!"}
+            rsps.add(
+                responses.POST,
+                url="http://httpbin.org/post",
+                match=[matchers.multipart_matcher(req_files)],
+            )
+
+            with pytest.raises(ConnectionError) as excinfo:
+                requests.post("http://httpbin.org/post")
+
+            msg = str(excinfo.value)
+            assert "Request is missing the 'Content-Type' header" in msg
+
+
+def test_query_string_matcher_raises():
+    """
+    Validate that Exception is raised if request does not match responses.matchers
+        validate matchers.query_string_matcher
+            :return: None
+    """
+    def run():
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
             rsps.add(
                 "GET",
@@ -1834,6 +1932,9 @@ def test_query_string_matcher_raises():
                 "Query string doesn't match. {didi: pro, test: 1} doesn't match {didi: pro}"
                 in msg
             )
+
+    run()
+    assert_reset()
 
 
 def test_request_matches_headers():

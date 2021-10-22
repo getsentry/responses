@@ -13,7 +13,13 @@ import pytest
 import requests
 import responses
 from requests.exceptions import ConnectionError, HTTPError
-from responses import BaseResponse, Response, PassthroughResponse, matchers
+from responses import (
+    BaseResponse,
+    Response,
+    PassthroughResponse,
+    matchers,
+    CallbackResponse,
+)
 
 try:
     from mock import patch, Mock
@@ -572,6 +578,11 @@ def test_callback():
 
     run()
     assert_reset()
+
+
+def test_callback_deprecated_argument():
+    with pytest.deprecated_call():
+        CallbackResponse(responses.GET, "url", lambda x: x, stream=False)
 
 
 def test_callback_exception_result():
@@ -1576,9 +1587,12 @@ def test_request_matches_post_params():
         )
         assert_response(resp, "one")
 
-    for depr in [True, False]:
-        run(deprecated=depr)
+    with pytest.deprecated_call():
+        run(deprecated=True)
         assert_reset()
+
+    run(deprecated=False)
+    assert_reset()
 
 
 def test_request_matches_empty_body():
@@ -1820,6 +1834,111 @@ def test_query_string_matcher_raises():
                 "Query string doesn't match. {didi: pro, test: 1} doesn't match {didi: pro}"
                 in msg
             )
+
+            
+def test_request_matches_headers():
+    @responses.activate
+    def run():
+        url = "http://example.com/"
+        responses.add(
+            method=responses.GET,
+            url=url,
+            json={"success": True},
+            match=[matchers.header_matcher({"Accept": "application/json"})],
+        )
+
+        responses.add(
+            method=responses.GET,
+            url=url,
+            body="success",
+            match=[matchers.header_matcher({"Accept": "text/plain"})],
+        )
+
+        # the actual request can contain extra headers (requests always adds some itself anyway)
+        resp = requests.get(
+            url, headers={"Accept": "application/json", "Accept-Charset": "utf-8"}
+        )
+        assert_response(resp, body='{"success": true}', content_type="application/json")
+
+        resp = requests.get(url, headers={"Accept": "text/plain"})
+        assert_response(resp, body="success", content_type="text/plain")
+
+    run()
+    assert_reset()
+
+
+def test_request_matches_headers_no_match():
+    @responses.activate
+    def run():
+        url = "http://example.com/"
+        responses.add(
+            method=responses.GET,
+            url=url,
+            json={"success": True},
+            match=[matchers.header_matcher({"Accept": "application/json"})],
+        )
+
+        with pytest.raises(ConnectionError) as excinfo:
+            requests.get(url, headers={"Accept": "application/xml"})
+
+        msg = str(excinfo.value)
+        assert (
+            "Headers do not match: {Accept: application/xml} doesn't match "
+            "{Accept: application/json}"
+        ) in msg
+
+    run()
+    assert_reset()
+
+
+def test_request_matches_headers_strict_match():
+    @responses.activate
+    def run():
+        url = "http://example.com/"
+        responses.add(
+            method=responses.GET,
+            url=url,
+            body="success",
+            match=[
+                matchers.header_matcher({"Accept": "text/plain"}, strict_match=True)
+            ],
+        )
+
+        # requests will add some extra headers of its own, so we have to use prepared requests
+        session = requests.Session()
+
+        # make sure we send *just* the header we're expectin
+        prepped = session.prepare_request(
+            requests.Request(
+                method="GET",
+                url=url,
+            )
+        )
+        prepped.headers.clear()
+        prepped.headers["Accept"] = "text/plain"
+
+        resp = session.send(prepped)
+        assert_response(resp, body="success", content_type="text/plain")
+
+        # include the "Accept-Charset" header, which will fail to match
+        prepped = session.prepare_request(
+            requests.Request(
+                method="GET",
+                url=url,
+            )
+        )
+        prepped.headers.clear()
+        prepped.headers["Accept"] = "text/plain"
+        prepped.headers["Accept-Charset"] = "utf-8"
+
+        with pytest.raises(ConnectionError) as excinfo:
+            session.send(prepped)
+
+        msg = str(excinfo.value)
+        assert (
+            "Headers do not match: {Accept: text/plain, Accept-Charset: utf-8} "
+            "doesn't match {Accept: text/plain}"
+        ) in msg
 
     run()
     assert_reset()

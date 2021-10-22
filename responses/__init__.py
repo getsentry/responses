@@ -361,7 +361,7 @@ class Response(BaseResponse):
         json=None,
         status=200,
         headers=None,
-        stream=False,
+        stream=None,
         content_type=UNSET,
         auto_calculate_content_length=False,
         **kwargs
@@ -383,6 +383,13 @@ class Response(BaseResponse):
         self.body = body
         self.status = status
         self.headers = headers
+
+        if stream is not None:
+            warn(
+                "stream argument is deprecated. Use stream parameter in request directly",
+                DeprecationWarning,
+            )
+
         self.stream = stream
         self.content_type = content_type
         self.auto_calculate_content_length = auto_calculate_content_length
@@ -427,9 +434,15 @@ class Response(BaseResponse):
 
 class CallbackResponse(BaseResponse):
     def __init__(
-        self, method, url, callback, stream=False, content_type="text/plain", **kwargs
+        self, method, url, callback, stream=None, content_type="text/plain", **kwargs
     ):
         self.callback = callback
+
+        if stream is not None:
+            warn(
+                "stream argument is deprecated. Use stream parameter in request directly",
+                DeprecationWarning,
+            )
         self.stream = stream
         self.content_type = content_type
         super(CallbackResponse, self).__init__(method, url, **kwargs)
@@ -767,12 +780,10 @@ class RequestsMock(object):
                 response = resp_callback(response) if resp_callback else response
                 raise
 
-        if not match.stream:
+        stream = kwargs.get("stream") if match.stream is None else match.stream
+        if not stream:
             content = response.content
-            if kwargs.get("stream"):
-                response.raw = BufferIO(content)
-            else:
-                response.close()
+            response.raw = BufferIO(content)
 
         response = resp_callback(response) if resp_callback else response
         match.call_count += 1

@@ -170,3 +170,37 @@ def request_kwargs_matcher(kwargs):
         return valid, reason
 
     return match
+
+
+def header_matcher(headers, strict_match=False):
+    """
+    Matcher to match 'headers' argument in request using the responses library.
+
+    Because ``requests`` will send several standard headers in addition to what
+    was specified by your code, request headers that are additional to the ones
+    passed to the matcher are ignored by default. You can change this behaviour
+    by passing ``strict_match=True``.
+
+    :param headers: (dict), same as provided to request
+    :param strict_match: (bool), whether headers in addition to those specified
+                         in the matcher should cause the match to fail.
+    :return: (func) matcher
+    """
+
+    def match(request):
+        request_headers = request.headers or {}
+
+        if not strict_match:
+            # filter down to just the headers specified in the matcher
+            request_headers = {k: v for k, v in request_headers.items() if k in headers}
+
+        valid = sorted(headers.items()) == sorted(request_headers.items())
+
+        if not valid:
+            return False, "Headers do not match: {} doesn't match {}".format(
+                _create_key_val_str(request_headers), _create_key_val_str(headers)
+            )
+
+        return valid, ""
+
+    return match

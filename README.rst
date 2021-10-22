@@ -248,7 +248,7 @@ Note, only arguments provided to ``matchers.request_kwargs_matcher`` will be val
         # >>>  Arguments don't match: {stream: True, verify: True} doesn't match {stream: True, verify: False}
 
 To validate request body and headers for ``multipart/form-data`` data you can use
-``matchers.multipart_matcher``. The ``data``, and ``files`` parameters provided will be compared 
+``matchers.multipart_matcher``. The ``data``, and ``files`` parameters provided will be compared
 to the request:
 
 .. code-block:: python

@@ -1909,6 +1909,9 @@ def test_fail_multipart_matcher():
             msg = str(excinfo.value)
             assert "Request is missing the 'Content-Type' header" in msg
 
+    run()
+    assert_reset()
+
 
 def test_query_string_matcher_raises():
     """

@@ -268,7 +268,7 @@ def multipart_matcher(files, data=None):
             return (
                 False,
                 reason
-                + "Request headers['Content-Type'] are different. {} isn't equal to {}".format(
+                + "Request headers['Content-Type'] is different. {} isn't equal to {}".format(
                     request_content_type, prepared_content_type
                 ),
             )

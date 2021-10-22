@@ -1916,6 +1916,7 @@ def test_query_string_matcher_raises():
         validate matchers.query_string_matcher
             :return: None
     """
+
     def run():
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
             rsps.add(

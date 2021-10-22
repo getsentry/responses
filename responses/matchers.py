@@ -211,7 +211,7 @@ def request_kwargs_matcher(kwargs):
 def multipart_matcher(files, data=None):
     """
     Matcher to match 'multipart/form-data' content-type.
-    This function constructs request body and headers from provided 'data' and 'files' 
+    This function constructs request body and headers from provided 'data' and 'files'
     arguments and compares to actual request
 
     :param files: (dict), same as provided to request
@@ -283,7 +283,7 @@ def multipart_matcher(files, data=None):
 
     return match
 
-      
+
 def header_matcher(headers, strict_match=False):
     """
     Matcher to match 'headers' argument in request using the responses library.
@@ -314,4 +314,5 @@ def header_matcher(headers, strict_match=False):
             )
 
         return valid, ""
+
     return match

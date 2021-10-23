@@ -1,9 +1,4 @@
-class BaseRegistry(object):
-    """
-    Abstract class for response registry.
-    All custom registries must inherit from it and implement all abstract methods
-    """
-
+class FirstMatchRegistry(object):
     def __init__(self):
         self._responses = []
 
@@ -14,20 +9,6 @@ class BaseRegistry(object):
     def reset(self):
         self._responses = []
 
-    def find(self, request):
-        raise NotImplementedError("Method must be implemented")
-
-    def add(self, response):
-        raise NotImplementedError("Method must be implemented")
-
-    def remove(self, response):
-        raise NotImplementedError("Method must be implemented")
-
-    def replace(self, response):
-        raise NotImplementedError("Method must be implemented")
-
-
-class DefaultRegistry(BaseRegistry):
     def find(self, request):
         found = None
         found_match = None

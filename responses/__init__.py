@@ -16,7 +16,7 @@ from requests.exceptions import ConnectionError
 from requests.utils import cookiejar_from_dict
 from responses.matchers import json_params_matcher as _json_params_matcher
 from responses.matchers import urlencoded_params_matcher as _urlencoded_params_matcher
-from responses.registries import DefaultRegistry
+from responses.registries import FirstMatchRegistry
 from warnings import warn
 
 try:
@@ -525,7 +525,7 @@ class RequestsMock(object):
         response_callback=None,
         passthru_prefixes=(),
         target="requests.adapters.HTTPAdapter.send",
-        registry=DefaultRegistry,
+        registry=FirstMatchRegistry,
     ):
         self._calls = CallList()
         self._registry = registry()
@@ -535,14 +535,20 @@ class RequestsMock(object):
         self.passthru_prefixes = tuple(passthru_prefixes)
         self.target = target
 
-    def get_registry(self):
+    def _get_registry(self):
         return self._registry
 
     def set_registry(self, new_registry):
-        self.reset()
+        if self.registry:
+            err_msg = (
+                "Cannot replace Registry, current registry has responses.\n"
+                "Run 'responses.registry.reset()' first"
+            )
+            raise AttributeError(err_msg)
+
         self._registry = new_registry()
 
-    registry = property(get_registry, set_registry, None, "Registry property")
+    registry = property(_get_registry, set_registry, None, "Registry property")
 
     def reset(self):
         self.registry.reset()
@@ -855,6 +861,8 @@ __all__ = [
     "stop",
     "target",
     "upsert",
+    "registry",
+    "set_registry",
 ]
 
 activate = _default_mock.activate

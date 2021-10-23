@@ -22,7 +22,7 @@ from unittest import mock as std_mock
 from urllib.parse import quote as quote
 from urllib3.response import HTTPHeaderDict
 from .matchers import urlencoded_params_matcher, json_params_matcher
-from .registries import BaseRegistry
+from .registries import FirstMatchRegistry
 
 
 def _clean_unicode(url: str) -> str: ...
@@ -160,7 +160,7 @@ class RequestsMock:
         response_callback: Optional[Callable[[Any], Any]] = ...,
         passthru_prefixes: Tuple[str, ...] = ...,
         target: str = ...,
-        registry: BaseRegistry = ...
+        registry: FirstMatchRegistry = ...
     ) -> None: ...
     def reset(self) -> None: ...
     add: _Add
@@ -181,6 +181,10 @@ class RequestsMock:
     def stop(self, allow_assert: bool = ...) -> None: ...
     def assert_call_count(self, url: str, count: int) -> bool: ...
     def registered(self) -> List[Any]: ...
+    def upsert(self) -> None: ...
+    @property
+    def registry(self) -> Any: ...
+    def set_registry(self) -> None: ...
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 
@@ -279,7 +283,6 @@ passthru_prefixes: Tuple[str, ...]
 PATCH: Literal["PATCH"]
 POST: Literal["POST"]
 PUT: Literal["PUT"]
-REGISTRY: BaseRegistry
 registered: _Registered
 remove: _Remove
 replace: _Replace
@@ -289,6 +292,8 @@ start: Callable[[], None]
 stop: Callable[..., None]
 target: Any
 upsert: _Upsert
+registry: FirstMatchRegistry
+set_registry: Callable[[Any], None]
 
 __all__ = [
     "CallbackResponse",
@@ -310,7 +315,6 @@ __all__ = [
     "PATCH",
     "POST",
     "PUT",
-    "REGISTRY",
     "registered",
     "remove",
     "replace",
@@ -319,5 +323,7 @@ __all__ = [
     "start",
     "stop",
     "target",
-    "upsert"
+    "upsert",
+    "registry",
+    "set_registry"
 ]

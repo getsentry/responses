@@ -19,6 +19,7 @@ from responses import (
     PassthroughResponse,
     matchers,
     CallbackResponse,
+    registries,
 )
 
 
@@ -2167,3 +2168,27 @@ def test_matchers_create_key_val_str():
         "a, {3: test, key1: val1, key2: 2}], test: val}"
     )
     assert conv_str == reference
+
+
+def test_set_registry_not_empty():
+    @responses.activate
+    def run():
+        url = "http://fizzbuzz/foo"
+        responses.add(method=responses.GET, url=url)
+        with pytest.raises(AttributeError):
+            responses.set_registry(None)
+
+    run()
+    assert_reset()
+
+
+def test_set_registry():
+    @responses.activate
+    def run():
+        class CustomRegistry(registries.FirstMatchRegistry):
+            pass
+
+        responses.set_registry(CustomRegistry)
+
+    run()
+    assert_reset()

@@ -539,7 +539,7 @@ class RequestsMock(object):
         return self._registry
 
     def set_registry(self, new_registry):
-        if self.registry:
+        if self.registered():
             err_msg = (
                 "Cannot replace Registry, current registry has responses.\n"
                 "Run 'responses.registry.reset()' first"

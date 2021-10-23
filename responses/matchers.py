@@ -118,13 +118,17 @@ def json_params_matcher(params):
     return match
 
 
-def fragment_identifier_matcher(identifier, pass_through=False):
+def fragment_identifier_matcher(identifier):
     def match(request):
         reason = ""
         url_fragment = urlparse(request.url).fragment
-        url_fragment_qsl = sorted(parse_qsl(url_fragment))
-        identifier_qsl = sorted(parse_qsl(identifier))
-        valid = identifier_qsl == url_fragment_qsl if not pass_through else True
+        if identifier:
+            url_fragment_qsl = sorted(parse_qsl(url_fragment))
+            identifier_qsl = sorted(parse_qsl(identifier))
+            valid = identifier_qsl == url_fragment_qsl
+        else:
+            valid = not url_fragment
+
         if not valid:
             reason = "URL fragment identifier is different: {} doesn't match {}".format(
                 identifier, url_fragment

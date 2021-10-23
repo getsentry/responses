@@ -11,7 +11,7 @@ from typing import (
     Dict,
     List,
     Tuple,
-    Union
+    Union, Iterable
 )
 from io import BufferedReader, BytesIO
 from re import Pattern
@@ -199,7 +199,7 @@ class _Add(Protocol):
         auto_calculate_content_length: bool = ...,
         adding_headers: Optional[Mapping[str, str]] = ...,
         match_querystring: bool = ...,
-        match: List[Any] = ...,
+        match: Iterable[Callable[[Any], Callable[..., Any]]] = ...,
     ) -> None: ...
 
 class _AddCallback(Protocol):
@@ -210,6 +210,7 @@ class _AddCallback(Protocol):
         callback: Callable[[PreparedRequest], Union[Exception, Tuple[int, Mapping[str, str], _Body]]],
         match_querystring: bool = ...,
         content_type: Optional[str] = ...,
+        match: Iterable[Callable[[Any], Callable[..., Any]]] = ...,
     ) -> None: ...
 
 class _AddPassthru(Protocol):

@@ -37,10 +37,17 @@ except ImportError:  # pragma: no cover
     from urllib3.util.url import parse_url  # pragma: no cover
 
 if six.PY2:
-    from urlparse import urlparse, parse_qsl, urlsplit, urlunsplit
+    from urlparse import urlparse, urlunparse, parse_qsl, urlsplit, urlunsplit
     from urllib import quote
 else:
-    from urllib.parse import urlparse, parse_qsl, urlsplit, urlunsplit, quote
+    from urllib.parse import (
+        urlparse,
+        urlunparse,
+        parse_qsl,
+        urlsplit,
+        urlunsplit,
+        quote,
+    )
 
 if six.PY2:
     try:
@@ -294,6 +301,14 @@ class BaseResponse(object):
 
         return bool(urlparse(self.url).query)
 
+    @staticmethod
+    def _get_url_and_path(url):
+        url_parsed = urlparse(url)
+        url_and_path = urlunparse(
+            [url_parsed.scheme, url_parsed.netloc, url_parsed.path, None, None, None]
+        )
+        return parse_url(url_and_path).url
+
     def _url_matches(self, url, other, match_querystring=False):
         if _is_string(url):
             if _has_unicode(url):
@@ -304,13 +319,8 @@ class BaseResponse(object):
             if match_querystring:
                 normalize_url = parse_url(url).url
                 return self._url_matches_strict(normalize_url, other)
-
             else:
-                url_without_qs = url.split("?", 1)[0]
-                other_without_qs = other.split("?", 1)[0]
-                normalized_url_without_qs = parse_url(url_without_qs).url
-
-                return normalized_url_without_qs == other_without_qs
+                return self._get_url_and_path(url) == self._get_url_and_path(other)
 
         elif isinstance(url, Pattern) and url.match(other):
             return True

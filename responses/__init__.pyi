@@ -11,7 +11,8 @@ from typing import (
     Dict,
     List,
     Tuple,
-    Union, Iterable
+    Union,
+    Iterable
 )
 from io import BufferedReader, BytesIO
 from re import Pattern

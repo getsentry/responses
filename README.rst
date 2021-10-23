@@ -353,6 +353,42 @@ include any additional headers.
         resp = session.send(prepped)
         assert resp.text == "hello world"
 
+Response Registry
+---------------------------
+
+By default, ``responses`` module uses algorithm, when ``Response`` is searched in all
+available registered responses and returns a match, registry keeps unchanged.
+However, if multiple matches are found for the same request, then first match is returned and
+removed from registry.
+
+Such behavior is suitable for most of use cases, but to handle special conditions, user can
+implement custom registry which must follow interface of ``registries.FirstMatchRegistry``.
+Redefining ``find`` method will allow to create custom search and return appropriate ``Response``
+
+Example that shows how to set custom registry
+
+.. code-block:: python
+
+    import responses
+    from responses import registries
+
+
+    class CustomRegistry(registries.FirstMatchRegistry):
+        pass
+
+
+    # using function decorator
+    @responses.activate
+    def run():
+        responses.set_registry(CustomRegistry)
+
+    run()
+
+    # using context manager
+    with responses.RequestsMock(registry=CustomRegistry) as rsps:
+        pass
+
+
 Dynamic Responses
 -----------------
 

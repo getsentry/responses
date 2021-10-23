@@ -2192,3 +2192,15 @@ def test_set_registry():
 
     run()
     assert_reset()
+
+
+def test_set_registry_context_manager():
+    def run():
+        class CustomRegistry(registries.FirstMatchRegistry):
+            pass
+
+        with responses.RequestsMock(registry=CustomRegistry):
+            pass
+
+    run()
+    assert_reset()

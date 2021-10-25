@@ -141,11 +141,11 @@ match (``list``)
     * request headers
 
     Alternatively user can create custom matcher.
-    Read more `Matching Request`_
+    Read more `Matching Requests`_
 
 
-Matching Request
----------------------------
+Matching Requests
+-----------------
 
 When adding responses for endpoints that are sent request data you can add
 matchers to ensure your code is sending the right parameters and provide

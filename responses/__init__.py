@@ -234,6 +234,14 @@ def _ensure_url_default_path(url):
     return url
 
 
+def _get_url_and_path(url):
+    url_parsed = urlparse(url)
+    url_and_path = urlunparse(
+        [url_parsed.scheme, url_parsed.netloc, url_parsed.path, None, None, None]
+    )
+    return parse_url(url_and_path).url
+
+
 def _handle_body(body):
     if isinstance(body, six.text_type):
         body = body.encode("utf-8")
@@ -301,14 +309,6 @@ class BaseResponse(object):
 
         return bool(urlparse(self.url).query)
 
-    @staticmethod
-    def _get_url_and_path(url):
-        url_parsed = urlparse(url)
-        url_and_path = urlunparse(
-            [url_parsed.scheme, url_parsed.netloc, url_parsed.path, None, None, None]
-        )
-        return parse_url(url_and_path).url
-
     def _url_matches(self, url, other, match_querystring=False):
         if _is_string(url):
             if _has_unicode(url):
@@ -320,7 +320,7 @@ class BaseResponse(object):
                 normalize_url = parse_url(url).url
                 return self._url_matches_strict(normalize_url, other)
             else:
-                return self._get_url_and_path(url) == self._get_url_and_path(other)
+                return _get_url_and_path(url) == _get_url_and_path(other)
 
         elif isinstance(url, Pattern) and url.match(other):
             return True

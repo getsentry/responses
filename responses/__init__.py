@@ -190,7 +190,7 @@ def get_wrapped(func, responses, custom_registry=None):
         func_args = str(signature)
 
     if custom_registry is not None:
-        responses.set_registry(custom_registry)
+        responses._set_registry(custom_registry)
 
     evaldict = {"func": func, "responses": responses}
     six.exec_(
@@ -531,8 +531,8 @@ class RequestsMock(object):
         registry=FirstMatchRegistry,
     ):
         self._calls = CallList()
-        self._registry = registry()
         self.reset()
+        self._registry = registry()  # call only after reset
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
         self.response_callback = response_callback
         self.passthru_prefixes = tuple(passthru_prefixes)
@@ -541,7 +541,7 @@ class RequestsMock(object):
     def _get_registry(self):
         return self._registry
 
-    def set_registry(self, new_registry):
+    def _set_registry(self, new_registry):
         if self.registered():
             err_msg = (
                 "Cannot replace Registry, current registry has responses.\n"
@@ -551,11 +551,8 @@ class RequestsMock(object):
 
         self._registry = new_registry()
 
-    registry = property(_get_registry, set_registry, None, "Registry property")
-
     def reset(self):
-        self.registry.reset()
-        self.set_registry(FirstMatchRegistry)
+        self._registry = FirstMatchRegistry()
         self._calls.reset()
 
     def add(
@@ -603,13 +600,13 @@ class RequestsMock(object):
         >>> )
         """
         if isinstance(method, BaseResponse):
-            self.registry.add(method)
+            self._registry.add(method)
             return
 
         if adding_headers is not None:
             kwargs.setdefault("headers", adding_headers)
 
-        self.registry.add(Response(method=method, url=url, body=body, **kwargs))
+        self._registry.add(Response(method=method, url=url, body=body, **kwargs))
 
     def add_passthru(self, prefix):
         """
@@ -642,7 +639,7 @@ class RequestsMock(object):
         else:
             response = BaseResponse(method=method_or_response, url=url)
 
-        self.registry.remove(response)
+        self._registry.remove(response)
 
     def replace(self, method_or_response=None, url=None, body="", *args, **kwargs):
         """
@@ -659,7 +656,7 @@ class RequestsMock(object):
         else:
             response = Response(method=method_or_response, url=url, body=body, **kwargs)
 
-        self.registry.replace(response)
+        self._registry.replace(response)
 
     def upsert(self, method_or_response=None, url=None, body="", *args, **kwargs):
         """
@@ -681,7 +678,7 @@ class RequestsMock(object):
         # ensure the url has a default path set if the url is a string
         # url = _ensure_url_default_path(url, match_querystring)
 
-        self.registry.add(
+        self._registry.add(
             CallbackResponse(
                 url=url,
                 method=method,
@@ -692,7 +689,7 @@ class RequestsMock(object):
         )
 
     def registered(self):
-        return self.registry.registered
+        return self._registry.registered
 
     @property
     def calls(self):
@@ -730,7 +727,7 @@ class RequestsMock(object):
             (Response) found match. If multiple found, then remove & return the first match.
             (list) list with reasons why other matches don't match
         """
-        return self.registry.find(request)
+        return self._registry.find(request)
 
     def _parse_request_params(self, url):
         params = {}
@@ -875,8 +872,6 @@ __all__ = [
     "stop",
     "target",
     "upsert",
-    "registry",
-    "set_registry",
 ]
 
 activate = _default_mock.activate
@@ -903,5 +898,5 @@ start = _default_mock.start
 stop = _default_mock.stop
 target = _default_mock.target
 upsert = _default_mock.upsert
-registry = _default_mock.registry
-set_registry = _default_mock.set_registry
+_set_registry = _default_mock._set_registry
+_get_registry = _default_mock._get_registry

@@ -2171,25 +2171,36 @@ def test_matchers_create_key_val_str():
 
 
 def test_set_registry_not_empty():
+    class CustomRegistry(registries.FirstMatchRegistry):
+        pass
+
     @responses.activate
     def run():
         url = "http://fizzbuzz/foo"
         responses.add(method=responses.GET, url=url)
-        with pytest.raises(AttributeError):
-            responses.set_registry(None)
+        with pytest.raises(AttributeError) as excinfo:
+            responses._set_registry(CustomRegistry)
+        msg = str(excinfo.value)
+        assert "Cannot replace Registry, current registry has responses" in msg
 
     run()
     assert_reset()
 
 
 def test_set_registry():
+    class CustomRegistry(registries.FirstMatchRegistry):
+        pass
+
+    @responses.activate(custom_registry=CustomRegistry)  # type: ignore
+    def run_with_registry():
+        assert type(responses._get_registry()) == CustomRegistry
+
     @responses.activate
     def run():
-        class CustomRegistry(registries.FirstMatchRegistry):
-            pass
+        # test that registry does not leak to another test
+        assert type(responses._get_registry()) == registries.FirstMatchRegistry
 
-        responses.set_registry(CustomRegistry)
-
+    run_with_registry()
     run()
     assert_reset()
 
@@ -2199,8 +2210,11 @@ def test_set_registry_context_manager():
         class CustomRegistry(registries.FirstMatchRegistry):
             pass
 
-        with responses.RequestsMock(registry=CustomRegistry):
-            pass
+        with responses.RequestsMock(
+            assert_all_requests_are_fired=False, registry=CustomRegistry
+        ) as rsps:
+            assert type(rsps._get_registry()) == CustomRegistry  # type: ignore
+            assert type(responses._get_registry()) == registries.FirstMatchRegistry
 
     run()
     assert_reset()

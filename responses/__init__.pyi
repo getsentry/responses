@@ -182,9 +182,8 @@ class RequestsMock:
     def assert_call_count(self, url: str, count: int) -> bool: ...
     def registered(self) -> List[Any]: ...
     def upsert(self) -> None: ...
-    @property
-    def registry(self) -> Any: ...
-    def set_registry(self) -> None: ...
+    def _set_registry(self, custom_registry: Callable[[Any], None]) -> None: ...
+    def _get_registry(self) -> Callable[[Any], None]: ...
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 
@@ -292,8 +291,8 @@ start: Callable[[], None]
 stop: Callable[..., None]
 target: Any
 upsert: _Upsert
-registry: FirstMatchRegistry
-set_registry: Callable[[Any], None]
+_get_registry: Any
+_set_registry: Callable[[Any], None]
 
 __all__ = [
     "CallbackResponse",
@@ -324,6 +323,4 @@ __all__ = [
     "stop",
     "target",
     "upsert",
-    "registry",
-    "set_registry"
 ]

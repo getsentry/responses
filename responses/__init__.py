@@ -780,14 +780,6 @@ class RequestsMock(object):
                 response = resp_callback(response) if resp_callback else response
                 raise
 
-        stream = kwargs.get("stream") if match.stream is None else match.stream
-        if not stream:
-            content = response.content
-            if kwargs.get("stream"):
-                response.raw = BufferIO(content)
-            else:
-                response.close()
-
         response = resp_callback(response) if resp_callback else response
         match.call_count += 1
         self._calls.add(request, response)

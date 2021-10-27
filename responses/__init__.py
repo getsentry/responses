@@ -150,7 +150,7 @@ def wrapper%(wrapper_args)s:
 """
 
 
-def get_wrapped(func, responses):
+def get_wrapped(func, responses, custom_registry=None):
     if six.PY2:
         args, a, kw, defaults = inspect.getargspec(func)
         wrapper_args = inspect.formatargspec(args, a, kw, defaults)
@@ -188,6 +188,9 @@ def get_wrapped(func, responses):
         ]
         signature = signature.replace(parameters=params_without_defaults)
         func_args = str(signature)
+
+    if custom_registry is not None:
+        responses.set_registry(custom_registry)
 
     evaldict = {"func": func, "responses": responses}
     six.exec_(
@@ -552,6 +555,7 @@ class RequestsMock(object):
 
     def reset(self):
         self.registry.reset()
+        self.set_registry(FirstMatchRegistry)
         self._calls.reset()
 
     def add(
@@ -704,8 +708,18 @@ class RequestsMock(object):
         self.reset()
         return success
 
-    def activate(self, func):
-        return get_wrapped(func, self)
+    def activate(self, func=None, custom_registry=None):
+        if func is not None:
+            warn(
+                "Decorator 'activate' is deprecated. Use 'activate()' instead",
+                DeprecationWarning,
+            )
+            return get_wrapped(func, self)
+
+        def deco_activate(func):
+            return get_wrapped(func, self, custom_registry)
+
+        return deco_activate
 
     def _find_match(self, request):
         """

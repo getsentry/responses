@@ -935,6 +935,37 @@ def test_response_cookies_session():
     assert_reset()
 
 
+def test_response_cookies_session_stream():
+    @responses.activate
+    def run():
+        url = "https://example.com/path"
+        with pytest.deprecated_call():
+            responses.add(
+                responses.GET,
+                url,
+                headers=[
+                    ("Set-cookie", "mycookie=cookieval; path=/; secure"),
+                ],
+                body="ok",
+                stream=False, # Deprecated
+            )
+        session = requests.session()
+        resp = session.get(url, stream=True)
+        assert resp.text == "ok"
+        assert resp.status_code == 200
+
+        assert "mycookie" in resp.cookies
+        assert resp.cookies["mycookie"] == "cookieval"
+        assert set(resp.cookies.keys()) == set(["mycookie"])
+
+        assert "mycookie" in session.cookies
+        assert session.cookies["mycookie"] == "cookieval"
+        assert set(session.cookies.keys()) == set(["mycookie"])
+
+    run()
+    assert_reset()
+
+
 def test_response_callback():
     """adds a callback to decorate the response, then checks it"""
 

@@ -911,7 +911,7 @@ def test_response_cookies_multiple():
     (True, False, None),
 )
 @pytest.mark.parametrize(
-    "responses_stream",
+    "responses_stream",  # The Response stream parameter is deprecated
     (True, False, None),
 )
 def test_response_cookies_session(responses_stream, request_stream):

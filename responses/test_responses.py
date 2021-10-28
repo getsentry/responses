@@ -906,7 +906,9 @@ def test_response_cookies_multiple():
     assert_reset()
 
 
-def test_response_cookies_session():
+@pytest.mark.parametrize("request_stream", (True, False, None))
+@pytest.mark.parametrize("responses_stream", (True, False, None))
+def test_response_cookies_session(request_stream, responses_stream):
     @responses.activate
     def run():
         url = "https://example.com/path"
@@ -917,9 +919,10 @@ def test_response_cookies_session():
                 ("Set-cookie", "mycookie=cookieval; path=/; secure"),
             ],
             body="ok",
+            stream=responses_stream,
         )
         session = requests.session()
-        resp = session.get(url)
+        resp = session.get(url, stream=request_stream)
         assert resp.text == "ok"
         assert resp.status_code == 200
 

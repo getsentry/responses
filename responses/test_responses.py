@@ -713,7 +713,7 @@ def test_regular_expression_url():
 def test_base_response_get_response():
     resp = BaseResponse("GET", ".com")
     with pytest.raises(NotImplementedError):
-        resp.get_response("")
+        resp.get_response(requests.PreparedRequest())
 
 
 def test_custom_adapter():

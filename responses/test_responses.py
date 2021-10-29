@@ -697,13 +697,6 @@ def test_callback_matchers():
 
 
 def test_callback_matchers_fail():
-    def request_callback(request):
-        return (
-            200,
-            {"Content-Type": "application/json"},
-            b"foo",
-        )
-
     @responses.activate
     def run():
         req_data = {"some": "other", "data": "fields"}
@@ -713,7 +706,7 @@ def test_callback_matchers_fail():
             responses.POST,
             url="http://httpbin.org/post",
             match=[matchers.multipart_matcher(req_files, data=req_data)],
-            callback=request_callback,
+            callback=lambda x: None,
         )
         with pytest.raises(ConnectionError) as exc:
             requests.post(

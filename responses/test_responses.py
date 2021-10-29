@@ -669,6 +669,65 @@ def test_callback_content_type_dict():
     assert_reset()
 
 
+def test_callback_matchers():
+    def request_callback(request):
+        return (
+            200,
+            {"Content-Type": "application/json"},
+            b"foo",
+        )
+
+    @responses.activate
+    def run():
+        req_data = {"some": "other", "data": "fields"}
+        req_files = {"file_name": b"Old World!"}
+
+        responses.add_callback(
+            responses.POST,
+            url="http://httpbin.org/post",
+            match=[matchers.multipart_matcher(req_files, data=req_data)],
+            callback=request_callback,
+        )
+        resp = requests.post("http://httpbin.org/post", data=req_data, files=req_files)
+        assert resp.text == "foo"
+        assert resp.headers["content-type"] == "application/json"
+
+    run()
+    assert_reset()
+
+
+def test_callback_matchers_fail():
+    def request_callback(request):
+        return (
+            200,
+            {"Content-Type": "application/json"},
+            b"foo",
+        )
+
+    @responses.activate
+    def run():
+        req_data = {"some": "other", "data": "fields"}
+        req_files = {"file_name": b"Old World!"}
+
+        responses.add_callback(
+            responses.POST,
+            url="http://httpbin.org/post",
+            match=[matchers.multipart_matcher(req_files, data=req_data)],
+            callback=request_callback,
+        )
+        with pytest.raises(ConnectionError) as exc:
+            requests.post(
+                "http://httpbin.org/post",
+                data={"some": "other", "data": "wrong"},
+                files=req_files,
+            )
+
+        assert "multipart/form-data doesn't match." in str(exc.value)
+
+    run()
+    assert_reset()
+
+
 def test_callback_content_type_tuple():
     def request_callback(request):
         return (

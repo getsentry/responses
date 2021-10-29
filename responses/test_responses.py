@@ -1775,21 +1775,13 @@ def test_mocked_responses_list_registered():
     assert_reset()
 
 
-def test_registry_initializer():
-    def my_registry_initializer():
-        response_a = Response(responses.GET, "http://example.com/")
-        return PopFirstKeepLastRegistry([response_a])
-
+def test_registry_as_container():
     def run():
-        with responses.RequestsMock(
-            registry_initializer=my_registry_initializer,
-            assert_all_requests_are_fired=False,
-        ) as rsps:
+        with responses.RequestsMock() as rsps:
+            rsps.add(responses.GET, "http://example.com/")
             assert Response(responses.GET, "http://example.com/") in rsps.registry
             rsps.registry.clear()
             assert list(rsps.registry) == []
-            rsps.reset()
-            assert Response(responses.GET, "http://example.com/") in rsps.registry
 
     run()
     assert_reset()

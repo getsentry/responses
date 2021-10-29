@@ -706,7 +706,11 @@ def test_callback_matchers_fail():
             responses.POST,
             url="http://httpbin.org/post",
             match=[matchers.multipart_matcher(req_files, data=req_data)],
-            callback=lambda x: None,
+            callback=lambda x: (
+                0,
+                {"a": ""},
+                "",
+            ),
         )
         with pytest.raises(ConnectionError) as exc:
             requests.post(

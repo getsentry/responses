@@ -163,8 +163,6 @@ def get_wrapped(func, responses):
 
         # Preserve the argspec for the wrapped function so that testing
         # tools such as pytest can continue to use their fixture injection.
-        if hasattr(func, "__self__"):
-            args = args[1:]  # Omit 'self'
         func_args = inspect.formatargspec(args, a, kw, None)
     else:
         signature = inspect.signature(func)

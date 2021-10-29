@@ -710,6 +710,12 @@ def test_regular_expression_url():
     assert_reset()
 
 
+def test_base_response_get_response():
+    resp = BaseResponse("GET", ".com")
+    with pytest.raises(NotImplementedError):
+        resp.get_response("")
+
+
 def test_custom_adapter():
     @responses.activate
     def run():
@@ -775,6 +781,29 @@ def test_activate_doesnt_change_signature():
         )
     assert decorated_test_function(1, 2) == test_function(1, 2)
     assert decorated_test_function(3) == test_function(3)
+
+
+@pytest.fixture
+def my_fruit():
+    return "apple"
+
+
+@pytest.fixture
+def fruit_basket(my_fruit):
+    return ["banana", my_fruit]
+
+
+@pytest.mark.usefixtures("my_fruit", "fruit_basket")
+class TestFixtures(object):
+    """
+    Test that pytest fixtures work well with 'activate' decorator
+    """
+
+    def test_function(self, my_fruit, fruit_basket):
+        assert my_fruit in fruit_basket
+        assert my_fruit == "apple"
+
+    test_function_decorated = responses.activate(test_function)
 
 
 def test_activate_mock_interaction():

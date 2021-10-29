@@ -2191,7 +2191,7 @@ def test_set_registry():
     class CustomRegistry(registries.FirstMatchRegistry):
         pass
 
-    @responses.activate(custom_registry=CustomRegistry)
+    @responses.activate(registry=CustomRegistry)
     def run_with_registry():
         assert type(responses.mock._get_registry()) == CustomRegistry
 
@@ -2215,6 +2215,21 @@ def test_set_registry_context_manager():
         ) as rsps:
             assert type(rsps._get_registry()) == CustomRegistry
             assert type(responses.mock._get_registry()) == registries.FirstMatchRegistry
+
+    run()
+    assert_reset()
+
+
+def test_registry_reset():
+    def run():
+        class CustomRegistry(registries.FirstMatchRegistry):
+            pass
+
+        with responses.RequestsMock(
+            assert_all_requests_are_fired=False, registry=CustomRegistry
+        ) as rsps:
+            rsps._get_registry().reset()
+            assert not rsps.registered()
 
     run()
     assert_reset()

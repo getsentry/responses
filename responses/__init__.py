@@ -150,7 +150,7 @@ def wrapper%(wrapper_args)s:
 """
 
 
-def get_wrapped(func, responses, custom_registry=None):
+def get_wrapped(func, responses, registry=None):
     if six.PY2:
         args, a, kw, defaults = inspect.getargspec(func)
         wrapper_args = inspect.formatargspec(args, a, kw, defaults)
@@ -189,8 +189,8 @@ def get_wrapped(func, responses, custom_registry=None):
         signature = signature.replace(parameters=params_without_defaults)
         func_args = str(signature)
 
-    if custom_registry is not None:
-        responses._set_registry(custom_registry)
+    if registry is not None:
+        responses._set_registry(registry)
 
     evaldict = {"func": func, "responses": responses}
     six.exec_(
@@ -705,12 +705,12 @@ class RequestsMock(object):
         self.reset()
         return success
 
-    def activate(self, func=None, custom_registry=None):
+    def activate(self, func=None, registry=None):
         if func is not None:
             return get_wrapped(func, self)
 
         def deco_activate(func):
-            return get_wrapped(func, self, custom_registry)
+            return get_wrapped(func, self, registry)
 
         return deco_activate
 

@@ -356,14 +356,15 @@ include any additional headers.
 Response Registry
 ---------------------------
 
-By default, ``responses`` module uses algorithm, when ``Response`` is searched in all
-available registered responses and returns a match, registry keeps unchanged.
+By default, ``responses`` module will search all registered``Response`` objects and
+return a match. If only one ``Response`` is registered, the registry is kept unchanged.
 However, if multiple matches are found for the same request, then first match is returned and
 removed from registry.
 
-Such behavior is suitable for most of use cases, but to handle special conditions, user can
+Such behavior is suitable for most of use cases, but to handle special conditions, you can
 implement custom registry which must follow interface of ``registries.FirstMatchRegistry``.
-Redefining ``find`` method will allow to create custom search and return appropriate ``Response``
+Redefining the ``find`` method will allow you to create custom search logic and return
+appropriate ``Response``
 
 Example that shows how to set custom registry
 
@@ -377,17 +378,29 @@ Example that shows how to set custom registry
         pass
 
 
+    print("Before tests:", responses.mock._get_registry())
+
     # using function decorator
-    @responses.activate
+    @responses.activate(registry=CustomRegistry)
     def run():
-        responses.set_registry(CustomRegistry)
+        print("Within test:", responses.mock._get_registry())
 
     run()
+    print("After test:", responses.mock._get_registry())
 
     # using context manager
     with responses.RequestsMock(registry=CustomRegistry) as rsps:
-        pass
+        print("In context manager:", rsps._get_registry())
 
+    print("After exit from context manager:", responses.mock._get_registry())
+    """
+    Results following output:
+    >>> Before tests: <responses.registries.FirstMatchRegistry object>
+    >>> Within test: <__main__.CustomRegistry object>
+    >>> After test: <responses.registries.FirstMatchRegistry object>
+    >>> In context manager: <__main__.CustomRegistry object>
+    >>> After exit from context manager: <responses.registries.FirstMatchRegistry object>
+    """
 
 Dynamic Responses
 -----------------

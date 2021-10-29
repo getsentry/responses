@@ -3,7 +3,6 @@
 
 * Added `responses.registries`. Now user can create custom registries to
   manipulate the order of responses in the match algorithm
-* `responses.activate` decorator should be used as `responses.activate()`
 
 0.15.0
 ------

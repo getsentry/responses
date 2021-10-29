@@ -707,10 +707,6 @@ class RequestsMock(object):
 
     def activate(self, func=None, custom_registry=None):
         if func is not None:
-            warn(
-                "Decorator 'activate' is deprecated. Use 'activate()' instead",
-                DeprecationWarning,
-            )
             return get_wrapped(func, self)
 
         def deco_activate(func):
@@ -898,5 +894,3 @@ start = _default_mock.start
 stop = _default_mock.stop
 target = _default_mock.target
 upsert = _default_mock.upsert
-_set_registry = _default_mock._set_registry
-_get_registry = _default_mock._get_registry

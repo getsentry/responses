@@ -18,6 +18,7 @@ from responses import (
     PassthroughResponse,
     matchers,
     CallbackResponse,
+    PopFirstKeepLastRegistry,
 )
 
 
@@ -1769,6 +1770,63 @@ def test_mocked_responses_list_registered():
 
         assert mocks_list == responses.mock.registry._responses
         assert mocks_list == [first_response, second_response, third_response]
+
+    run()
+    assert_reset()
+
+
+def test_registry_initializer():
+    def my_registry_initializer():
+        response_a = Response(responses.GET, "http://example.com/")
+        return PopFirstKeepLastRegistry([response_a])
+
+    def run():
+        with responses.RequestsMock(
+            registry_initializer=my_registry_initializer,
+            assert_all_requests_are_fired=False,
+        ) as rsps:
+            assert Response(responses.GET, "http://example.com/") in rsps.registry
+            rsps.registry.clear()
+            assert list(rsps.registry) == []
+            rsps.reset()
+            assert Response(responses.GET, "http://example.com/") in rsps.registry
+
+    run()
+    assert_reset()
+
+
+def test_custom_registry_is_not_persistent():
+    class InsertionOrderRegistry(PopFirstKeepLastRegistry):
+        def find_match(self, request):
+            match_failed_reasons = []
+            for response in self._responses:
+                success, reason = response.matches(request)
+                if success:
+                    return response, match_failed_reasons
+            return None, match_failed_reasons
+
+    def run():
+        with responses.RequestsMock() as rsps:
+            rsps.registry = InsertionOrderRegistry(
+                [
+                    Response(
+                        responses.GET, re.compile(r"http://example\.com/items/\d+")
+                    ),
+                    Response(
+                        responses.GET, re.compile(r"http://example\.com/.+"), status=404
+                    ),
+                ]
+            )
+            for item_id in [123, 234, 345]:
+                response = requests.get("http://example.com/items/{}".format(item_id))
+                assert response.ok
+            response = requests.get("http://example.com/xyz")
+            assert response.status_code == 404
+            # Not being persistien is important because otherwise the registry could leak
+            # into other test modules if it was changed in the module level default mock
+            rsps.reset()
+            assert not isinstance(rsps.registry, InsertionOrderRegistry)
+            assert isinstance(rsps.registry, PopFirstKeepLastRegistry)
 
     run()
     assert_reset()

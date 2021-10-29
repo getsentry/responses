@@ -540,20 +540,17 @@ class RequestsMock(object):
         registry_initializer=None,
     ):
         self._calls = CallList()
+        if registry_initializer is not None:
+            self.registry_initializer = registry_initializer
         self.reset()
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
         self.response_callback = response_callback
         self.passthru_prefixes = tuple(passthru_prefixes)
         self.target = target
-        if registry_initializer is not None:
-            self.registry_initializer = registry_initializer
 
     def reset(self):
         self.registry = self.registry_initializer()
         self._calls.reset()
-
-    def _get_registry(self):
-        return self._registry
 
     def add(
         self,

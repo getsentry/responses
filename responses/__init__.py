@@ -16,6 +16,7 @@ from requests.exceptions import ConnectionError
 from requests.utils import cookiejar_from_dict
 from responses.matchers import json_params_matcher as _json_params_matcher
 from responses.matchers import urlencoded_params_matcher as _urlencoded_params_matcher
+from responses.registries import PopFirstKeepLastRegistry
 from warnings import warn
 
 try:
@@ -528,6 +529,7 @@ class RequestsMock(object):
     POST = "POST"
     PUT = "PUT"
     response_callback = None
+    registry_initializer = PopFirstKeepLastRegistry
 
     def __init__(
         self,
@@ -535,6 +537,7 @@ class RequestsMock(object):
         response_callback=None,
         passthru_prefixes=(),
         target="requests.adapters.HTTPAdapter.send",
+        registry_initializer=None,
     ):
         self._calls = CallList()
         self.reset()
@@ -542,10 +545,29 @@ class RequestsMock(object):
         self.response_callback = response_callback
         self.passthru_prefixes = tuple(passthru_prefixes)
         self.target = target
+        if registry_initializer is not None:
+            self.registry_initializer = registry_initializer
 
     def reset(self):
-        self._matches = []
+        self.registry = self.registry_initializer()
         self._calls.reset()
+
+    def _get_registry(self):
+        return self._registry
+
+    def _set_registry(self, value):
+        self._registry = value
+
+    def _del_registry(self):
+        self.registry_initializer = self.__class__.registry_initializer
+        self._registry = self.registry_initializer()
+
+    registry = property(
+        _get_registry,
+        _set_registry,
+        _del_registry,
+        "response registry"
+    )
 
     def add(
         self,
@@ -592,13 +614,12 @@ class RequestsMock(object):
         >>> )
         """
         if isinstance(method, BaseResponse):
-            self._matches.append(method)
-            return
-
-        if adding_headers is not None:
-            kwargs.setdefault("headers", adding_headers)
-
-        self._matches.append(Response(method=method, url=url, body=body, **kwargs))
+            response = method
+        else:
+            if adding_headers is not None:
+                kwargs.setdefault("headers", adding_headers)
+            response = Response(method=method, url=url, body=body, **kwargs)
+        self.registry.add(response)
 
     def add_passthru(self, prefix):
         """
@@ -630,9 +651,7 @@ class RequestsMock(object):
             response = method_or_response
         else:
             response = BaseResponse(method=method_or_response, url=url)
-
-        while response in self._matches:
-            self._matches.remove(response)
+        self.registry.remove(response)
 
     def replace(self, method_or_response=None, url=None, body="", *args, **kwargs):
         """
@@ -648,12 +667,7 @@ class RequestsMock(object):
             response = method_or_response
         else:
             response = Response(method=method_or_response, url=url, body=body, **kwargs)
-
-        try:
-            index = self._matches.index(response)
-        except ValueError:
-            raise ValueError("Response is not registered for URL %s" % url)
-        self._matches[index] = response
+        self.registry.replace(response)
 
     def upsert(self, method_or_response=None, url=None, body="", *args, **kwargs):
         """
@@ -681,7 +695,7 @@ class RequestsMock(object):
         # ensure the url has a default path set if the url is a string
         # url = _ensure_url_default_path(url, match_querystring)
 
-        self._matches.append(
+        self.registry.add(
             CallbackResponse(
                 url=url,
                 method=method,
@@ -693,7 +707,7 @@ class RequestsMock(object):
         )
 
     def registered(self):
-        return self._matches
+        return self.registry._responses
 
     @property
     def calls(self):
@@ -712,31 +726,6 @@ class RequestsMock(object):
     def activate(self, func):
         return get_wrapped(func, self)
 
-    def _find_match(self, request):
-        """
-        Iterates through all available matches and validates if any of them matches the request
-
-        :param request: (PreparedRequest), request object
-        :return:
-            (Response) found match. If multiple found, then remove & return the first match.
-            (list) list with reasons why other matches don't match
-        """
-        found = None
-        found_match = None
-        match_failed_reasons = []
-        for i, match in enumerate(self._matches):
-            match_result, reason = match.matches(request)
-            if match_result:
-                if found is None:
-                    found = i
-                    found_match = match
-                else:
-                    # Multiple matches found.  Remove & return the first match.
-                    return self._matches.pop(found), match_failed_reasons
-            else:
-                match_failed_reasons.append(reason)
-        return found_match, match_failed_reasons
-
     def _parse_request_params(self, url):
         params = {}
         for key, val in groupby(parse_qsl(urlparse(url).query), lambda kv: kv[0]):
@@ -752,7 +741,7 @@ class RequestsMock(object):
         request.params = self._parse_request_params(request.path_url)
         request.req_kwargs = kwargs
 
-        match, match_failed_reasons = self._find_match(request)
+        match, match_failed_reasons = self.registry.find_match(request)
         resp_callback = self.response_callback
 
         if match is None:
@@ -774,10 +763,8 @@ class RequestsMock(object):
                 "- %s %s\n\n"
                 "Available matches:\n" % (request.method, request.url)
             )
-            for i, m in enumerate(self._matches):
-                error_msg += "- {} {} {}\n".format(
-                    m.method, m.url, match_failed_reasons[i]
-                )
+            for m, reason in match_failed_reasons:
+                error_msg += "- {} {} {}\n".format(m.method, m.url, reason)
 
             response = ConnectionError(error_msg)
             response.request = request
@@ -823,7 +810,7 @@ class RequestsMock(object):
         if not allow_assert:
             return
 
-        not_called = [m for m in self._matches if m.call_count == 0]
+        not_called = [m for m in self.registry if m.call_count == 0]
         if not_called:
             raise AssertionError(
                 "Not all requests have been executed {0!r}".format(

@@ -31,6 +31,7 @@ def _ensure_str(s: str) -> str: ...
 def _ensure_url_default_path(
     url: Union[Pattern[str], str]
 ) -> Union[Pattern[str], str]: ...
+def _get_url_and_path(url: str) -> str: ...
 def _handle_body(
     body: Optional[Union[bytes, BufferedReader, str]]
 ) -> Union[BufferedReader, BytesIO]: ...
@@ -183,6 +184,8 @@ class RequestsMock:
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 
+HeaderSet = Optional[Union[Mapping[str, str], List[Tuple[str, str]]]]
+
 class _Activate(Protocol):
     def __call__(self, func: _F) -> _F: ...
 
@@ -194,11 +197,11 @@ class _Add(Protocol):
         body: _Body = ...,
         json: Optional[Any] = ...,
         status: int = ...,
-        headers: Optional[Mapping[str, str]] = ...,
+        headers: HeaderSet = ...,
         stream: bool = ...,
         content_type: Optional[str] = ...,
         auto_calculate_content_length: bool = ...,
-        adding_headers: Optional[Mapping[str, str]] = ...,
+        adding_headers: HeaderSet = ...,
         match_querystring: bool = ...,
         match: Iterable[Callable[[Any], Callable[..., Any]]] = ...,
     ) -> None: ...
@@ -234,10 +237,10 @@ class _Replace(Protocol):
         body: _Body = ...,
         json: Optional[Any] = ...,
         status: int = ...,
-        headers: Optional[Mapping[str, str]] = ...,
+        headers: HeaderSet = ...,
         stream: bool = ...,
         content_type: Optional[str] = ...,
-        adding_headers: Optional[Mapping[str, str]] = ...,
+        adding_headers: HeaderSet = ...,
         match_querystring: bool = ...,
         match: List[Any] = ...,
     ) -> None: ...
@@ -250,10 +253,10 @@ class _Upsert(Protocol):
         body: _Body = ...,
         json: Optional[Any] = ...,
         status: int = ...,
-        headers: Optional[Mapping[str, str]] = ...,
+        headers: HeaderSet = ...,
         stream: bool = ...,
         content_type: Optional[str] = ...,
-        adding_headers: Optional[Mapping[str, str]] = ...,
+        adding_headers: HeaderSet = ...,
         match_querystring: bool = ...,
         match: List[Any] = ...,
     ) -> None: ...

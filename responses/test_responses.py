@@ -857,7 +857,7 @@ def test_response_cookies():
     assert_reset()
 
 
-def test_response_secure_cookies():
+def test_response_cookies_secure():
     body = b"test callback"
     status = 200
     headers = {"set-cookie": "session_id=12345; a=b; c=d; secure"}
@@ -901,6 +901,38 @@ def test_response_cookies_multiple():
         assert set(resp.cookies.keys()) == set(["1P_JAR", "NID"])
         assert resp.cookies["1P_JAR"] == "2019-12-31-23"
         assert resp.cookies["NID"] == "some=value"
+
+    run()
+    assert_reset()
+
+
+@pytest.mark.parametrize("request_stream", (True, False, None))
+@pytest.mark.parametrize("responses_stream", (True, False, None))
+def test_response_cookies_session(request_stream, responses_stream):
+    @responses.activate
+    def run():
+        url = "https://example.com/path"
+        responses.add(
+            responses.GET,
+            url,
+            headers=[
+                ("Set-cookie", "mycookie=cookieval; path=/; secure"),
+            ],
+            body="ok",
+            stream=responses_stream,
+        )
+        session = requests.session()
+        resp = session.get(url, stream=request_stream)
+        assert resp.text == "ok"
+        assert resp.status_code == 200
+
+        assert "mycookie" in resp.cookies
+        assert resp.cookies["mycookie"] == "cookieval"
+        assert set(resp.cookies.keys()) == set(["mycookie"])
+
+        assert "mycookie" in session.cookies
+        assert session.cookies["mycookie"] == "cookieval"
+        assert set(session.cookies.keys()) == set(["mycookie"])
 
     run()
     assert_reset()

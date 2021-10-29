@@ -1,3 +1,9 @@
+0.15.1
+------
+
+* Fixed regression with ``stream`` parameter deprecation, requests.session() and cookie handling.
+* Replaced adhoc URL parsing with `urllib.parse`.
+
 0.15.0
 ------
 

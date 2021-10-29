@@ -555,20 +555,6 @@ class RequestsMock(object):
     def _get_registry(self):
         return self._registry
 
-    def _set_registry(self, value):
-        self._registry = value
-
-    def _del_registry(self):
-        self.registry_initializer = self.__class__.registry_initializer
-        self._registry = self.registry_initializer()
-
-    registry = property(
-        _get_registry,
-        _set_registry,
-        _del_registry,
-        "response registry"
-    )
-
     def add(
         self,
         method=None,  # method or ``Response``

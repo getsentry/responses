@@ -1,4 +1,3 @@
-
 class PopFirstKeepLastRegistry(object):
     def __init__(self, responses=None):
         self._responses = list(responses or [])
@@ -15,6 +14,12 @@ class PopFirstKeepLastRegistry(object):
 
     def clear(self):
         self._responses.clear()
+
+    def index(self, response):
+        for index, match in self._matching_order():
+            if response == match:
+                return index
+        raise ValueError("Response is not registered for URL {}".format(response.url))
 
     def _matching_order(self):
         return enumerate(self._responses)
@@ -44,10 +49,5 @@ class PopFirstKeepLastRegistry(object):
             self._responses.remove(response)
 
     def replace(self, response):
-        try:
-            index = self._responses.index(response)
-        except ValueError:
-            raise ValueError(
-                "Response is not registered for URL {}".format(response.url)
-            )
+        index = self.index(response)
         self._responses[index] = response

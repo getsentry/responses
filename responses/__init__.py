@@ -529,6 +529,7 @@ class RequestsMock(object):
     POST = "POST"
     PUT = "PUT"
     response_callback = None
+    registry_initializer = PopFirstKeepLastRegistry
 
     def __init__(
         self,
@@ -536,8 +537,11 @@ class RequestsMock(object):
         response_callback=None,
         passthru_prefixes=(),
         target="requests.adapters.HTTPAdapter.send",
+        registry_initializer=None,
     ):
         self._calls = CallList()
+        if registry_initializer is not None:
+            self.registry_initializer = registry_initializer
         self.reset()
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
         self.response_callback = response_callback
@@ -545,7 +549,7 @@ class RequestsMock(object):
         self.target = target
 
     def reset(self):
-        self.registry = PopFirstKeepLastRegistry()
+        self.registry = self.registry_initializer()
         self._calls.reset()
 
     def add(

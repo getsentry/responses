@@ -802,7 +802,7 @@ def test_activate_mock_interaction():
 @pytest.mark.skipif(six.PY2, reason="Cannot run in python2")
 def test_activate_doesnt_change_signature_with_return_type():
     def test_function(a, b=None):
-        return (a, b)
+        return a, b
 
     # Add type annotations as they are syntax errors in py2.
     # Use a class to test for import errors in evaled code.

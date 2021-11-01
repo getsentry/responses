@@ -2106,6 +2106,11 @@ def test_fragment_identifier_matcher_error():
             "http://example.com/",
             match=[matchers.fragment_identifier_matcher("test=1")],
         )
+        responses.add(
+            responses.GET,
+            "http://example.com/",
+            match=[matchers.fragment_identifier_matcher(None)],
+        )
 
         with pytest.raises(ConnectionError) as excinfo:
             requests.get("http://example.com/#test=2")
@@ -2113,6 +2118,9 @@ def test_fragment_identifier_matcher_error():
         msg = str(excinfo.value)
         assert (
             "URL fragment identifier is different: test=1 doesn't match test=2"
+        ) in msg
+        assert (
+            "URL fragment identifier is different: None doesn't match test=2"
         ) in msg
 
     run()

@@ -4,9 +4,10 @@ import json as json_module
 from requests import PreparedRequest
 
 if six.PY2:
-    from urlparse import parse_qsl
+    from urlparse import parse_qsl, urlparse
 else:
-    from urllib.parse import parse_qsl
+    from urllib.parse import parse_qsl, urlparse
+
 
 try:
     from requests.packages.urllib3.util.url import parse_url
@@ -112,6 +113,26 @@ def json_params_matcher(params):
                 "request.body doesn't match: JSONDecodeError: Cannot parse request.body"
             )
 
+        return valid, reason
+
+    return match
+
+
+def fragment_identifier_matcher(identifier):
+    def match(request):
+        reason = ""
+        url_fragment = urlparse(request.url).fragment
+        if identifier:
+            url_fragment_qsl = sorted(parse_qsl(url_fragment))
+            identifier_qsl = sorted(parse_qsl(identifier))
+            valid = identifier_qsl == url_fragment_qsl
+        else:
+            valid = not url_fragment
+
+        if not valid:
+            reason = "URL fragment identifier is different: {} doesn't match {}".format(
+                identifier, url_fragment
+            )
         return valid, reason
 
     return match

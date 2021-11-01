@@ -2106,6 +2106,74 @@ def test_request_matches_headers_strict_match():
     assert_reset()
 
 
+def test_fragment_identifier_matcher():
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "http://example.com",
+            match=[matchers.fragment_identifier_matcher("test=1&foo=bar")],
+            body=b"test",
+        )
+
+        resp = requests.get("http://example.com#test=1&foo=bar")
+        assert_response(resp, "test")
+
+    run()
+    assert_reset()
+
+
+def test_fragment_identifier_matcher_error():
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "http://example.com/",
+            match=[matchers.fragment_identifier_matcher("test=1")],
+        )
+        responses.add(
+            responses.GET,
+            "http://example.com/",
+            match=[matchers.fragment_identifier_matcher(None)],
+        )
+
+        with pytest.raises(ConnectionError) as excinfo:
+            requests.get("http://example.com/#test=2")
+
+        msg = str(excinfo.value)
+        assert (
+            "URL fragment identifier is different: test=1 doesn't match test=2"
+        ) in msg
+        assert (
+            "URL fragment identifier is different: None doesn't match test=2"
+        ) in msg
+
+    run()
+    assert_reset()
+
+
+def test_fragment_identifier_matcher_and_match_querystring():
+    @responses.activate
+    def run():
+        url = "http://example.com?ab=xy&zed=qwe#test=1&foo=bar"
+        responses.add(
+            responses.GET,
+            url,
+            match_querystring=True,
+            match=[matchers.fragment_identifier_matcher("test=1&foo=bar")],
+            body=b"test",
+        )
+
+        # two requests to check reversed order of fragment identifier
+        resp = requests.get("http://example.com?ab=xy&zed=qwe#test=1&foo=bar")
+        assert_response(resp, "test")
+        resp = requests.get("http://example.com?zed=qwe&ab=xy#foo=bar&test=1")
+        assert_response(resp, "test")
+
+    run()
+    assert_reset()
+
+
 @pytest.mark.parametrize(
     "response_params, expected_representation",
     [

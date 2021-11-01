@@ -3,6 +3,8 @@
 
 * Fixed regression with ``stream`` parameter deprecation, requests.session() and cookie handling.
 * Replaced adhoc URL parsing with `urllib.parse`.
+* Added `responses.matchers.fragment_identifier_matcher`. This matcher allows you
+  to match request URL fragment identifier.
 
 0.15.0
 ------

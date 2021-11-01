@@ -123,31 +123,34 @@ headers (``dict``)
     Response headers.
 
 stream (``bool``)
-    DEPRECATED
+    DEPRECATED: use ``stream`` argument in request directly
 
 auto_calculate_content_length (``bool``)
     Disabled by default. Automatically calculates the length of a supplied string or JSON body.
 
 match (``list``)
     A list of callbacks to match requests based on request attributes.
-    Current module provides multiple matchers that you can use:
+    Current module provides multiple matchers that you can use to match:
 
     * body contents in JSON format
     * body contents in URL encoded data format
     * request query parameters
+    * request query string (similar to query parameters but takes string as input)
     * kwargs provided to request e.g. ``stream``, ``verify``
+    * 'multipart/form-data' content and headers in request
+    * request headers
 
     Alternatively user can create custom matcher.
-    Read more `Matching Request Parameters`_
+    Read more `Matching Requests`_
 
 
-Matching Request Parameters
----------------------------
+Matching Requests
+-----------------
 
 When adding responses for endpoints that are sent request data you can add
 matchers to ensure your code is sending the right parameters and provide
 different responses based on the request body contents. Responses provides
-matchers for JSON and URLencoded request bodies and you can supply your own for
+matchers for JSON and URL-encoded request bodies and you can supply your own for
 other formats.
 
 .. code-block:: python

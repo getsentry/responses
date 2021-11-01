@@ -37,10 +37,17 @@ except ImportError:  # pragma: no cover
     from urllib3.util.url import parse_url  # pragma: no cover
 
 if six.PY2:
-    from urlparse import urlparse, parse_qsl, urlsplit, urlunsplit
+    from urlparse import urlparse, urlunparse, parse_qsl, urlsplit, urlunsplit
     from urllib import quote
 else:
-    from urllib.parse import urlparse, parse_qsl, urlsplit, urlunsplit, quote
+    from urllib.parse import (
+        urlparse,
+        urlunparse,
+        parse_qsl,
+        urlsplit,
+        urlunsplit,
+        quote,
+    )
 
 if six.PY2:
     try:
@@ -227,6 +234,14 @@ def _ensure_url_default_path(url):
     return url
 
 
+def _get_url_and_path(url):
+    url_parsed = urlparse(url)
+    url_and_path = urlunparse(
+        [url_parsed.scheme, url_parsed.netloc, url_parsed.path, None, None, None]
+    )
+    return parse_url(url_and_path).url
+
+
 def _handle_body(body):
     if isinstance(body, six.text_type):
         body = body.encode("utf-8")
@@ -304,13 +319,8 @@ class BaseResponse(object):
             if match_querystring:
                 normalize_url = parse_url(url).url
                 return self._url_matches_strict(normalize_url, other)
-
             else:
-                url_without_qs = url.split("?", 1)[0]
-                other_without_qs = other.split("?", 1)[0]
-                normalized_url_without_qs = parse_url(url_without_qs).url
-
-                return normalized_url_without_qs == other_without_qs
+                return _get_url_and_path(url) == _get_url_and_path(other)
 
         elif isinstance(url, Pattern) and url.match(other):
             return True
@@ -780,10 +790,10 @@ class RequestsMock(object):
                 response = resp_callback(response) if resp_callback else response
                 raise
 
-        stream = kwargs.get("stream") if match.stream is None else match.stream
+        stream = kwargs.get("stream")
         if not stream:
-            content = response.content
-            response.raw = BufferIO(content)
+            response.content  # NOQA required to ensure that response body is read.
+            response.close()
 
         response = resp_callback(response) if resp_callback else response
         match.call_count += 1

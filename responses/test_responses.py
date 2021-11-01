@@ -831,7 +831,7 @@ def test_activate_mock_interaction():
 @pytest.mark.skipif(six.PY2, reason="Cannot run in python2")
 def test_activate_doesnt_change_signature_with_return_type():
     def test_function(a, b=None):
-        return (a, b)
+        return a, b
 
     # Add type annotations as they are syntax errors in py2.
     # Use a class to test for import errors in evaled code.
@@ -839,14 +839,10 @@ def test_activate_doesnt_change_signature_with_return_type():
     test_function.__annotations__["a"] = Mock
 
     decorated_test_function = responses.activate(test_function)
-    if hasattr(inspect, "signature"):
-        assert inspect.signature(test_function) == inspect.signature(
-            decorated_test_function
-        )
-    else:
-        assert inspect.getargspec(test_function) == inspect.getargspec(
-            decorated_test_function
-        )
+    assert inspect.signature(test_function) == inspect.signature(
+        decorated_test_function
+    )
+
     assert decorated_test_function(1, 2) == test_function(1, 2)
     assert decorated_test_function(3) == test_function(3)
 

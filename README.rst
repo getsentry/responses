@@ -99,6 +99,9 @@ url (``str`` or compiled regular expression)
     The full resource URL.
 
 match_querystring (``bool``)
+    DEPRECATED: Use `responses.matchers.query_param_matcher` or
+    `responses.matchers.query_string_matcher`
+
     Include the query string when matching requests.
     Enabled by default if the response URL contains a query string,
     disabled if it doesn't or the URL is a regular expression.

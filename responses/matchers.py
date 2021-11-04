@@ -175,6 +175,8 @@ def query_string_matcher(query):
     :param query: (str), same as constructed by request
     :return: (func) matcher
     """
+    if isinstance(query, unicode):  # noqa: F821
+        query = query.encode("utf8")
 
     def match(request):
         reason = ""

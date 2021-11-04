@@ -181,8 +181,8 @@ def query_string_matcher(query):
         data = parse_url(request.url)
         request_query = data.query
 
-        request_qsl = sorted(parse_qsl(request_query))
-        matcher_qsl = sorted(parse_qsl(query))
+        request_qsl = sorted(parse_qsl(request_query)) if request_query else {}
+        matcher_qsl = sorted(parse_qsl(query)) if query else {}
 
         valid = not query if request_query is None else request_qsl == matcher_qsl
 

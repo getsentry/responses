@@ -1177,9 +1177,9 @@ def test_headers():
     assert_reset()
 
 
-def test_content_length_error():
+def test_content_length_error(monkeypatch):
     """
-    Currently 'requests' do not enforce content length validation,
+    Currently 'requests' does not enforce content length validation,
     (validation that body length matches header). However, this could
     be expected in next major version, see
     https://github.com/psf/requests/pull/3563
@@ -1203,15 +1203,15 @@ def test_content_length_error():
     original_init = getattr(requests.packages.urllib3.HTTPResponse, "__init__")
 
     def patched_init(self, *args, **kwargs):
-        original_init(self, *args, enforce_content_length=True, **kwargs)
+        kwargs["enforce_content_length"] = True
+        original_init(self, *args, **kwargs)
 
-    setattr(requests.packages.urllib3.HTTPResponse, "__init__", patched_init)
+    monkeypatch.setattr(
+        requests.packages.urllib3.HTTPResponse, "__init__", patched_init
+    )
 
-    try:
-        run()
-        assert_reset()
-    finally:
-        setattr(requests.packages.urllib3.HTTPResponse, "__init__", original_init)
+    run()
+    assert_reset()
 
 
 def test_legacy_adding_headers():

@@ -766,6 +766,12 @@ def test_regular_expression_url():
     assert_reset()
 
 
+def test_base_response_get_response():
+    resp = BaseResponse("GET", ".com")
+    with pytest.raises(NotImplementedError):
+        resp.get_response(requests.PreparedRequest())
+
+
 def test_custom_adapter():
     @responses.activate
     def run():
@@ -833,6 +839,29 @@ def test_activate_doesnt_change_signature():
     assert decorated_test_function(3) == test_function(3)
 
 
+@pytest.fixture
+def my_fruit():
+    return "apple"
+
+
+@pytest.fixture
+def fruit_basket(my_fruit):
+    return ["banana", my_fruit]
+
+
+@pytest.mark.usefixtures("my_fruit", "fruit_basket")
+class TestFixtures(object):
+    """
+    Test that pytest fixtures work well with 'activate' decorator
+    """
+
+    def test_function(self, my_fruit, fruit_basket):
+        assert my_fruit in fruit_basket
+        assert my_fruit == "apple"
+
+    test_function_decorated = responses.activate(test_function)
+
+
 def test_activate_mock_interaction():
     @patch("sys.stdout")
     def test_function(mock_stdout):
@@ -858,7 +887,7 @@ def test_activate_mock_interaction():
 @pytest.mark.skipif(six.PY2, reason="Cannot run in python2")
 def test_activate_doesnt_change_signature_with_return_type():
     def test_function(a, b=None):
-        return (a, b)
+        return a, b
 
     # Add type annotations as they are syntax errors in py2.
     # Use a class to test for import errors in evaled code.
@@ -866,14 +895,10 @@ def test_activate_doesnt_change_signature_with_return_type():
     test_function.__annotations__["a"] = Mock
 
     decorated_test_function = responses.activate(test_function)
-    if hasattr(inspect, "signature"):
-        assert inspect.signature(test_function) == inspect.signature(
-            decorated_test_function
-        )
-    else:
-        assert inspect.getargspec(test_function) == inspect.getargspec(
-            decorated_test_function
-        )
+    assert inspect.signature(test_function) == inspect.signature(
+        decorated_test_function
+    )
+
     assert decorated_test_function(1, 2) == test_function(1, 2)
     assert decorated_test_function(3) == test_function(3)
 
@@ -2132,6 +2157,74 @@ def test_request_matches_headers_strict_match():
             "Headers do not match: {Accept: text/plain, Accept-Charset: utf-8} "
             "doesn't match {Accept: text/plain}"
         ) in msg
+
+    run()
+    assert_reset()
+
+
+def test_fragment_identifier_matcher():
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "http://example.com",
+            match=[matchers.fragment_identifier_matcher("test=1&foo=bar")],
+            body=b"test",
+        )
+
+        resp = requests.get("http://example.com#test=1&foo=bar")
+        assert_response(resp, "test")
+
+    run()
+    assert_reset()
+
+
+def test_fragment_identifier_matcher_error():
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "http://example.com/",
+            match=[matchers.fragment_identifier_matcher("test=1")],
+        )
+        responses.add(
+            responses.GET,
+            "http://example.com/",
+            match=[matchers.fragment_identifier_matcher(None)],
+        )
+
+        with pytest.raises(ConnectionError) as excinfo:
+            requests.get("http://example.com/#test=2")
+
+        msg = str(excinfo.value)
+        assert (
+            "URL fragment identifier is different: test=1 doesn't match test=2"
+        ) in msg
+        assert (
+            "URL fragment identifier is different: None doesn't match test=2"
+        ) in msg
+
+    run()
+    assert_reset()
+
+
+def test_fragment_identifier_matcher_and_match_querystring():
+    @responses.activate
+    def run():
+        url = "http://example.com?ab=xy&zed=qwe#test=1&foo=bar"
+        responses.add(
+            responses.GET,
+            url,
+            match_querystring=True,
+            match=[matchers.fragment_identifier_matcher("test=1&foo=bar")],
+            body=b"test",
+        )
+
+        # two requests to check reversed order of fragment identifier
+        resp = requests.get("http://example.com?ab=xy&zed=qwe#test=1&foo=bar")
+        assert_response(resp, "test")
+        resp = requests.get("http://example.com?zed=qwe&ab=xy#foo=bar&test=1")
+        assert_response(resp, "test")
 
     run()
     assert_reset()

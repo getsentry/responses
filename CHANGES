@@ -3,12 +3,12 @@
 
 * Fixed regression with `stream` parameter deprecation, requests.session() and cookie handling.
 * Replaced adhoc URL parsing with `urllib.parse`.
+* Added ``match`` parameter to ``add_callback`` method
 * Added `responses.matchers.fragment_identifier_matcher`. This matcher allows you
   to match request URL fragment identifier.
 * Improved test coverage.
 * Deprecate ``match_querystring`` argument in ``Response`` and ``CallbackResponse``.
   Use `responses.matchers.query_param_matcher` or `responses.matchers.query_string_matcher`
-
 
 0.15.0
 ------

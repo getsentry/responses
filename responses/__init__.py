@@ -515,6 +515,9 @@ class OriginalResponseShim(object):
     def isclosed(self):
         return True
 
+    def close(self):
+        return
+
 
 class RequestsMock(object):
     DELETE = "DELETE"

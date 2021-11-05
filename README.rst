@@ -4,11 +4,11 @@ Responses
 .. image:: https://img.shields.io/pypi/v/responses.svg
     :target: https://pypi.python.org/pypi/responses/
 
-..  image:: https://travis-ci.org/getsentry/responses.svg?branch=master
-    :target: https://travis-ci.org/getsentry/responses
-
 .. image:: https://img.shields.io/pypi/pyversions/responses.svg
     :target: https://pypi.org/project/responses/
+
+.. image:: https://codecov.io/gh/getsentry/responses/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/getsentry/responses/
 
 A utility library for mocking out the ``requests`` Python library.
 
@@ -139,6 +139,7 @@ match (``list``)
     * kwargs provided to request e.g. ``stream``, ``verify``
     * 'multipart/form-data' content and headers in request
     * request headers
+    * request fragment identifier
 
     Alternatively user can create custom matcher.
     Read more `Matching Requests`_
@@ -272,6 +273,33 @@ to the request:
 
     my_func()
     # >>> raises ConnectionError: multipart/form-data doesn't match. Request body differs.
+
+
+To validate request URL fragment identifier you can use ``matchers.fragment_identifier_matcher``.
+The matcher takes fragment string (everything after ``#`` sign) as input for comparison:
+
+.. code-block:: python
+
+    import requests
+    import responses
+    from responses.matchers import fragment_identifier_matcher
+
+    @responses.activate
+    def run():
+        url = "http://example.com?ab=xy&zed=qwe#test=1&foo=bar"
+        responses.add(
+            responses.GET,
+            url,
+            match_querystring=True,
+            match=[fragment_identifier_matcher("test=1&foo=bar")],
+            body=b"test",
+        )
+
+        # two requests to check reversed order of fragment identifier
+        resp = requests.get("http://example.com?ab=xy&zed=qwe#test=1&foo=bar")
+        resp = requests.get("http://example.com?zed=qwe&ab=xy#foo=bar&test=1")
+
+    run()
 
 Matching Request Headers
 ------------------------

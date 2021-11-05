@@ -259,7 +259,7 @@ class BaseResponse(object):
 
     stream = False
 
-    def __init__(self, method, url, match_querystring=_unspecified, match=[]):
+    def __init__(self, method, url, match_querystring=_unspecified, match=()):
         self.method = method
         # ensure the url has a default path set if the url is a string
         self.url = _ensure_url_default_path(url)
@@ -667,7 +667,13 @@ class RequestsMock(object):
             self.add(method_or_response, url, body, *args, **kwargs)
 
     def add_callback(
-        self, method, url, callback, match_querystring=False, content_type="text/plain"
+        self,
+        method,
+        url,
+        callback,
+        match_querystring=False,
+        content_type="text/plain",
+        match=(),
     ):
         # ensure the url has a default path set if the url is a string
         # url = _ensure_url_default_path(url, match_querystring)
@@ -679,6 +685,7 @@ class RequestsMock(object):
                 callback=callback,
                 content_type=content_type,
                 match_querystring=match_querystring,
+                match=match,
             )
         )
 

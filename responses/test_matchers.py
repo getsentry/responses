@@ -13,10 +13,7 @@ from responses import matchers
 def assert_response(resp, body=None, content_type="text/plain"):
     assert resp.status_code == 200
     assert resp.reason == "OK"
-    if content_type is not None:
-        assert resp.headers["Content-Type"] == content_type
-    else:
-        assert "Content-Type" not in resp.headers
+    assert resp.headers["Content-Type"] == content_type
     assert resp.text == body
 
 

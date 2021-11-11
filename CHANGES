@@ -7,6 +7,7 @@
 * Added `responses.matchers.fragment_identifier_matcher`. This matcher allows you
   to match request URL fragment identifier.
 * Improved test coverage.
+* Fixed failing test in python 2.7 when `python-future` is also installed.
 
 0.15.0
 ------

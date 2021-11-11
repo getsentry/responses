@@ -18,7 +18,7 @@ def assert_response(resp, body=None, content_type="text/plain"):
 
 
 def assert_reset():
-    assert len(responses._default_mock._matches) == 0
+    assert len(responses._default_mock.registry) == 0
     assert len(responses.calls) == 0
 
 

@@ -36,31 +36,17 @@ try:
 except ImportError:  # pragma: no cover
     from urllib3.util.url import parse_url  # pragma: no cover
 
-if six.PY2:
-    from urlparse import urlparse, urlunparse, parse_qsl, urlsplit, urlunsplit
-    from urllib import quote
-else:
-    from urllib.parse import (
-        urlparse,
-        urlunparse,
-        parse_qsl,
-        urlsplit,
-        urlunsplit,
-        quote,
-    )
+from urllib.parse import (
+    urlparse,
+    urlunparse,
+    parse_qsl,
+    urlsplit,
+    urlunsplit,
+    quote,
+)
 
-if six.PY2:
-    try:
-        from six import cStringIO as BufferIO
-    except ImportError:
-        from six import StringIO as BufferIO
-else:
-    from io import BytesIO as BufferIO
-
-try:
-    from unittest import mock as std_mock
-except ImportError:
-    import mock as std_mock
+from io import BytesIO as BufferIO
+from unittest import mock as std_mock
 
 try:
     Pattern = re._pattern_type
@@ -125,12 +111,6 @@ def _clean_unicode(url):
     return "".join(chars)
 
 
-def _ensure_str(s):
-    if six.PY2:
-        s = s.encode("utf-8") if isinstance(s, six.text_type) else s
-    return s
-
-
 def _cookies_from_headers(headers):
     try:
         import http.cookies as _cookies
@@ -142,10 +122,8 @@ def _cookies_from_headers(headers):
     except (ImportError, AttributeError):
         from cookies import Cookies
 
-        resp_cookies = Cookies.from_request(_ensure_str(headers["set-cookie"]))
-        cookies_dict = {
-            v.name: quote(_ensure_str(v.value)) for _, v in resp_cookies.items()
-        }
+        resp_cookies = Cookies.from_request(str(headers["set-cookie"]))
+        cookies_dict = {v.name: quote(str(v.value)) for _, v in resp_cookies.items()}
     return cookiejar_from_dict(cookies_dict)
 
 
@@ -157,41 +135,33 @@ def wrapper%(wrapper_args)s:
 
 
 def get_wrapped(func, responses):
-    if six.PY2:
-        args, a, kw, defaults = inspect.getargspec(func)
-        wrapper_args = inspect.formatargspec(args, a, kw, defaults)
-
-        # Preserve the argspec for the wrapped function so that testing
-        # tools such as pytest can continue to use their fixture injection.
-        func_args = inspect.formatargspec(args, a, kw, None)
+    signature = inspect.signature(func)
+    signature = signature.replace(return_annotation=inspect.Signature.empty)
+    # If the function is wrapped, switch to *args, **kwargs for the parameters
+    # as we can't rely on the signature to give us the arguments the function will
+    # be called with. For example unittest.mock.patch uses required args that are
+    # not actually passed to the function when invoked.
+    if hasattr(func, "__wrapped__"):
+        wrapper_params = [
+            inspect.Parameter("args", inspect.Parameter.VAR_POSITIONAL),
+            inspect.Parameter("kwargs", inspect.Parameter.VAR_KEYWORD),
+        ]
     else:
-        signature = inspect.signature(func)
-        signature = signature.replace(return_annotation=inspect.Signature.empty)
-        # If the function is wrapped, switch to *args, **kwargs for the parameters
-        # as we can't rely on the signature to give us the arguments the function will
-        # be called with. For example unittest.mock.patch uses required args that are
-        # not actually passed to the function when invoked.
-        if hasattr(func, "__wrapped__"):
-            wrapper_params = [
-                inspect.Parameter("args", inspect.Parameter.VAR_POSITIONAL),
-                inspect.Parameter("kwargs", inspect.Parameter.VAR_KEYWORD),
-            ]
-        else:
-            wrapper_params = [
-                param.replace(annotation=inspect.Parameter.empty)
-                for param in signature.parameters.values()
-            ]
-        signature = signature.replace(parameters=wrapper_params)
-
-        wrapper_args = str(signature)
-        params_without_defaults = [
-            param.replace(
-                annotation=inspect.Parameter.empty, default=inspect.Parameter.empty
-            )
+        wrapper_params = [
+            param.replace(annotation=inspect.Parameter.empty)
             for param in signature.parameters.values()
         ]
-        signature = signature.replace(parameters=params_without_defaults)
-        func_args = str(signature)
+    signature = signature.replace(parameters=wrapper_params)
+
+    wrapper_args = str(signature)
+    params_without_defaults = [
+        param.replace(
+            annotation=inspect.Parameter.empty, default=inspect.Parameter.empty
+        )
+        for param in signature.parameters.values()
+    ]
+    signature = signature.replace(parameters=params_without_defaults)
+    func_args = str(signature)
 
     evaldict = {"func": func, "responses": responses}
     six.exec_(

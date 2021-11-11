@@ -1,12 +1,8 @@
-import six
 import json as json_module
 
 from requests import PreparedRequest
 
-if six.PY2:
-    from urlparse import parse_qsl, urlparse
-else:
-    from urllib.parse import parse_qsl, urlparse
+from urllib.parse import parse_qsl, urlparse
 
 
 try:

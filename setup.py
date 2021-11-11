@@ -20,16 +20,13 @@ if "test" in sys.argv:
     setup_requires.append("pytest")
 
 install_requires = [
-    "cookies; python_version < '3.4'",
-    "mock; python_version < '3.3'",
     "requests>=2.0",
     "urllib3>=1.25.10",
     "six",
 ]
 
 tests_require = [
-    "pytest>=4.6,<5.0; python_version < '3.5'",
-    "pytest>=4.6; python_version >= '3.5'",
+    "pytest>=4.6",
     "coverage >= 3.7.1, < 6.0.0",
     "pytest-cov",
     "pytest-localserver",
@@ -68,7 +65,7 @@ setup(
     long_description_content_type="text/x-rst",
     packages=["responses"],
     zip_safe=False,
-    python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
+    python_requires=">=3.5.*, <4",
     install_requires=install_requires,
     extras_require=extras_require,
     tests_require=tests_require,
@@ -81,8 +78,6 @@ setup(
         "Intended Audience :: System Administrators",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",

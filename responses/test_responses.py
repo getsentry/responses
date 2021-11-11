@@ -11,7 +11,7 @@ from io import BufferedReader, BytesIO
 import pytest
 import requests
 import responses
-from requests.exceptions import ConnectionError, HTTPError
+from requests.exceptions import ConnectionError, HTTPError, ChunkedEncodingError
 from responses import (
     BaseResponse,
     Response,
@@ -1206,6 +1206,43 @@ def test_headers():
         )
         resp = requests.get("http://example.com")
         assert resp.headers["X-Test"] == "foo"
+
+    run()
+    assert_reset()
+
+
+def test_content_length_error(monkeypatch):
+    """
+    Currently 'requests' does not enforce content length validation,
+    (validation that body length matches header). However, this could
+    be expected in next major version, see
+    https://github.com/psf/requests/pull/3563
+
+    Now user can manually patch URL3 lib to achieve the same
+    """
+
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "http://example.com/api/123",
+            json={"message": "this body is too large"},
+            adding_headers={"content-length": "2"},
+        )
+        with pytest.raises(ChunkedEncodingError) as exc:
+            requests.get("http://example.com/api/123")
+
+        assert "IncompleteRead" in str(exc.value)
+
+    original_init = getattr(requests.packages.urllib3.HTTPResponse, "__init__")
+
+    def patched_init(self, *args, **kwargs):
+        kwargs["enforce_content_length"] = True
+        original_init(self, *args, **kwargs)
+
+    monkeypatch.setattr(
+        requests.packages.urllib3.HTTPResponse, "__init__", patched_init
+    )
 
     run()
     assert_reset()

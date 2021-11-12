@@ -134,13 +134,13 @@ def _ensure_str(s):
 
 def _cookies_from_headers(headers):
     try:
-        import http.cookies as cookies
+        import http.cookies as _cookies
 
-        resp_cookie = cookies.SimpleCookie()
+        resp_cookie = _cookies.SimpleCookie()
         resp_cookie.load(headers["set-cookie"])
 
         cookies_dict = {name: v.value for name, v in resp_cookie.items()}
-    except ImportError:
+    except (ImportError, AttributeError):
         from cookies import Cookies
 
         resp_cookies = Cookies.from_request(_ensure_str(headers["set-cookie"]))
@@ -518,6 +518,9 @@ class OriginalResponseShim(object):
 
     def isclosed(self):
         return True
+
+    def close(self):
+        return
 
 
 class RequestsMock(object):

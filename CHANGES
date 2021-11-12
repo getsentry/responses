@@ -1,9 +1,13 @@
-0.16.0
+0.17.0
 ------
 
 * Added `responses.registries`. Now user can create custom registries to
   manipulate the order of responses in the match algorithm
   `responses.activate(registry=CustomRegistry)`
+
+0.16.0
+------
+
 * Fixed regression with `stream` parameter deprecation, requests.session() and cookie handling.
 * Replaced adhoc URL parsing with `urllib.parse`.
 * Added ``match`` parameter to ``add_callback`` method

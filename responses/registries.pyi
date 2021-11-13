@@ -1,5 +1,5 @@
 from collections import Sequence
-from . import BaseResponse 
+from . import BaseResponse
 
 from typing import (
     Iterator,

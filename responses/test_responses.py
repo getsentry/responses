@@ -1811,10 +1811,11 @@ def test_custom_registries():
             rsps.registry = StrictOrderRegistry([response_0, response_1, response_2])
             url = "http://example.com/items"
             requests.get(url)
-            requests.get(url, params={"foo": "bar"})
             with pytest.raises(ConnectionError):
-                requests.get("http://www.foo.bar/")
+                requests.get(url, params={"foo": "bar", "a": "1"})
+            requests.get(url, params={"foo": "bar"})
             requests.get(url, params={"foo": "bar", "a": "1"})
+            assert len(rsps.registry) == 0
 
     run()
     assert_reset()

@@ -15,7 +15,11 @@ class PopFirstKeepLastRegistry(object):
         return response in self._responses
 
     def clear(self):
-        self._responses.clear()
+        try:
+            self._responses.clear()
+        except AttributeError:
+            # python 2 does not know clear
+            del self._responses[:]
 
     def index(self, response):
         try:

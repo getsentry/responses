@@ -18,7 +18,11 @@ from responses import (
     PassthroughResponse,
     matchers,
     CallbackResponse,
+)
+from responses.registries import (
     PopFirstKeepLastRegistry,
+    InsertionOrderRegistry,
+    StrictOrderRegistry,
 )
 
 
@@ -1775,58 +1779,42 @@ def test_mocked_responses_list_registered():
     assert_reset()
 
 
-def test_registry_initializer():
-    def my_registry_initializer():
-        response_a = Response(responses.GET, "http://example.com/")
-        return PopFirstKeepLastRegistry([response_a])
-
-    def run():
-        with responses.RequestsMock(
-            registry_initializer=my_registry_initializer,
-            assert_all_requests_are_fired=False,
-        ) as rsps:
-            assert Response(responses.GET, "http://example.com/") in rsps.registry
-            rsps.registry.clear()
-            assert list(rsps.registry) == []
-            rsps.reset()
-            assert Response(responses.GET, "http://example.com/") in rsps.registry
-
-    run()
-    assert_reset()
-
-
-def test_custom_registry_is_not_persistent():
-    class InsertionOrderRegistry(PopFirstKeepLastRegistry):
-        def find_match(self, request):
-            match_failed_reasons = []
-            for response in self._responses:
-                success, reason = response.matches(request)
-                if success:
-                    return response, match_failed_reasons
-            return None, match_failed_reasons
-
+def test_custom_registries():
     def run():
         with responses.RequestsMock() as rsps:
+            response_allowed = Response(
+                responses.GET, re.compile(r"http://example\.com/items/\d+")
+            )
+            response_forbidden = Response(
+                responses.GET, re.compile(r"http://example\.com/.+"), status=404
+            )
             rsps.registry = InsertionOrderRegistry(
-                [
-                    Response(
-                        responses.GET, re.compile(r"http://example\.com/items/\d+")
-                    ),
-                    Response(
-                        responses.GET, re.compile(r"http://example\.com/.+"), status=404
-                    ),
-                ]
+                [response_allowed, response_forbidden]
             )
             for item_id in [123, 234, 345]:
                 response = requests.get("http://example.com/items/{}".format(item_id))
                 assert response.ok
             response = requests.get("http://example.com/xyz")
             assert response.status_code == 404
-            # Not being persistien is important because otherwise the registry could leak
-            # into other test modules if it was changed in the module level default mock
+            assert response_allowed in rsps.registry
+            with pytest.raises(ConnectionError):
+                requests.get("http://www.foo.bar/")
             rsps.reset()
-            assert not isinstance(rsps.registry, InsertionOrderRegistry)
+            assert response_allowed not in rsps.registry
+            assert isinstance(rsps.registry, InsertionOrderRegistry)
+
+        with responses.RequestsMock() as rsps:
             assert isinstance(rsps.registry, PopFirstKeepLastRegistry)
+            response_0 = Response(responses.GET, "http://example.com/items")
+            response_1 = Response(responses.GET, "http://example.com/items?foo=bar")
+            response_2 = Response(responses.GET, "http://example.com/items?foo=bar&a=1")
+            rsps.registry = StrictOrderRegistry([response_0, response_1, response_2])
+            url = "http://example.com/items"
+            requests.get(url)
+            requests.get(url, params={"foo": "bar"})
+            with pytest.raises(ConnectionError):
+                requests.get("http://www.foo.bar/")
+            requests.get(url, params={"foo": "bar", "a": "1"})
 
     run()
     assert_reset()

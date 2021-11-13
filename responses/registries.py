@@ -1,3 +1,6 @@
+from collections import deque
+
+
 class PopFirstKeepLastRegistry(object):
     def __init__(self, responses=None):
         self._responses = list(responses or [])
@@ -18,7 +21,9 @@ class PopFirstKeepLastRegistry(object):
         try:
             return self._responses.index(response)
         except ValueError:
-            raise ValueError("Response is not registered for URL {}".format(response.url))
+            raise ValueError(
+                "Response is not registered for URL {}".format(response.url)
+            )
 
     def find_match(self, request):
         found = None
@@ -47,3 +52,27 @@ class PopFirstKeepLastRegistry(object):
     def replace(self, response):
         index = self.index(response)
         self._responses[index] = response
+
+
+class InsertionOrderRegistry(PopFirstKeepLastRegistry):
+    def find_match(self, request):
+        match_failed_reasons = []
+        for response in self._responses:
+            success, reason = response.matches(request)
+            if success:
+                return response, match_failed_reasons
+            match_failed_reasons.append((response, reason))
+        return None, match_failed_reasons
+
+
+class StrictOrderRegistry(PopFirstKeepLastRegistry):
+    def __init__(self, responses=None):
+        self._responses = deque(responses or [])
+
+    def find_match(self, request):
+        response = self._responses.popleft()
+        success, reason = response.matches(request)
+        if success:
+            return response, []
+        self._responses.appendleft(response)
+        return None, [(response, reason)]

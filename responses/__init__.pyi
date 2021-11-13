@@ -23,6 +23,7 @@ from unittest import mock as std_mock
 from urllib.parse import quote as quote
 from urllib3.response import HTTPHeaderDict
 from .matchers import urlencoded_params_matcher, json_params_matcher
+from .registries import PopFirstKeepLastRegistry
 
 
 def _clean_unicode(url: str) -> str: ...
@@ -156,7 +157,7 @@ class RequestsMock:
     assert_all_requests_are_fired: Any = ...
     passthru_prefixes: Tuple[str, ...] = ...
     target: Any = ...
-    _matches: List[Any]
+    registry: PopFirstKeepLastRegistry
     def __init__(
         self,
         assert_all_requests_are_fired: bool = ...,

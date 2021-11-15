@@ -18,10 +18,7 @@ from responses.matchers import json_params_matcher as _json_params_matcher
 from responses.matchers import urlencoded_params_matcher as _urlencoded_params_matcher
 from warnings import warn
 
-try:
-    from collections.abc import Sequence, Sized
-except ImportError:
-    from collections import Sequence, Sized
+from collections.abc import Sequence, Sized
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -112,18 +109,12 @@ def _clean_unicode(url):
 
 
 def _cookies_from_headers(headers):
-    try:
-        import http.cookies as _cookies
+    import http.cookies as _cookies
 
-        resp_cookie = _cookies.SimpleCookie()
-        resp_cookie.load(headers["set-cookie"])
+    resp_cookie = _cookies.SimpleCookie()
+    resp_cookie.load(headers["set-cookie"])
 
-        cookies_dict = {name: v.value for name, v in resp_cookie.items()}
-    except (ImportError, AttributeError):
-        from cookies import Cookies
-
-        resp_cookies = Cookies.from_request(str(headers["set-cookie"]))
-        cookies_dict = {v.name: quote(str(v.value)) for _, v in resp_cookies.items()}
+    cookies_dict = {name: v.value for name, v in resp_cookie.items()}
     return cookiejar_from_dict(cookies_dict)
 
 
@@ -281,9 +272,6 @@ class BaseResponse(object):
         if _is_string(url):
             if _has_unicode(url):
                 url = _clean_unicode(url)
-                if not isinstance(other, six.text_type):
-                    other = other.encode("ascii").decode("utf8")
-
             if match_querystring:
                 normalize_url = parse_url(url).url
                 return self._url_matches_strict(normalize_url, other)

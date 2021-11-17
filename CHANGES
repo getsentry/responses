@@ -1,3 +1,8 @@
+0.17.0
+------
+
+* Fixed issue when `response.iter_content` when `chunk_size=None` entered infinite loop
+
 0.16.0
 ------
 

@@ -283,17 +283,24 @@ def test_fail_matchers_error():
     assert_reset()
 
 
-def test_multipart_matcher():
+@pytest.mark.parametrize("match_file", (b"Old World!", b"Old World!", "Old World!"))
+@pytest.mark.parametrize("req_file", (b"Old World!", "Old World!", b"Old World!"))
+def test_multipart_matcher(req_file, match_file):
     @responses.activate
     def run():
         req_data = {"some": "other", "data": "fields"}
-        req_files = {"file_name": b"Old World!"}
         responses.add(
             responses.POST,
             url="http://httpbin.org/post",
-            match=[matchers.multipart_matcher(req_files, data=req_data)],
+            match=[
+                matchers.multipart_matcher(
+                    files={"file_name": match_file}, data=req_data
+                )
+            ],
         )
-        resp = requests.post("http://httpbin.org/post", data=req_data, files=req_files)
+        resp = requests.post(
+            "http://httpbin.org/post", data=req_data, files={"file_name": req_file}
+        )
         assert resp.status_code == 200
 
         with pytest.raises(TypeError):
@@ -334,14 +341,24 @@ def test_multipart_matcher_fail():
 
             msg = str(excinfo.value)
             assert "multipart/form-data doesn't match. Request body differs." in msg
-            assert (
-                '\r\nContent-Disposition: form-data; name="file_name"; '
-                'filename="file_name"\r\n\r\nOld World!\r\n'
-            ) in msg
-            assert (
-                '\r\nContent-Disposition: form-data; name="file_name"; '
-                'filename="file_name"\r\n\r\nNew World!\r\n'
-            ) in msg
+            if six.PY2:
+                assert (
+                    '\r\nContent-Disposition: form-data; name="file_name"; '
+                    'filename="file_name"\r\n\r\nOld World!\r\n'
+                ) in msg
+                assert (
+                    '\r\nContent-Disposition: form-data; name="file_name"; '
+                    'filename="file_name"\r\n\r\nNew World!\r\n'
+                ) in msg
+            else:
+                assert (
+                    r'\r\nContent-Disposition: form-data; name="file_name"; '
+                    r'filename="file_name"\r\n\r\nOld World!\r\n'
+                ) in msg
+                assert (
+                    r'\r\nContent-Disposition: form-data; name="file_name"; '
+                    r'filename="file_name"\r\n\r\nNew World!\r\n'
+                ) in msg
 
         # x-www-form-urlencoded request
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:

@@ -1,3 +1,8 @@
+0.17.0
+------
+
+* Added support for non-UTF-8 bytes in `responses.matchers.multipart_matcher`
+
 0.16.0
 ------
 

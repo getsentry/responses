@@ -283,8 +283,16 @@ def test_fail_matchers_error():
     assert_reset()
 
 
-@pytest.mark.parametrize("match_file", (b"Old World!", b"Old World!", "Old World!"))
-@pytest.mark.parametrize("req_file", (b"Old World!", "Old World!", b"Old World!"))
+@pytest.mark.parametrize(
+    "req_file,match_file",
+    [
+        (b"Old World!", "Old World!"),
+        ("Old World!", b"Old World!"),
+        (b"Old World!", b"Old World!"),
+        ("Old World!", "Old World!"),
+        (b"\xacHello World!", b"\xacHello World!"),
+    ],
+)
 def test_multipart_matcher(req_file, match_file):
     @responses.activate
     def run():

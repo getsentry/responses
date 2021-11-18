@@ -574,6 +574,7 @@ class RequestsMock(object):
     def reset(self):
         self._matches = []
         self._calls.reset()
+        self.passthru_prefixes = ()
 
     def add(
         self,

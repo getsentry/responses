@@ -2,6 +2,9 @@
 ------
 
 * Fixed issue when `response.iter_content` when `chunk_size=None` entered infinite loop
+* Fixed issue when `passthru_prefixes` persisted across tests.
+  Now `add_passthru` is valid only within a context manager or for a single function and
+  cleared on exit
 
 0.16.0
 ------

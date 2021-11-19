@@ -1547,6 +1547,32 @@ def test_passthru_regex(httpserver):
     assert_reset()
 
 
+def test_passthru_does_not_persist_across_tests(httpserver):
+    """
+    passthru should be erased on exit from context manager
+    see:
+    https://github.com/getsentry/responses/issues/322
+    """
+    httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
+
+    @responses.activate
+    def with_a_passthru():
+        assert not responses._default_mock.passthru_prefixes
+        responses.add_passthru(re.compile(".*"))
+        response = requests.get("https://example.com")
+
+        assert response.status_code == 200
+
+    @responses.activate
+    def without_a_passthru():
+        assert not responses._default_mock.passthru_prefixes
+        with pytest.raises(requests.exceptions.ConnectionError):
+            requests.get("https://example.com")
+
+    with_a_passthru()
+    without_a_passthru()
+
+
 def test_method_named_param():
     @responses.activate
     def run():

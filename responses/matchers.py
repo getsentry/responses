@@ -277,12 +277,12 @@ def multipart_matcher(files, data=None):
         )
 
         request_body = request.body
-        if isinstance(request_body, bytes):
-            request_body = request_body.decode("utf-8")
-
         prepared_body = prepared.body
+
         if isinstance(prepared_body, bytes):
-            prepared_body = prepared_body.decode("utf-8")
+            # since headers always come as str, need to convert to bytes
+            prepared_boundary = prepared_boundary.encode("utf-8")
+            request_boundary = request_boundary.encode("utf-8")
 
         prepared_body = prepared_body.replace(prepared_boundary, request_boundary)
 

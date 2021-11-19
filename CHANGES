@@ -5,6 +5,9 @@
 * Fixed issue when `passthru_prefixes` persisted across tests.
   Now `add_passthru` is valid only within a context manager or for a single function and
   cleared on exit
+* Deprecate ``match_querystring`` argument in ``Response`` and ``CallbackResponse``.
+  Use `responses.matchers.query_param_matcher` or `responses.matchers.query_string_matcher`
+* Added support for non-UTF-8 bytes in `responses.matchers.multipart_matcher`
 
 0.16.0
 ------

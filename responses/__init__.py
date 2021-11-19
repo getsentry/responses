@@ -16,6 +16,7 @@ from requests.exceptions import ConnectionError
 from requests.utils import cookiejar_from_dict
 from responses.matchers import json_params_matcher as _json_params_matcher
 from responses.matchers import urlencoded_params_matcher as _urlencoded_params_matcher
+from responses.matchers import query_string_matcher as _query_string_matcher
 from warnings import warn
 
 try:
@@ -277,9 +278,6 @@ def _handle_body(body):
     return data
 
 
-_unspecified = object()
-
-
 class BaseResponse(object):
     passthrough = False
     content_type = None
@@ -287,11 +285,14 @@ class BaseResponse(object):
 
     stream = False
 
-    def __init__(self, method, url, match_querystring=_unspecified, match=()):
+    def __init__(self, method, url, match_querystring=None, match=()):
         self.method = method
         # ensure the url has a default path set if the url is a string
         self.url = _ensure_url_default_path(url)
-        self.match_querystring = self._should_match_querystring(match_querystring)
+
+        if self._should_match_querystring(match_querystring):
+            match = tuple(match) + (_query_string_matcher(urlparse(self.url).query),)
+
         self.match = match
         self.call_count = 0
 
@@ -313,40 +314,32 @@ class BaseResponse(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def _url_matches_strict(self, url, other):
-        url_parsed = urlparse(url)
-        other_parsed = urlparse(other)
-
-        if url_parsed[:3] != other_parsed[:3]:
-            return False
-
-        url_qsl = sorted(parse_qsl(url_parsed.query))
-        other_qsl = sorted(parse_qsl(other_parsed.query))
-
-        return url_qsl == other_qsl
-
     def _should_match_querystring(self, match_querystring_argument):
-        if match_querystring_argument is not _unspecified:
-            return match_querystring_argument
-
         if isinstance(self.url, Pattern):
             # the old default from <= 0.9.0
             return False
 
+        if match_querystring_argument is not None:
+            warn(
+                (
+                    "Argument 'match_querystring' is deprecated. "
+                    "Use 'responses.matchers.query_param_matcher' or "
+                    "'responses.matchers.query_string_matcher'"
+                ),
+                DeprecationWarning,
+            )
+            return match_querystring_argument
+
         return bool(urlparse(self.url).query)
 
-    def _url_matches(self, url, other, match_querystring=False):
+    def _url_matches(self, url, other):
         if _is_string(url):
             if _has_unicode(url):
                 url = _clean_unicode(url)
                 if not isinstance(other, six.text_type):
                     other = other.encode("ascii").decode("utf8")
 
-            if match_querystring:
-                normalize_url = parse_url(url).url
-                return self._url_matches_strict(normalize_url, other)
-            else:
-                return _get_url_and_path(url) == _get_url_and_path(other)
+            return _get_url_and_path(url) == _get_url_and_path(other)
 
         elif isinstance(url, Pattern) and url.match(other):
             return True
@@ -378,7 +371,7 @@ class BaseResponse(object):
         if request.method != self.method:
             return False, "Method does not match"
 
-        if not self._url_matches(self.url, request.url, self.match_querystring):
+        if not self._url_matches(self.url, request.url):
             return False, "URL does not match"
 
         valid, reason = self._req_attr_matches(self.match, request)
@@ -611,14 +604,6 @@ class RequestsMock(object):
         >>>     headers={'X-Header': 'foo'},
         >>> )
 
-
-        Strict query string matching:
-
-        >>> responses.add(
-        >>>     method='GET',
-        >>>     url='http://example.com?foo=bar',
-        >>>     match_querystring=True
-        >>> )
         """
         if isinstance(method, BaseResponse):
             self._matches.append(method)

@@ -4,6 +4,7 @@
 * Fixed issue when `passthru_prefixes` persisted across tests.
   Now `add_passthru` is valid only within a context manager or for a single function and
   cleared on exit
+* Added support for non-UTF-8 bytes in `responses.matchers.multipart_matcher`
 
 0.16.0
 ------

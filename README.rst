@@ -566,22 +566,26 @@ generic class-level responses, that may be complemented by each test
 
 .. code-block:: python
 
-    def setUp():
-        self.responses = responses.RequestsMock()
-        self.responses.start()
+    class TestMyApi(unittest.TestCase):
+        def setUp(self):
+            responses.add(responses.GET, 'https://example.com', body="within setup")
+            # here go other self.responses.add(...)
 
-        # self.responses.add(...)
+        @responses.activate
+        def test_my_func(self):
+            responses.add(
+                responses.GET,
+                "https://httpbin.org/get",
+                match=[matchers.query_param_matcher({"test": "1", "didi": "pro"})],
+                body="within test"
+            )
+            resp = requests.get("https://example.com")
+            resp2 = requests.get("https://httpbin.org/get", params={"test": "1", "didi": "pro"})
+            print(resp.text)
+            # >>> within setup
+            print(resp2.text)
+            # >>> within test
 
-        self.addCleanup(self.responses.stop)
-        self.addCleanup(self.responses.reset)
-
-    def test_api(self):
-        self.responses.add(
-            responses.GET, 'http://twitter.com/api/1/foobar',
-            body='{}', status=200,
-            content_type='application/json')
-        resp = requests.get('http://twitter.com/api/1/foobar')
-        assert resp.status_code == 200
 
 Assertions on declared responses
 --------------------------------

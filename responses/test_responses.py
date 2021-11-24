@@ -1585,7 +1585,12 @@ def test_passthru_does_not_persist_across_tests(httpserver):
     def with_a_passthru():
         assert not responses._default_mock.passthru_prefixes
         responses.add_passthru(re.compile(".*"))
-        response = requests.get("https://example.com")
+        try:
+            response = requests.get("https://example.com")
+        except ConnectionError as err:
+            if "Failed to establish" in str(err):
+                pytest.skip("Cannot resolve DNS for example.com")
+            raise err
 
         assert response.status_code == 200
 

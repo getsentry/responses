@@ -1219,6 +1219,9 @@ def test_content_length_error(monkeypatch):
     https://github.com/psf/requests/pull/3563
 
     Now user can manually patch URL3 lib to achieve the same
+
+    See discussion in
+    https://github.com/getsentry/responses/issues/394
     """
 
     @responses.activate
@@ -1243,6 +1246,30 @@ def test_content_length_error(monkeypatch):
     monkeypatch.setattr(
         requests.packages.urllib3.HTTPResponse, "__init__", patched_init
     )
+
+    run()
+    assert_reset()
+
+
+def test_stream_with_none_chunk_size():
+    """
+    See discussion in
+    https://github.com/getsentry/responses/issues/438
+    """
+
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "https://example.com",
+            status=200,
+            content_type="application/octet-stream",
+            body=b"This is test",
+            auto_calculate_content_length=True,
+        )
+        res = requests.get("https://example.com", stream=True)
+        for chunk in res.iter_content(chunk_size=None):
+            assert chunk == b"This is test"
 
     run()
     assert_reset()

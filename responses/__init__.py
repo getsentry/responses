@@ -247,7 +247,35 @@ def _handle_body(body):
     if isinstance(body, _io.BufferedReader):
         return body
 
-    return BufferIO(body)
+    data = BufferIO(body)
+
+    def is_closed():
+        """
+        Real Response uses HTTPResponse as body object.
+        Thus, when method is_closed is called first to check if there is any more
+        content to consume and the file-like object is still opened
+
+        This method ensures stability to work for both:
+        https://github.com/getsentry/responses/issues/438
+        https://github.com/getsentry/responses/issues/394
+
+        where file should be intentionally be left opened to continue consumption
+        """
+        if not data.closed and data.read(1):
+            # if there is more bytes to read then keep open, but return pointer
+            data.seek(-1, 1)
+            return False
+        else:
+            if not data.closed:
+                # close but return False to mock like is still opened
+                data.close()
+                return False
+
+            # only if file really closed (by us) return True
+            return True
+
+    data.isclosed = is_closed
+    return data
 
 
 class BaseResponse(object):

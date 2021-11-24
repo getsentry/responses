@@ -812,11 +812,6 @@ class RequestsMock(object):
                 response = resp_callback(response) if resp_callback else response
                 raise
 
-        stream = kwargs.get("stream")
-        if not stream:
-            response.content  # NOQA required to ensure that response body is read.
-            response.close()
-
         response = resp_callback(response) if resp_callback else response
         match.call_count += 1
         self._calls.add(request, response)

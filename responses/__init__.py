@@ -77,6 +77,13 @@ _real_send = HTTPAdapter.send
 
 logger = logging.getLogger("responses")
 
+if six.PY2:
+    warn(
+        "Support for Python 2.7 is being removed from the next release of responses. "
+        "Pin your dependency to responses==0.17 or lower.",
+        DeprecationWarning,
+    )
+
 
 def urlencoded_params_matcher(params):
     warn(

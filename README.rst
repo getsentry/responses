@@ -390,7 +390,7 @@ include any additional headers.
 Response Registry
 ---------------------------
 
-By default, ``responses`` module will search all registered``Response`` objects and
+By default, ``responses`` will search all registered``Response`` objects and
 return a match. If only one ``Response`` is registered, the registry is kept unchanged.
 However, if multiple matches are found for the same request, then first match is returned and
 removed from registry.

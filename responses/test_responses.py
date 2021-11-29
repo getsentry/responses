@@ -1220,6 +1220,9 @@ def test_content_length_error(monkeypatch):
     https://github.com/psf/requests/pull/3563
 
     Now user can manually patch URL3 lib to achieve the same
+
+    See discussion in
+    https://github.com/getsentry/responses/issues/394
     """
 
     @responses.activate
@@ -1244,6 +1247,30 @@ def test_content_length_error(monkeypatch):
     monkeypatch.setattr(
         requests.packages.urllib3.HTTPResponse, "__init__", patched_init
     )
+
+    run()
+    assert_reset()
+
+
+def test_stream_with_none_chunk_size():
+    """
+    See discussion in
+    https://github.com/getsentry/responses/issues/438
+    """
+
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "https://example.com",
+            status=200,
+            content_type="application/octet-stream",
+            body=b"This is test",
+            auto_calculate_content_length=True,
+        )
+        res = requests.get("https://example.com", stream=True)
+        for chunk in res.iter_content(chunk_size=None):
+            assert chunk == b"This is test"
 
     run()
     assert_reset()
@@ -1559,7 +1586,12 @@ def test_passthru_does_not_persist_across_tests(httpserver):
     def with_a_passthru():
         assert not responses._default_mock.passthru_prefixes
         responses.add_passthru(re.compile(".*"))
-        response = requests.get("https://example.com")
+        try:
+            response = requests.get("https://example.com")
+        except ConnectionError as err:
+            if "Failed to establish" in str(err):
+                pytest.skip("Cannot resolve DNS for example.com")
+            raise err
 
         assert response.status_code == 200
 

@@ -178,6 +178,7 @@ class RequestsMock:
         url: Optional[Union[Pattern[str], str]] = ...,
     ) -> None: ...
     replace: _Replace
+    upsert: _Upsert
     add_callback: _AddCallback
     @property
     def calls(self) -> CallList: ...

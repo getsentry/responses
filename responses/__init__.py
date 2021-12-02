@@ -648,8 +648,9 @@ class RequestsMock(object):
         either by a response object inheriting ``BaseResponse`` or
         ``method`` and ``url``. Removes all matching responses.
 
-        >>> response.add(responses.GET, 'http://example.org')
-        >>> response.remove(responses.GET, 'http://example.org')
+        >>> import responses
+        >>> responses.add(responses.GET, 'http://example.org')
+        >>> responses.remove(responses.GET, 'http://example.org')
         """
         if isinstance(method_or_response, BaseResponse):
             response = method_or_response

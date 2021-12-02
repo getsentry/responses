@@ -9,6 +9,8 @@
 * Deprecate ``match_querystring`` argument in ``Response`` and ``CallbackResponse``.
   Use `responses.matchers.query_param_matcher` or `responses.matchers.query_string_matcher`
 * Added support for non-UTF-8 bytes in `responses.matchers.multipart_matcher`
+* Fixed issue with response match when requests were performed between adding responses with
+  same URL. See Issue #212
 
 0.16.0
 ------

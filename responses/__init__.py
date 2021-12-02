@@ -752,6 +752,12 @@ class RequestsMock(object):
                     found = i
                     found_match = match
                 else:
+                    if self._matches[found].call_count > 0:
+                        # that assumes that some responses were added between calls
+                        self._matches.pop(found)
+                        found_match = match
+                        break
+
                     # Multiple matches found.  Remove & return the first match.
                     return self._matches.pop(found), match_failed_reasons
             else:

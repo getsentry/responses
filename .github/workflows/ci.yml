@@ -63,8 +63,8 @@ jobs:
     - name: Run Pytest
       run: |
         # Run test
-        pytest . --cov-report term-missing --cov responses
+        pytest . --cov-report term-missing --cov-report xml --cov responses
 
     - name: Code Coverage Report
       if: success()
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v2

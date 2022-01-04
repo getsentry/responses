@@ -576,6 +576,8 @@ class RequestsMock(object):
         self.response_callback = response_callback
         self.passthru_prefixes = tuple(passthru_prefixes)
         self.target = target
+        self._patcher = None
+        self._matches = []
 
     def _get_registry(self):
         return self._registry
@@ -605,8 +607,9 @@ class RequestsMock(object):
         **kwargs
     ):
         """
-        A basic request:
+        >>> import responses
 
+        A basic request:
         >>> responses.add(responses.GET, 'http://example.com')
 
         You can also directly pass an object which implements the
@@ -647,6 +650,7 @@ class RequestsMock(object):
         For example, to allow any request to 'https://example.com', but require
         mocks for the remainder, you would add the prefix as so:
 
+        >>> import responses
         >>> responses.add_passthru('https://example.com')
 
         Regex can be used like:
@@ -663,8 +667,9 @@ class RequestsMock(object):
         either by a response object inheriting ``BaseResponse`` or
         ``method`` and ``url``. Removes all matching responses.
 
-        >>> response.add(responses.GET, 'http://example.org')
-        >>> response.remove(responses.GET, 'http://example.org')
+        >>> import responses
+        >>> responses.add(responses.GET, 'http://example.org')
+        >>> responses.remove(responses.GET, 'http://example.org')
         """
         if isinstance(method_or_response, BaseResponse):
             response = method_or_response
@@ -679,6 +684,7 @@ class RequestsMock(object):
         is identical to ``add()``. The response is identified using ``method``
         and ``url``, and the first matching response is replaced.
 
+        >>> import responses
         >>> responses.add(responses.GET, 'http://example.org', json={'data': 1})
         >>> responses.replace(responses.GET, 'http://example.org', json={'data': 2})
         """
@@ -696,6 +702,7 @@ class RequestsMock(object):
         if no response exists.  Responses are matched using ``method``and ``url``.
         The first matching response is replaced.
 
+        >>> import responses
         >>> responses.add(responses.GET, 'http://example.org', json={'data': 1})
         >>> responses.upsert(responses.GET, 'http://example.org', json={'data': 2})
         """

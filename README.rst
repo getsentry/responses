@@ -270,7 +270,7 @@ to the request:
         req_files = {"file_name": b"Old World!"}
         responses.add(
             responses.POST, url="http://httpbin.org/post",
-            match=[multipart_matcher(req_data, req_files)]
+            match=[multipart_matcher(req_files, data=req_data)]
         )
         resp = requests.post("http://httpbin.org/post", files={"file_name": b"New World!"})
 

@@ -390,7 +390,7 @@ include any additional headers.
 Response Registry
 ---------------------------
 
-By default, ``responses`` will search all registered``Response`` objects and
+By default, ``responses`` will search all registered ``Response`` objects and
 return a match. If only one ``Response`` is registered, the registry is kept unchanged.
 However, if multiple matches are found for the same request, then first match is returned and
 removed from registry.
@@ -801,6 +801,9 @@ Finally, ``reset`` will reset all registered responses.
 Contributing
 ------------
 
+Environment Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Responses uses several linting and autoformatting utilities, so it's important that when
 submitting patches you use the appropriate toolchain:
 
@@ -822,8 +825,37 @@ Configure development requirements:
 
     make develop
 
+
+Tests and Code Quality Validation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The easiest way to validate your code will be to run tests via ``tox``.
+Current ``tox`` configuration runs the same checks that are used in CI/CD
+pipeline.
+
+Please execute following command line from the project root to validate
+you code against:
+* Unittests in all Python versions that are supported by this project
+* Type validation via ``mypy``
+* All ``pre-commit`` hooks
+
+.. code-block:: shell
+
+    tox
+
+Alternatively, you can always run a single test. See documentation below.
+
+Unittests
+"""""""""
+
 Responses uses `Pytest <https://docs.pytest.org/en/latest/>`_ for
 testing. You can run all tests by:
+
+.. code-block:: shell
+
+    tox -e py37
+
+OR
 
 .. code-block:: shell
 
@@ -835,13 +867,31 @@ And run a single test by:
 
     pytest -k '<test_function_name>'
 
+Type Validation
+"""""""""""""""
+
 To verify ``type`` compliance, run `mypy <https://github.com/python/mypy>`_ linter:
+
+.. code-block:: shell
+
+    tox -e mypy
+
+OR
 
 .. code-block:: shell
 
     mypy --config-file=./mypy.ini -p responses
 
+Code Quality and Style
+""""""""""""""""""""""
+
 To check code style and reformat it run:
+
+.. code-block:: shell
+
+    tox -e precom
+
+OR
 
 .. code-block:: shell
 

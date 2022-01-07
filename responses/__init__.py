@@ -8,7 +8,6 @@ import logging
 import re
 from itertools import groupby
 
-import six
 
 from collections import namedtuple
 from functools import update_wrapper
@@ -179,7 +178,7 @@ def get_wrapped(func, responses, registry=None):
         responses._set_registry(registry)
 
     evaldict = {"func": func, "responses": responses}
-    six.exec_(
+    exec(
         _wrapper_template % {"wrapper_args": wrapper_args, "func_args": func_args},
         evaldict,
     )

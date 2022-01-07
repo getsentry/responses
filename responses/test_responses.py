@@ -1393,14 +1393,47 @@ def test_multiple_responses():
     def run():
         responses.add(responses.GET, "http://example.com", body="test")
         responses.add(responses.GET, "http://example.com", body="rest")
+        responses.add(responses.GET, "http://example.com", body="fest")
+        responses.add(responses.GET, "http://example.com", body="best")
 
         resp = requests.get("http://example.com")
         assert_response(resp, "test")
+
         resp = requests.get("http://example.com")
         assert_response(resp, "rest")
+
+        resp = requests.get("http://example.com")
+        assert_response(resp, "fest")
+
+        resp = requests.get("http://example.com")
+        assert_response(resp, "best")
+
         # After all responses are used, last response should be repeated
         resp = requests.get("http://example.com")
+        assert_response(resp, "best")
+
+    run()
+    assert_reset()
+
+
+def test_multiple_responses_intermixed():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com", body="test")
+        resp = requests.get("http://example.com")
+        assert_response(resp, "test")
+
+        responses.add(responses.GET, "http://example.com", body="rest")
+        resp = requests.get("http://example.com")
         assert_response(resp, "rest")
+
+        responses.add(responses.GET, "http://example.com", body="best")
+        resp = requests.get("http://example.com")
+        assert_response(resp, "best")
+
+        # After all responses are used, last response should be repeated
+        resp = requests.get("http://example.com")
+        assert_response(resp, "best")
 
     run()
     assert_reset()
@@ -1901,6 +1934,24 @@ def test_registry_reset():
         ) as rsps:
             rsps._get_registry().reset()
             assert not rsps.registered()
+
+    run()
+    assert_reset()
+
+
+def test_requests_between_add():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "https://example.com/", json={"response": "old"})
+        assert requests.get("https://example.com/").content == b'{"response": "old"}'
+        assert requests.get("https://example.com/").content == b'{"response": "old"}'
+        assert requests.get("https://example.com/").content == b'{"response": "old"}'
+
+        responses.add(responses.GET, "https://example.com/", json={"response": "new"})
+
+        assert requests.get("https://example.com/").content == b'{"response": "new"}'
+        assert requests.get("https://example.com/").content == b'{"response": "new"}'
+        assert requests.get("https://example.com/").content == b'{"response": "new"}'
 
     run()
     assert_reset()

@@ -20,6 +20,11 @@ class FirstMatchRegistry(object):
                     found = i
                     found_match = response
                 else:
+                    if self.registered[found].call_count > 0:
+                        # that assumes that some responses were added between calls
+                        self.registered.pop(found)
+                        found_match = response
+                        break
                     # Multiple matches found.  Remove & return the first response.
                     return self.registered.pop(found), match_failed_reasons
             else:

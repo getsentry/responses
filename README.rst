@@ -829,12 +829,13 @@ Configure development requirements:
 Tests and Code Quality Validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The easiest way to validate your code will be to run tests via ``tox``.
-Current ``tox`` configuration runs the same checks that are used in CI/CD
-pipeline.
+The easiest way to validate your code is to run tests via ``tox``.
+Current ``tox`` configuration runs the same checks that are used in
+GitHub Actions CI/CD pipeline.
 
 Please execute following command line from the project root to validate
 you code against:
+
 * Unittests in all Python versions that are supported by this project
 * Type validation via ``mypy``
 * All ``pre-commit`` hooks

@@ -5,7 +5,6 @@ from __future__ import absolute_import, print_function, division, unicode_litera
 import inspect
 import os
 import re
-import six
 from io import BufferedReader, BytesIO
 
 import pytest
@@ -863,7 +862,6 @@ def test_activate_mock_interaction():
     assert isinstance(value, Mock)
 
 
-@pytest.mark.skipif(six.PY2, reason="Cannot run in python2")
 def test_activate_doesnt_change_signature_with_return_type():
     def test_function(a, b=None):
         return a, b
@@ -1017,7 +1015,6 @@ def test_response_callback():
     assert_reset()
 
 
-@pytest.mark.skipif(six.PY2, reason="re.compile works differntly in PY2")
 def test_response_filebody():
     """ Adds the possibility to use actual (binary) files as responses """
 

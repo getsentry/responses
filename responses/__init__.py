@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function, division, unicode_literals
 
 import _io
+from http import client
 import inspect
 import json as json_module
 import logging
@@ -38,31 +39,20 @@ try:
 except ImportError:  # pragma: no cover
     from urllib3.util.url import parse_url  # pragma: no cover
 
-if six.PY2:
-    from urlparse import urlparse, urlunparse, parse_qsl, urlsplit, urlunsplit
-    from urllib import quote
-else:
-    from urllib.parse import (
-        urlparse,
-        urlunparse,
-        parse_qsl,
-        urlsplit,
-        urlunsplit,
-        quote,
-    )
 
-if six.PY2:
-    try:
-        from six import cStringIO as BufferIO
-    except ImportError:
-        from six import StringIO as BufferIO
-else:
-    from io import BytesIO as BufferIO
+from urllib.parse import (
+    urlparse,
+    urlunparse,
+    parse_qsl,
+    urlsplit,
+    urlunsplit,
+    quote,
+)
 
-try:
-    from unittest import mock as std_mock
-except ImportError:
-    import mock as std_mock
+from io import BytesIO as BufferIO
+
+from unittest import mock as std_mock
+
 
 try:
     Pattern = re._pattern_type
@@ -77,13 +67,6 @@ Call = namedtuple("Call", ["request", "response"])
 _real_send = HTTPAdapter.send
 
 logger = logging.getLogger("responses")
-
-if six.PY2:
-    warn(
-        "Support for Python 2.7 is being removed from the next release of responses. "
-        "Pin your dependency to responses==0.17 or lower.",
-        DeprecationWarning,
-    )
 
 
 def urlencoded_params_matcher(params):
@@ -103,7 +86,7 @@ def json_params_matcher(params):
 
 
 def _is_string(s):
-    return isinstance(s, six.string_types)
+    return isinstance(s, str)
 
 
 def _has_unicode(s):
@@ -124,7 +107,7 @@ def _clean_unicode(url):
         url = urlunsplit(urllist)
 
     # Clean up path/query/params, which use url-encoding to handle unicode chars
-    if isinstance(url.encode("utf8"), six.string_types):
+    if isinstance(url.encode("utf8"), str):
         url = url.encode("utf8")
     chars = list(url)
     for i, x in enumerate(chars):
@@ -135,8 +118,6 @@ def _clean_unicode(url):
 
 
 def _ensure_str(s):
-    if six.PY2:
-        s = s.encode("utf-8") if isinstance(s, six.text_type) else s
     return s
 
 
@@ -166,41 +147,33 @@ def wrapper%(wrapper_args)s:
 
 
 def get_wrapped(func, responses, registry=None):
-    if six.PY2:
-        args, a, kw, defaults = inspect.getargspec(func)
-        wrapper_args = inspect.formatargspec(args, a, kw, defaults)
-
-        # Preserve the argspec for the wrapped function so that testing
-        # tools such as pytest can continue to use their fixture injection.
-        func_args = inspect.formatargspec(args, a, kw, None)
+    signature = inspect.signature(func)
+    signature = signature.replace(return_annotation=inspect.Signature.empty)
+    # If the function is wrapped, switch to *args, **kwargs for the parameters
+    # as we can't rely on the signature to give us the arguments the function will
+    # be called with. For example unittest.mock.patch uses required args that are
+    # not actually passed to the function when invoked.
+    if hasattr(func, "__wrapped__"):
+        wrapper_params = [
+            inspect.Parameter("args", inspect.Parameter.VAR_POSITIONAL),
+            inspect.Parameter("kwargs", inspect.Parameter.VAR_KEYWORD),
+        ]
     else:
-        signature = inspect.signature(func)
-        signature = signature.replace(return_annotation=inspect.Signature.empty)
-        # If the function is wrapped, switch to *args, **kwargs for the parameters
-        # as we can't rely on the signature to give us the arguments the function will
-        # be called with. For example unittest.mock.patch uses required args that are
-        # not actually passed to the function when invoked.
-        if hasattr(func, "__wrapped__"):
-            wrapper_params = [
-                inspect.Parameter("args", inspect.Parameter.VAR_POSITIONAL),
-                inspect.Parameter("kwargs", inspect.Parameter.VAR_KEYWORD),
-            ]
-        else:
-            wrapper_params = [
-                param.replace(annotation=inspect.Parameter.empty)
-                for param in signature.parameters.values()
-            ]
-        signature = signature.replace(parameters=wrapper_params)
-
-        wrapper_args = str(signature)
-        params_without_defaults = [
-            param.replace(
-                annotation=inspect.Parameter.empty, default=inspect.Parameter.empty
-            )
+        wrapper_params = [
+            param.replace(annotation=inspect.Parameter.empty)
             for param in signature.parameters.values()
         ]
-        signature = signature.replace(parameters=params_without_defaults)
-        func_args = str(signature)
+    signature = signature.replace(parameters=wrapper_params)
+
+    wrapper_args = str(signature)
+    params_without_defaults = [
+        param.replace(
+            annotation=inspect.Parameter.empty, default=inspect.Parameter.empty
+        )
+        for param in signature.parameters.values()
+    ]
+    signature = signature.replace(parameters=params_without_defaults)
+    func_args = str(signature)
 
     if registry is not None:
         responses._set_registry(registry)
@@ -253,7 +226,7 @@ def _get_url_and_path(url):
 
 
 def _handle_body(body):
-    if isinstance(body, six.text_type):
+    if isinstance(body, str):
         body = body.encode("utf-8")
     if isinstance(body, _io.BufferedReader):
         return body
@@ -347,7 +320,7 @@ class BaseResponse(object):
         if _is_string(url):
             if _has_unicode(url):
                 url = _clean_unicode(url)
-                if not isinstance(other, six.text_type):
+                if not isinstance(other, str):
                     other = other.encode("ascii").decode("utf8")
 
             return _get_url_and_path(url) == _get_url_and_path(other)
@@ -415,7 +388,7 @@ class Response(BaseResponse):
                 content_type = "application/json"
 
         if content_type is UNSET:
-            if isinstance(body, six.text_type) and _has_unicode(body):
+            if isinstance(body, str) and _has_unicode(body):
                 content_type = "text/plain; charset=utf-8"
             else:
                 content_type = "text/plain"
@@ -453,7 +426,7 @@ class Response(BaseResponse):
 
         return HTTPResponse(
             status=status,
-            reason=six.moves.http_client.responses.get(status),
+            reason=client.responses.get(status, None),
             body=body,
             headers=headers,
             original_response=OriginalResponseShim(headers),
@@ -516,7 +489,7 @@ class CallbackResponse(BaseResponse):
 
         return HTTPResponse(
             status=status,
-            reason=six.moves.http_client.responses.get(status),
+            reason=client.responses.get(status, None),
             body=body,
             headers=headers,
             original_response=OriginalResponseShim(headers),

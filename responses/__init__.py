@@ -2,6 +2,7 @@ from __future__ import absolute_import, print_function, division, unicode_litera
 
 import _io
 from http import client
+from http import cookies
 import inspect
 import json as json_module
 import logging
@@ -112,20 +113,10 @@ def _ensure_str(s):
 
 
 def _cookies_from_headers(headers):
-    try:
-        import http.cookies as _cookies
+    resp_cookie = cookies.SimpleCookie()
+    resp_cookie.load(headers["set-cookie"])
+    cookies_dict = {name: v.value for name, v in resp_cookie.items()}
 
-        resp_cookie = _cookies.SimpleCookie()
-        resp_cookie.load(headers["set-cookie"])
-
-        cookies_dict = {name: v.value for name, v in resp_cookie.items()}
-    except (ImportError, AttributeError):
-        from cookies import Cookies
-
-        resp_cookies = Cookies.from_request(_ensure_str(headers["set-cookie"]))
-        cookies_dict = {
-            v.name: quote(_ensure_str(v.value)) for _, v in resp_cookies.items()
-        }
     return cookiejar_from_dict(cookies_dict)
 
 

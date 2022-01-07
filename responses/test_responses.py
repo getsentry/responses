@@ -842,14 +842,9 @@ def test_activate_mock_interaction():
         return mock_stdout
 
     decorated_test_function = responses.activate(test_function)
-    if hasattr(inspect, "signature"):
-        assert inspect.signature(test_function) == inspect.signature(
-            decorated_test_function
-        )
-    else:
-        assert inspect.getargspec(test_function) == inspect.getargspec(
-            decorated_test_function
-        )
+    assert inspect.signature(test_function) == inspect.signature(
+        decorated_test_function
+    )
 
     value = test_function()
     assert isinstance(value, Mock)

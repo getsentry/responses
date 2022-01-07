@@ -1,8 +1,5 @@
 from __future__ import absolute_import, print_function, division, unicode_literals
 
-import six
-from sys import version_info
-
 import pytest
 import requests
 import responses
@@ -182,11 +179,9 @@ def test_request_matches_params():
         }
         resp = requests.get(url, params=params)
 
-        if six.PY3 and version_info[1] >= 7:
-            # only after py 3.7 dictionaries are ordered, so we can check URL
-            constructed_url = r"http://example.com/test?I+am=a+big+test&hello=world"
-            assert resp.url == constructed_url
-            assert resp.request.url == constructed_url
+        constructed_url = r"http://example.com/test?I+am=a+big+test&hello=world"
+        assert resp.url == constructed_url
+        assert resp.request.url == constructed_url
 
         resp_params = getattr(resp.request, "params")
         assert resp_params == params
@@ -349,24 +344,15 @@ def test_multipart_matcher_fail():
 
             msg = str(excinfo.value)
             assert "multipart/form-data doesn't match. Request body differs." in msg
-            if six.PY2:
-                assert (
-                    '\r\nContent-Disposition: form-data; name="file_name"; '
-                    'filename="file_name"\r\n\r\nOld World!\r\n'
-                ) in msg
-                assert (
-                    '\r\nContent-Disposition: form-data; name="file_name"; '
-                    'filename="file_name"\r\n\r\nNew World!\r\n'
-                ) in msg
-            else:
-                assert (
-                    r'\r\nContent-Disposition: form-data; name="file_name"; '
-                    r'filename="file_name"\r\n\r\nOld World!\r\n'
-                ) in msg
-                assert (
-                    r'\r\nContent-Disposition: form-data; name="file_name"; '
-                    r'filename="file_name"\r\n\r\nNew World!\r\n'
-                ) in msg
+
+            assert (
+                r'\r\nContent-Disposition: form-data; name="file_name"; '
+                r'filename="file_name"\r\n\r\nOld World!\r\n'
+            ) in msg
+            assert (
+                r'\r\nContent-Disposition: form-data; name="file_name"; '
+                r'filename="file_name"\r\n\r\nNew World!\r\n'
+            ) in msg
 
         # x-www-form-urlencoded request
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:

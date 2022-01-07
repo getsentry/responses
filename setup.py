@@ -22,7 +22,6 @@ if "test" in sys.argv:
 install_requires = [
     "requests>=2.0",
     "urllib3>=1.25.10",
-    "six",
 ]
 
 tests_require = [
@@ -33,7 +32,6 @@ tests_require = [
     "flake8",
     "types-mock",
     "types-requests",
-    "types-six",
     "mypy",
 ]
 

@@ -1576,10 +1576,10 @@ def test_passthru_does_not_persist_across_tests(httpserver):
         responses.add_passthru(re.compile(".*"))
         try:
             response = requests.get("https://example.com")
-        except ConnectionError as err:
-            if "Failed to establish" in str(err):
-                pytest.skip("Cannot resolve DNS for example.com")
-            raise err
+        except ConnectionError as err:  # pragma: no cover
+            if "Failed to establish" in str(err):  # pragma: no cover
+                pytest.skip("Cannot resolve DNS for example.com")  # pragma: no cover
+            raise err  # pragma: no cover
 
         assert response.status_code == 200
 

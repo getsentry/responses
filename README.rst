@@ -17,6 +17,12 @@ A utility library for mocking out the ``requests`` Python library.
     Responses requires Python 2.7 or newer, and requests >= 2.0
 
 
+Table of Contents
+----------
+
+.. contents::
+
+
 Installing
 ----------
 

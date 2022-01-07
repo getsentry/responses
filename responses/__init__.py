@@ -20,10 +20,7 @@ from responses.registries import FirstMatchRegistry
 from responses.matchers import query_string_matcher as _query_string_matcher
 from warnings import warn
 
-try:
-    from collections.abc import Sequence, Sized
-except ImportError:
-    from collections import Sequence, Sized
+from collections.abc import Sequence, Sized
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -102,8 +99,6 @@ def _clean_unicode(url):
         url = urlunsplit(urllist)
 
     # Clean up path/query/params, which use url-encoding to handle unicode chars
-    if isinstance(url.encode("utf8"), str):
-        url = url.encode("utf8")
     chars = list(url)
     for i, x in enumerate(chars):
         if ord(x) > 128:
@@ -315,8 +310,6 @@ class BaseResponse(object):
         if _is_string(url):
             if _has_unicode(url):
                 url = _clean_unicode(url)
-                if not isinstance(other, str):
-                    other = other.encode("ascii").decode("utf8")
 
             return _get_url_and_path(url) == _get_url_and_path(other)
 

@@ -805,14 +805,10 @@ def test_activate_doesnt_change_signature():
         return (a, b)
 
     decorated_test_function = responses.activate(test_function)
-    if hasattr(inspect, "signature"):
-        assert inspect.signature(test_function) == inspect.signature(
-            decorated_test_function
-        )
-    else:
-        assert inspect.getargspec(test_function) == inspect.getargspec(
-            decorated_test_function
-        )
+    assert inspect.signature(test_function) == inspect.signature(
+        decorated_test_function
+    )
+
     assert decorated_test_function(1, 2) == test_function(1, 2)
     assert decorated_test_function(3) == test_function(3)
 

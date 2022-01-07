@@ -12,6 +12,8 @@
 * Added `responses.registries`. Now user can create custom registries to
   manipulate the order of responses in the match algorithm
   `responses.activate(registry=CustomRegistry)`
+* Fixed issue with response match when requests were performed between adding responses with
+  same URL. See Issue #212
 
 0.16.0
 ------

@@ -18,6 +18,7 @@ from responses import (
     PassthroughResponse,
     matchers,
     CallbackResponse,
+    registries,
 )
 
 
@@ -28,7 +29,7 @@ except ImportError:
 
 
 def assert_reset():
-    assert len(responses._default_mock._matches) == 0
+    assert len(responses._default_mock.registered()) == 0
     assert len(responses.calls) == 0
 
 
@@ -1070,24 +1071,24 @@ def test_assert_all_requests_are_fired():
         # check that assert_all_requests_are_fired=True doesn't remove urls
         with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
             m.add(responses.GET, "http://example.com", body=b"test")
-            assert len(m._matches) == 1
+            assert len(m.registered()) == 1
             requests.get("http://example.com")
-            assert len(m._matches) == 1
+            assert len(m.registered()) == 1
 
         # check that assert_all_requests_are_fired=True counts mocked errors
         with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
             m.add(responses.GET, "http://example.com", body=Exception())
-            assert len(m._matches) == 1
+            assert len(m.registered()) == 1
             with pytest.raises(Exception):
                 requests.get("http://example.com")
-            assert len(m._matches) == 1
+            assert len(m.registered()) == 1
 
         with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
             m.add_callback(responses.GET, "http://example.com", request_callback)
-            assert len(m._matches) == 1
+            assert len(m.registered()) == 1
             with pytest.raises(BaseException):
                 requests.get("http://example.com")
-            assert len(m._matches) == 1
+            assert len(m.registered()) == 1
 
     run()
     assert_reset()
@@ -1825,7 +1826,7 @@ def test_mocked_responses_list_registered():
 
         mocks_list = responses.registered()
 
-        assert mocks_list == responses.mock._matches
+        assert mocks_list == responses.mock.registered()
         assert mocks_list == [first_response, second_response, third_response]
 
     run()
@@ -1847,6 +1848,71 @@ def test_rfc_compliance(url, other_url):
         responses.add(method=responses.GET, url=url)
         resp = requests.request("GET", other_url)
         assert_response(resp, "")
+
+    run()
+    assert_reset()
+
+
+def test_set_registry_not_empty():
+    class CustomRegistry(registries.FirstMatchRegistry):
+        pass
+
+    @responses.activate
+    def run():
+        url = "http://fizzbuzz/foo"
+        responses.add(method=responses.GET, url=url)
+        with pytest.raises(AttributeError) as excinfo:
+            responses.mock._set_registry(CustomRegistry)
+        msg = str(excinfo.value)
+        assert "Cannot replace Registry, current registry has responses" in msg
+
+    run()
+    assert_reset()
+
+
+def test_set_registry():
+    class CustomRegistry(registries.FirstMatchRegistry):
+        pass
+
+    @responses.activate(registry=CustomRegistry)
+    def run_with_registry():
+        assert type(responses.mock._get_registry()) == CustomRegistry
+
+    @responses.activate
+    def run():
+        # test that registry does not leak to another test
+        assert type(responses.mock._get_registry()) == registries.FirstMatchRegistry
+
+    run_with_registry()
+    run()
+    assert_reset()
+
+
+def test_set_registry_context_manager():
+    def run():
+        class CustomRegistry(registries.FirstMatchRegistry):
+            pass
+
+        with responses.RequestsMock(
+            assert_all_requests_are_fired=False, registry=CustomRegistry
+        ) as rsps:
+            assert type(rsps._get_registry()) == CustomRegistry
+            assert type(responses.mock._get_registry()) == registries.FirstMatchRegistry
+
+    run()
+    assert_reset()
+
+
+def test_registry_reset():
+    def run():
+        class CustomRegistry(registries.FirstMatchRegistry):
+            pass
+
+        with responses.RequestsMock(
+            assert_all_requests_are_fired=False, registry=CustomRegistry
+        ) as rsps:
+            rsps._get_registry().reset()
+            assert not rsps.registered()
 
     run()
     assert_reset()

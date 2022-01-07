@@ -23,6 +23,7 @@ from unittest import mock as std_mock
 from urllib.parse import quote as quote
 from urllib3.response import HTTPHeaderDict
 from .matchers import urlencoded_params_matcher, json_params_matcher
+from .registries import FirstMatchRegistry
 
 
 def _clean_unicode(url: str) -> str: ...
@@ -38,7 +39,7 @@ def _handle_body(
 def _has_unicode(s: str) -> bool: ...
 def _is_string(s: Union[Pattern[str], str]) -> bool: ...
 def get_wrapped(
-    func: Callable[..., Any], responses: RequestsMock
+    func: Callable[..., Any], responses: RequestsMock, registry: Optional[Any]
 ) -> Callable[..., Any]: ...
 
 
@@ -146,6 +147,8 @@ class OriginalResponseShim:
     ) -> None: ...
     def isclosed(self) -> bool: ...
 
+_F = TypeVar("_F", bound=Callable[..., Any])
+
 class RequestsMock:
     DELETE: Literal["DELETE"]
     GET: Literal["GET"]
@@ -165,6 +168,7 @@ class RequestsMock:
         response_callback: Optional[Callable[[Any], Any]] = ...,
         passthru_prefixes: Tuple[str, ...] = ...,
         target: str = ...,
+        registry: Any = ...,
     ) -> None:
         self._patcher = Callable[[Any], Any]
         self._calls = CallList
@@ -184,18 +188,16 @@ class RequestsMock:
     def calls(self) -> CallList: ...
     def __enter__(self) -> RequestsMock: ...
     def __exit__(self, type: Any, value: Any, traceback: Any) -> bool: ...
-    activate: _Activate
+    def activate(self, func: Optional[_F], registry: Optional[Any]) -> _F: ...
     def start(self) -> None: ...
     def stop(self, allow_assert: bool = ...) -> None: ...
     def assert_call_count(self, url: str, count: int) -> bool: ...
     def registered(self) -> List[Any]: ...
+    def _set_registry(self, registry: Any) -> None: ...
+    def _get_registry(self) -> Any: ...
 
-_F = TypeVar("_F", bound=Callable[..., Any])
 
 HeaderSet = Optional[Union[Mapping[str, str], List[Tuple[str, str]]]]
-
-class _Activate(Protocol):
-    def __call__(self, func: _F) -> _F: ...
 
 class _Add(Protocol):
     def __call__(
@@ -273,7 +275,7 @@ class _Registered(Protocol):
     def __call__(self) -> List[Response]: ...
 
 
-activate: _Activate
+activate: Any
 add: _Add
 add_callback: _AddCallback
 add_passthru: _AddPassthru
@@ -328,5 +330,5 @@ __all__ = [
     "start",
     "stop",
     "target",
-    "upsert"
+    "upsert",
 ]

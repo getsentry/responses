@@ -16,6 +16,7 @@ from requests.exceptions import ConnectionError
 from requests.utils import cookiejar_from_dict
 from responses.matchers import json_params_matcher as _json_params_matcher
 from responses.matchers import urlencoded_params_matcher as _urlencoded_params_matcher
+from responses.registries import FirstMatchRegistry
 from responses.matchers import query_string_matcher as _query_string_matcher
 from warnings import warn
 
@@ -164,7 +165,7 @@ def wrapper%(wrapper_args)s:
 """
 
 
-def get_wrapped(func, responses):
+def get_wrapped(func, responses, registry=None):
     if six.PY2:
         args, a, kw, defaults = inspect.getargspec(func)
         wrapper_args = inspect.formatargspec(args, a, kw, defaults)
@@ -200,6 +201,9 @@ def get_wrapped(func, responses):
         ]
         signature = signature.replace(parameters=params_without_defaults)
         func_args = str(signature)
+
+    if registry is not None:
+        responses._set_registry(registry)
 
     evaldict = {"func": func, "responses": responses}
     six.exec_(
@@ -563,9 +567,11 @@ class RequestsMock(object):
         response_callback=None,
         passthru_prefixes=(),
         target="requests.adapters.HTTPAdapter.send",
+        registry=FirstMatchRegistry,
     ):
         self._calls = CallList()
         self.reset()
+        self._registry = registry()  # call only after reset
         self.assert_all_requests_are_fired = assert_all_requests_are_fired
         self.response_callback = response_callback
         self.passthru_prefixes = tuple(passthru_prefixes)
@@ -573,8 +579,21 @@ class RequestsMock(object):
         self._patcher = None
         self._matches = []
 
+    def _get_registry(self):
+        return self._registry
+
+    def _set_registry(self, new_registry):
+        if self.registered():
+            err_msg = (
+                "Cannot replace Registry, current registry has responses.\n"
+                "Run 'responses.registry.reset()' first"
+            )
+            raise AttributeError(err_msg)
+
+        self._registry = new_registry()
+
     def reset(self):
-        self._matches = []
+        self._registry = FirstMatchRegistry()
         self._calls.reset()
         self.passthru_prefixes = ()
 
@@ -616,13 +635,13 @@ class RequestsMock(object):
 
         """
         if isinstance(method, BaseResponse):
-            self._matches.append(method)
+            self._registry.add(method)
             return
 
         if adding_headers is not None:
             kwargs.setdefault("headers", adding_headers)
 
-        self._matches.append(Response(method=method, url=url, body=body, **kwargs))
+        self._registry.add(Response(method=method, url=url, body=body, **kwargs))
 
     def add_passthru(self, prefix):
         """
@@ -657,8 +676,7 @@ class RequestsMock(object):
         else:
             response = BaseResponse(method=method_or_response, url=url)
 
-        while response in self._matches:
-            self._matches.remove(response)
+        self._registry.remove(response)
 
     def replace(self, method_or_response=None, url=None, body="", *args, **kwargs):
         """
@@ -676,11 +694,7 @@ class RequestsMock(object):
         else:
             response = Response(method=method_or_response, url=url, body=body, **kwargs)
 
-        try:
-            index = self._matches.index(response)
-        except ValueError:
-            raise ValueError("Response is not registered for URL %s" % url)
-        self._matches[index] = response
+        self._registry.replace(response)
 
     def upsert(self, method_or_response=None, url=None, body="", *args, **kwargs):
         """
@@ -709,7 +723,7 @@ class RequestsMock(object):
         # ensure the url has a default path set if the url is a string
         # url = _ensure_url_default_path(url, match_querystring)
 
-        self._matches.append(
+        self._registry.add(
             CallbackResponse(
                 url=url,
                 method=method,
@@ -721,7 +735,7 @@ class RequestsMock(object):
         )
 
     def registered(self):
-        return self._matches
+        return self._registry.registered
 
     @property
     def calls(self):
@@ -737,8 +751,14 @@ class RequestsMock(object):
         self.reset()
         return success
 
-    def activate(self, func):
-        return get_wrapped(func, self)
+    def activate(self, func=None, registry=None):
+        if func is not None:
+            return get_wrapped(func, self)
+
+        def deco_activate(func):
+            return get_wrapped(func, self, registry)
+
+        return deco_activate
 
     def _find_match(self, request):
         """
@@ -749,21 +769,7 @@ class RequestsMock(object):
             (Response) found match. If multiple found, then remove & return the first match.
             (list) list with reasons why other matches don't match
         """
-        found = None
-        found_match = None
-        match_failed_reasons = []
-        for i, match in enumerate(self._matches):
-            match_result, reason = match.matches(request)
-            if match_result:
-                if found is None:
-                    found = i
-                    found_match = match
-                else:
-                    # Multiple matches found.  Remove & return the first match.
-                    return self._matches.pop(found), match_failed_reasons
-            else:
-                match_failed_reasons.append(reason)
-        return found_match, match_failed_reasons
+        return self._registry.find(request)
 
     def _parse_request_params(self, url):
         params = {}
@@ -802,7 +808,7 @@ class RequestsMock(object):
                 "- %s %s\n\n"
                 "Available matches:\n" % (request.method, request.url)
             )
-            for i, m in enumerate(self._matches):
+            for i, m in enumerate(self.registered()):
                 error_msg += "- {} {} {}\n".format(
                     m.method, m.url, match_failed_reasons[i]
                 )
@@ -846,7 +852,7 @@ class RequestsMock(object):
         if not allow_assert:
             return
 
-        not_called = [m for m in self._matches if m.call_count == 0]
+        not_called = [m for m in self.registered() if m.call_count == 0]
         if not_called:
             raise AssertionError(
                 "Not all requests have been executed {0!r}".format(

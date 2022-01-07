@@ -53,11 +53,7 @@ from io import BytesIO as BufferIO
 from unittest import mock as std_mock
 
 
-try:
-    Pattern = re._pattern_type
-except AttributeError:
-    # Python 3.7
-    Pattern = re.Pattern
+Pattern = re.Pattern
 
 UNSET = object()
 

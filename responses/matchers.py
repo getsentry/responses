@@ -58,7 +58,7 @@ def urlencoded_params_matcher(params: Optional[Dict[str, str]]) -> Callable[...,
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         request_body = request.body
-        qsl_body = dict(parse_qsl(str(request_body))) if request_body else {}
+        qsl_body = dict(parse_qsl(request_body)) if request_body else {}  # type: ignore[type-var]
         params_dict = params or {}
         valid = params is None if request_body is None else params_dict == qsl_body
         if not valid:
@@ -111,7 +111,7 @@ def fragment_identifier_matcher(identifier: Optional[str]) -> Callable[..., Any]
         reason = ""
         url_fragment = urlparse(request.url).fragment
         if identifier:
-            url_fragment_qsl = sorted(parse_qsl(str(url_fragment)))
+            url_fragment_qsl = sorted(parse_qsl(url_fragment))  # type: ignore[type-var]
             identifier_qsl = sorted(parse_qsl(identifier))
             valid = identifier_qsl == url_fragment_qsl
         else:

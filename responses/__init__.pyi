@@ -21,7 +21,7 @@ from requests.cookies import RequestsCookieJar
 from typing_extensions import Literal
 from unittest import mock as std_mock
 from urllib.parse import quote as quote
-from urllib3.response import HTTPHeaderDict
+from urllib3.response import HTTPHeaderDict # type: ignore # Not currently exposed in typestubs.
 from .matchers import urlencoded_params_matcher, json_params_matcher
 from .registries import FirstMatchRegistry
 
@@ -90,7 +90,7 @@ class BaseResponse:
         self, url: Union[Pattern[str], str], other: str, match_querystring: bool = ...
     ) -> bool: ...
     def _url_matches_strict(self, url: str, other: str) -> bool: ...
-    def get_headers(self) -> HTTPHeaderDict: ...  # type: ignore [no-any-unimported]
+    def get_headers(self) -> HTTPHeaderDict: ...  # type: ignore
     def get_response(self, request: PreparedRequest) -> None: ...
     def matches(self, request: PreparedRequest) -> Tuple[bool, str]: ...
 

@@ -58,7 +58,7 @@ def urlencoded_params_matcher(params: Optional[Dict[str, str]]) -> Callable[...,
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         request_body = request.body
-        qsl_body = dict(parse_qsl(request_body)) if request_body else {}
+        qsl_body = dict(parse_qsl(str(request_body))) if request_body else {}
         params_dict = params or {}
         valid = params is None if request_body is None else params_dict == qsl_body
         if not valid:
@@ -111,16 +111,18 @@ def fragment_identifier_matcher(identifier: Optional[str]) -> Callable[..., Any]
         reason = ""
         url_fragment = urlparse(request.url).fragment
         if identifier:
-            url_fragment_qsl = sorted(parse_qsl(url_fragment))
+            url_fragment_qsl = sorted(parse_qsl(str(url_fragment)))
             identifier_qsl = sorted(parse_qsl(identifier))
             valid = identifier_qsl == url_fragment_qsl
         else:
             valid = not url_fragment
 
         if not valid:
-            reason = "URL fragment identifier is different: {} doesn't match {}".format(
-                identifier, url_fragment
+            reason = (
+                "URL fragment identifier is different: "  # type: ignore[str-bytes-safe]
+                f"{identifier} doesn't match {url_fragment}"
             )
+
         return valid, reason
 
     return match
@@ -136,7 +138,7 @@ def query_param_matcher(params: Optional[Dict[str, str]]) -> Callable[..., Any]:
 
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
-        request_params = request.params
+        request_params = request.params  # type: ignore[attr-defined]
         request_params_dict = request_params or {}
         params_dict = params or {}
         valid = (
@@ -197,14 +199,13 @@ def request_kwargs_matcher(kwargs: Optional[Dict[str, Any]]) -> Callable[..., An
         reason = ""
         kwargs_dict = kwargs or {}
         # validate only kwargs that were requested for comparison, skip defaults
-        request_kwargs = {
-            k: v for k, v in request.req_kwargs.items() if k in kwargs_dict
-        }
+        req_kwargs = request.req_kwargs  # type: ignore[attr-defined]
+        request_kwargs = {k: v for k, v in req_kwargs.items() if k in kwargs_dict}
 
         valid = (
             not kwargs_dict
             if not request_kwargs
-            else sorted(kwargs.items()) == sorted(request_kwargs.items())
+            else sorted(kwargs_dict.items()) == sorted(request_kwargs.items())
         )
 
         if not valid:
@@ -265,14 +266,16 @@ def multipart_matcher(
         )
 
         request_body = request.body
-        prepared_body = prepared.body
+        prepared_body = prepared.body or ""
 
         if isinstance(prepared_body, bytes):
             # since headers always come as str, need to convert to bytes
-            prepared_boundary = prepared_boundary.encode("utf-8")
-            request_boundary = request_boundary.encode("utf-8")
+            prepared_boundary = prepared_boundary.encode("utf-8")  # type: ignore[assignment]
+            request_boundary = request_boundary.encode("utf-8")  # type: ignore[assignment]
 
-        prepared_body = prepared_body.replace(prepared_boundary, request_boundary)
+        prepared_body = prepared_body.replace(
+            prepared_boundary, request_boundary  # type: ignore[arg-type]
+        )
 
         headers_valid = prepared_content_type == request_content_type
         if not headers_valid:
@@ -286,8 +289,12 @@ def multipart_matcher(
 
         body_valid = prepared_body == request_body
         if not body_valid:
-            return False, reason + "Request body differs. {} aren't equal {}".format(
-                request_body, prepared_body
+            return (
+                False,
+                reason
+                + "Request body differs. {} aren't equal {}".format(  # type: ignore[str-bytes-safe]
+                    request_body, prepared_body
+                ),
             )
 
         return True, ""

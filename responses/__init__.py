@@ -3,7 +3,6 @@ from __future__ import absolute_import, print_function, division, unicode_litera
 import _io
 from http import client
 from http import cookies
-import inspect
 import json as json_module
 import logging
 import re
@@ -11,7 +10,7 @@ from itertools import groupby
 
 
 from collections import namedtuple
-from functools import update_wrapper
+from functools import wraps
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 from requests.utils import cookiejar_from_dict
@@ -120,52 +119,15 @@ def _cookies_from_headers(headers):
     return cookiejar_from_dict(cookies_dict)
 
 
-_wrapper_template = """\
-def wrapper%(wrapper_args)s:
-    with responses:
-        return func%(func_args)s
-"""
-
-
 def get_wrapped(func, responses, registry=None):
-    signature = inspect.signature(func)
-    signature = signature.replace(return_annotation=inspect.Signature.empty)
-    # If the function is wrapped, switch to *args, **kwargs for the parameters
-    # as we can't rely on the signature to give us the arguments the function will
-    # be called with. For example unittest.mock.patch uses required args that are
-    # not actually passed to the function when invoked.
-    if hasattr(func, "__wrapped__"):
-        wrapper_params = [
-            inspect.Parameter("args", inspect.Parameter.VAR_POSITIONAL),
-            inspect.Parameter("kwargs", inspect.Parameter.VAR_KEYWORD),
-        ]
-    else:
-        wrapper_params = [
-            param.replace(annotation=inspect.Parameter.empty)
-            for param in signature.parameters.values()
-        ]
-    signature = signature.replace(parameters=wrapper_params)
-
-    wrapper_args = str(signature)
-    params_without_defaults = [
-        param.replace(
-            annotation=inspect.Parameter.empty, default=inspect.Parameter.empty
-        )
-        for param in signature.parameters.values()
-    ]
-    signature = signature.replace(parameters=params_without_defaults)
-    func_args = str(signature)
-
     if registry is not None:
         responses._set_registry(registry)
 
-    evaldict = {"func": func, "responses": responses}
-    exec(
-        _wrapper_template % {"wrapper_args": wrapper_args, "func_args": func_args},
-        evaldict,
-    )
-    wrapper = evaldict["wrapper"]
-    update_wrapper(wrapper, func)
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        with responses:
+            return func(*args, **kwargs)
+
     return wrapper
 
 

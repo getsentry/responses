@@ -1,4 +1,5 @@
 import json as json_module
+from typing import Dict, Any, Optional, Callable
 
 from requests import PreparedRequest
 from urllib.parse import parse_qsl, urlparse
@@ -6,7 +7,7 @@ from requests.packages.urllib3.util.url import parse_url
 from json.decoder import JSONDecodeError
 
 
-def _create_key_val_str(input_dict):
+def _create_key_val_str(input_dict: Dict[Any, Any]) -> str:
     """
     Returns string of format {'key': val, 'key2': val2}
     Function is called recursively for nested dictionaries
@@ -45,7 +46,7 @@ def _create_key_val_str(input_dict):
     return key_val_str
 
 
-def urlencoded_params_matcher(params):
+def urlencoded_params_matcher(params: Optional[Dict[str, str]]) -> Callable[..., Any]:
     """
     Matches URL encoded data
 
@@ -69,7 +70,7 @@ def urlencoded_params_matcher(params):
     return match
 
 
-def json_params_matcher(params):
+def json_params_matcher(params: Optional[Dict[str, Any]]) -> Callable[..., Any]:
     """
     Matches JSON encoded data
 
@@ -104,7 +105,7 @@ def json_params_matcher(params):
     return match
 
 
-def fragment_identifier_matcher(identifier):
+def fragment_identifier_matcher(identifier: Optional[str]) -> Callable[..., Any]:
     def match(request):
         reason = ""
         url_fragment = urlparse(request.url).fragment
@@ -124,7 +125,7 @@ def fragment_identifier_matcher(identifier):
     return match
 
 
-def query_param_matcher(params):
+def query_param_matcher(params: Optional[Dict[str, str]]) -> Callable[..., Any]:
     """
     Matcher to match 'params' argument in request
 
@@ -154,7 +155,7 @@ def query_param_matcher(params):
     return match
 
 
-def query_string_matcher(query):
+def query_string_matcher(query: Optional[str]) -> Callable[..., Any]:
     """
     Matcher to match query string part of request
 
@@ -183,7 +184,7 @@ def query_string_matcher(query):
     return match
 
 
-def request_kwargs_matcher(kwargs):
+def request_kwargs_matcher(kwargs: Optional[Dict[str, Any]]) -> Callable[..., Any]:
     """
     Matcher to match keyword arguments provided to request
 
@@ -215,7 +216,9 @@ def request_kwargs_matcher(kwargs):
     return match
 
 
-def multipart_matcher(files, data=None):
+def multipart_matcher(
+    files: Dict[str, Any], data: Optional[Dict[str, str]] = None
+) -> Callable[..., Any]:
     """
     Matcher to match 'multipart/form-data' content-type.
     This function constructs request body and headers from provided 'data' and 'files'
@@ -291,7 +294,9 @@ def multipart_matcher(files, data=None):
     return match
 
 
-def header_matcher(headers, strict_match=False):
+def header_matcher(
+    headers: Dict[str, str], strict_match: bool = False
+) -> Callable[..., Any]:
     """
     Matcher to match 'headers' argument in request using the responses library.
 

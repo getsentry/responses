@@ -1,13 +1,14 @@
 import json as json_module
-from typing import Dict, Any, Optional, Callable
+from typing import Dict, Any, Optional, Callable, Tuple, Union, List
 
 from requests import PreparedRequest
 from urllib.parse import parse_qsl, urlparse
-from requests.packages.urllib3.util.url import parse_url
+
+from requests.packages.urllib3.util.url import parse_url  # type: ignore[import]
 from json.decoder import JSONDecodeError
 
 
-def _create_key_val_str(input_dict: Dict[Any, Any]) -> str:
+def _create_key_val_str(input_dict: Union[Dict[Any, Any], Any]) -> str:
     """
     Returns string of format {'key': val, 'key2': val2}
     Function is called recursively for nested dictionaries
@@ -16,7 +17,7 @@ def _create_key_val_str(input_dict: Dict[Any, Any]) -> str:
     :return: (str) reformatted string
     """
 
-    def list_to_str(input_list):
+    def list_to_str(input_list: List[str]) -> str:
         """
         Convert all list items to string.
         Function is called recursively for nested lists
@@ -54,7 +55,7 @@ def urlencoded_params_matcher(params: Optional[Dict[str, str]]) -> Callable[...,
     :return: (func) matcher
     """
 
-    def match(request):
+    def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         request_body = request.body
         qsl_body = dict(parse_qsl(request_body)) if request_body else {}
@@ -78,7 +79,7 @@ def json_params_matcher(params: Optional[Dict[str, Any]]) -> Callable[..., Any]:
     :return: (func) matcher
     """
 
-    def match(request):
+    def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         request_body = request.body
         params_dict = params or {}
@@ -106,7 +107,7 @@ def json_params_matcher(params: Optional[Dict[str, Any]]) -> Callable[..., Any]:
 
 
 def fragment_identifier_matcher(identifier: Optional[str]) -> Callable[..., Any]:
-    def match(request):
+    def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         url_fragment = urlparse(request.url).fragment
         if identifier:
@@ -133,7 +134,7 @@ def query_param_matcher(params: Optional[Dict[str, str]]) -> Callable[..., Any]:
     :return: (func) matcher
     """
 
-    def match(request):
+    def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         request_params = request.params
         request_params_dict = request_params or {}
@@ -163,7 +164,7 @@ def query_string_matcher(query: Optional[str]) -> Callable[..., Any]:
     :return: (func) matcher
     """
 
-    def match(request):
+    def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         data = parse_url(request.url)
         request_query = data.query
@@ -192,7 +193,7 @@ def request_kwargs_matcher(kwargs: Optional[Dict[str, Any]]) -> Callable[..., An
     :return: (func) matcher
     """
 
-    def match(request):
+    def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         kwargs_dict = kwargs or {}
         # validate only kwargs that were requested for comparison, skip defaults
@@ -232,10 +233,10 @@ def multipart_matcher(
         raise TypeError("files argument cannot be empty")
 
     prepared = PreparedRequest()
-    prepared.headers = {"Content-Type": ""}
+    prepared.headers = {"Content-Type": ""}  # type: ignore[assignment]
     prepared.prepare_body(data=data, files=files)
 
-    def get_boundary(content_type):
+    def get_boundary(content_type: str) -> str:
         """
         Parse 'boundary' value from header.
 
@@ -247,7 +248,7 @@ def multipart_matcher(
 
         return content_type.split("boundary=")[1]
 
-    def match(request):
+    def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = "multipart/form-data doesn't match. "
         if "Content-Type" not in request.headers:
             return False, reason + "Request is missing the 'Content-Type' header"
@@ -311,8 +312,8 @@ def header_matcher(
     :return: (func) matcher
     """
 
-    def match(request):
-        request_headers = request.headers or {}
+    def match(request: PreparedRequest) -> Tuple[bool, str]:
+        request_headers: Union[Dict[Any, Any], Any] = request.headers or {}
 
         if not strict_match:
             # filter down to just the headers specified in the matcher

@@ -1,23 +1,9 @@
-import six
 import json as json_module
 
 from requests import PreparedRequest
-
-if six.PY2:
-    from urlparse import parse_qsl, urlparse
-else:
-    from urllib.parse import parse_qsl, urlparse
-
-
-try:
-    from requests.packages.urllib3.util.url import parse_url
-except ImportError:  # pragma: no cover
-    from urllib3.util.url import parse_url  # pragma: no cover
-
-try:
-    from json.decoder import JSONDecodeError
-except ImportError:
-    JSONDecodeError = ValueError
+from urllib.parse import parse_qsl, urlparse
+from requests.packages.urllib3.util.url import parse_url
+from json.decoder import JSONDecodeError
 
 
 def _create_key_val_str(input_dict):
@@ -175,8 +161,6 @@ def query_string_matcher(query):
     :param query: (str), same as constructed by request
     :return: (func) matcher
     """
-    if six.PY2 and isinstance(query, unicode):  # noqa: F821
-        query = query.encode("utf8")
 
     def match(request):
         reason = ""

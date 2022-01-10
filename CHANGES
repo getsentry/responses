@@ -1,6 +1,8 @@
 0.18.0
 ------
 
+* Dropped support of Python 2.7, 3.5, 3.6
+
 0.17.0
 ------
 

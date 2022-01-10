@@ -5,7 +5,6 @@ from __future__ import absolute_import, print_function, division, unicode_litera
 import inspect
 import os
 import re
-import six
 from io import BufferedReader, BytesIO
 
 import pytest
@@ -806,14 +805,10 @@ def test_activate_doesnt_change_signature():
         return (a, b)
 
     decorated_test_function = responses.activate(test_function)
-    if hasattr(inspect, "signature"):
-        assert inspect.signature(test_function) == inspect.signature(
-            decorated_test_function
-        )
-    else:
-        assert inspect.getargspec(test_function) == inspect.getargspec(
-            decorated_test_function
-        )
+    assert inspect.signature(test_function) == inspect.signature(
+        decorated_test_function
+    )
+
     assert decorated_test_function(1, 2) == test_function(1, 2)
     assert decorated_test_function(3) == test_function(3)
 
@@ -847,14 +842,9 @@ def test_activate_mock_interaction():
         return mock_stdout
 
     decorated_test_function = responses.activate(test_function)
-    if hasattr(inspect, "signature"):
-        assert inspect.signature(test_function) == inspect.signature(
-            decorated_test_function
-        )
-    else:
-        assert inspect.getargspec(test_function) == inspect.getargspec(
-            decorated_test_function
-        )
+    assert inspect.signature(test_function) == inspect.signature(
+        decorated_test_function
+    )
 
     value = test_function()
     assert isinstance(value, Mock)
@@ -863,7 +853,6 @@ def test_activate_mock_interaction():
     assert isinstance(value, Mock)
 
 
-@pytest.mark.skipif(six.PY2, reason="Cannot run in python2")
 def test_activate_doesnt_change_signature_with_return_type():
     def test_function(a, b=None):
         return a, b
@@ -1017,7 +1006,6 @@ def test_response_callback():
     assert_reset()
 
 
-@pytest.mark.skipif(six.PY2, reason="re.compile works differntly in PY2")
 def test_response_filebody():
     """ Adds the possibility to use actual (binary) files as responses """
 
@@ -1621,10 +1609,10 @@ def test_passthru_does_not_persist_across_tests(httpserver):
         responses.add_passthru(re.compile(".*"))
         try:
             response = requests.get("https://example.com")
-        except ConnectionError as err:
-            if "Failed to establish" in str(err):
-                pytest.skip("Cannot resolve DNS for example.com")
-            raise err
+        except ConnectionError as err:  # pragma: no cover
+            if "Failed to establish" in str(err):  # pragma: no cover
+                pytest.skip("Cannot resolve DNS for example.com")  # pragma: no cover
+            raise err  # pragma: no cover
 
         assert response.status_code == 200
 

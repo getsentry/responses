@@ -839,10 +839,10 @@ The easiest way to validate your code is to run tests via ``tox``.
 Current ``tox`` configuration runs the same checks that are used in
 GitHub Actions CI/CD pipeline.
 
-Please execute following command line from the project root to validate
-you code against:
+Please execute the following command line from the project root to validate
+your code against:
 
-* Unittests in all Python versions that are supported by this project
+* Unit tests in all Python versions that are supported by this project
 * Type validation via ``mypy``
 * All ``pre-commit`` hooks
 
@@ -852,7 +852,7 @@ you code against:
 
 Alternatively, you can always run a single test. See documentation below.
 
-Unittests
+Unit tests
 """""""""
 
 Responses uses `Pytest <https://docs.pytest.org/en/latest/>`_ for
@@ -861,8 +861,9 @@ testing. You can run all tests by:
 .. code-block:: shell
 
     tox -e py37
+    tox -e py310
 
-OR
+OR manually activate required version of Python and run
 
 .. code-block:: shell
 

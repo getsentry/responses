@@ -78,10 +78,6 @@ def json_params_matcher(params):
     return _json_params_matcher(params)
 
 
-def _is_string(s):
-    return isinstance(s, str)
-
-
 def _has_unicode(s):
     return any(ord(char) > 128 for char in s)
 
@@ -106,10 +102,6 @@ def _clean_unicode(url):
             chars[i] = quote(x)
 
     return "".join(chars)
-
-
-def _ensure_str(s):
-    return s
 
 
 def _cookies_from_headers(headers):
@@ -190,7 +182,7 @@ class CallList(Sequence, Sized):
 
 
 def _ensure_url_default_path(url):
-    if _is_string(url):
+    if isinstance(url, str):
         url_parts = list(urlsplit(url))
         if url_parts[2] == "":
             url_parts[2] = "/"
@@ -298,7 +290,7 @@ class BaseResponse(object):
         return bool(urlparse(self.url).query)
 
     def _url_matches(self, url, other):
-        if _is_string(url):
+        if isinstance(url, str):
             if _has_unicode(url):
                 url = _clean_unicode(url)
 

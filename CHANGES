@@ -2,6 +2,8 @@
 ------
 
 * Dropped support of Python 2.7, 3.5, 3.6
+* Removed internal `_is_string` and `_ensure_str` functions
+* Removed internal `_quote` from `test_responses.py`
 
 0.17.0
 ------

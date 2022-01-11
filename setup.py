@@ -26,7 +26,7 @@ install_requires = [
 
 tests_require = [
     "pytest>=4.6",
-    "coverage >= 3.7.1",
+    "coverage >= 6.0.0",
     "pytest-cov",
     "pytest-localserver",
     "flake8",

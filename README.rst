@@ -214,11 +214,6 @@ Matching JSON encoded data can be done with ``matchers.json_params_matcher()``.
         )
 
 
-If your application uses other encodings you can build your own matcher that
-returns ``True`` or ``False`` if the request parameters match. Your matcher can
-expect a ``request`` parameter to be provided by responses.
-
-
 Query Parameters Matcher
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -283,9 +278,14 @@ query parameters in your request
     my_func()
 
 
+Request Keyword Arguments Matcher
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 To validate request arguments use the ``matchers.request_kwargs_matcher`` function to match
 against the request kwargs.
-Note, only arguments provided to ``matchers.request_kwargs_matcher`` will be validated
+
+.. note::
+    Only arguments provided to ``matchers.request_kwargs_matcher`` will be validated
 
 .. code-block:: python
 
@@ -307,6 +307,10 @@ Note, only arguments provided to ``matchers.request_kwargs_matcher`` will be val
         requests.get("http://111.com", stream=True)
 
         # >>>  Arguments don't match: {stream: True, verify: True} doesn't match {stream: True, verify: False}
+
+
+Request multipart/form-data Data Validation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To validate request body and headers for ``multipart/form-data`` data you can use
 ``matchers.multipart_matcher``. The ``data``, and ``files`` parameters provided will be compared
@@ -331,6 +335,8 @@ to the request:
     my_func()
     # >>> raises ConnectionError: multipart/form-data doesn't match. Request body differs.
 
+Request Fragment Identifier Validation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To validate request URL fragment identifier you can use ``matchers.fragment_identifier_matcher``.
 The matcher takes fragment string (everything after ``#`` sign) as input for comparison:
@@ -358,8 +364,8 @@ The matcher takes fragment string (everything after ``#`` sign) as input for com
 
     run()
 
-Matching Request Headers
-------------------------
+Request Headers Validation
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When adding responses you can specify matchers to ensure that your code is
 sending the right headers and provide different responses based on the request
@@ -440,6 +446,17 @@ include any additional headers.
 
         resp = session.send(prepped)
         assert resp.text == "hello world"
+
+Creating Custom Matcher
+
+If your application requires other encodings or different data validation you can build
+your own matcher that returns ``Tuple[matches: bool, reason: str]``.
+Where boolean represents ``True`` or ``False`` if the request parameters match and
+the string is a reason in case of match failure. Your matcher can
+expect a ``PreparedRequest`` parameter to be provided by ``responses``.
+
+.. note::
+    ``PreparedRequest`` is customized and has additional attributes ``params`` and ``req_kwargs``.
 
 Response Registry
 ---------------------------

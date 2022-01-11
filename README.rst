@@ -224,9 +224,8 @@ You can use the ``matchers.query_param_matcher`` function to match
 against the ``params`` request parameter. Just use the same dictionary as you
 will use in ``params`` argument in ``request``.
 
-.. note::
-    Do not use query parameters as part of the URL. Avoid using ``match_querystring``
-    deprecated argument.
+Note, do not use query parameters as part of the URL. Avoid using ``match_querystring``
+deprecated argument.
 
 .. code-block:: python
 
@@ -284,8 +283,7 @@ Request Keyword Arguments Matcher
 To validate request arguments use the ``matchers.request_kwargs_matcher`` function to match
 against the request kwargs.
 
-.. note::
-    Only arguments provided to ``matchers.request_kwargs_matcher`` will be validated
+Note, only arguments provided to ``matchers.request_kwargs_matcher`` will be validated.
 
 .. code-block:: python
 
@@ -457,8 +455,7 @@ Where boolean represents ``True`` or ``False`` if the request parameters match a
 the string is a reason in case of match failure. Your matcher can
 expect a ``PreparedRequest`` parameter to be provided by ``responses``.
 
-.. note::
-    ``PreparedRequest`` is customized and has additional attributes ``params`` and ``req_kwargs``.
+Note, ``PreparedRequest`` is customized and has additional attributes ``params`` and ``req_kwargs``.
 
 Response Registry
 ---------------------------

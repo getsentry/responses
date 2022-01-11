@@ -162,7 +162,7 @@ Matching Request Body Contents
 
 When adding responses for endpoints that are sent request data you can add
 matchers to ensure your code is sending the right parameters and provide
-different responses based on the request body contents. Responses provides
+different responses based on the request body contents. ``responses`` provides
 matchers for JSON and URL-encoded request bodies.
 
 URL-encoded data

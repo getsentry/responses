@@ -218,9 +218,20 @@ If your application uses other encodings you can build your own matcher that
 returns ``True`` or ``False`` if the request parameters match. Your matcher can
 expect a ``request`` parameter to be provided by responses.
 
-Similarly, you can use the ``matchers.query_param_matcher`` function to match
-against the ``params`` request parameter.
-Note, you must set ``match_querystring=False``
+
+Query Parameters Matcher
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Query Parameters as a Dictionary
+""""""""""""""""""""""""""""""""
+
+You can use the ``matchers.query_param_matcher`` function to match
+against the ``params`` request parameter. Just use the same dictionary as you
+will use in ``params`` argument in ``request``.
+
+.. note::
+    Do not use query parameters as part of the URL. Avoid using ``match_querystring``
+    deprecated argument.
 
 .. code-block:: python
 
@@ -248,7 +259,11 @@ Note, you must set ``match_querystring=False``
         assert resp.request.params == params
 
 
-As alternative, you can use query string value in ``matchers.query_string_matcher``
+Query Parameters as a String
+""""""""""""""""""""""""""""
+
+As alternative, you can use query string value in ``matchers.query_string_matcher`` to match
+query parameters in your request
 
 .. code-block:: python
 
@@ -266,6 +281,7 @@ As alternative, you can use query string value in ``matchers.query_string_matche
         resp = requests.get("https://httpbin.org/get", params={"test": 1, "didi": "pro"})
 
     my_func()
+
 
 To validate request arguments use the ``matchers.request_kwargs_matcher`` function to match
 against the request kwargs.

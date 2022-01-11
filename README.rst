@@ -447,7 +447,9 @@ include any additional headers.
         resp = session.send(prepped)
         assert resp.text == "hello world"
 
+
 Creating Custom Matcher
+^^^^^^^^^^^^^^^^^^^^^^^
 
 If your application requires other encodings or different data validation you can build
 your own matcher that returns ``Tuple[matches: bool, reason: str]``.

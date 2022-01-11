@@ -157,11 +157,16 @@ match (``list``)
 Matching Requests
 -----------------
 
+Matching Request Body Contents
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 When adding responses for endpoints that are sent request data you can add
 matchers to ensure your code is sending the right parameters and provide
 different responses based on the request body contents. Responses provides
-matchers for JSON and URL-encoded request bodies and you can supply your own for
-other formats.
+matchers for JSON and URL-encoded request bodies.
+
+URL-encoded data
+""""""""""""""""
 
 .. code-block:: python
 
@@ -181,7 +186,34 @@ other formats.
         )
         requests.post("http://calc.com/sum", data={"left": 1, "right": 3})
 
+
+JSON encoded data
+"""""""""""""""""
+
 Matching JSON encoded data can be done with ``matchers.json_params_matcher()``.
+
+.. code-block:: python
+
+    import responses
+    import requests
+    from responses import matchers
+
+    @responses.activate
+    def test_calc_api():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="one",
+            match=[matchers.json_params_matcher({"page": {"name": "first", "type": "json"}})],
+        )
+        resp = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={"Content-Type": "application/json"},
+            json={"page": {"name": "first", "type": "json"}},
+        )
+
+
 If your application uses other encodings you can build your own matcher that
 returns ``True`` or ``False`` if the request parameters match. Your matcher can
 expect a ``request`` parameter to be provided by responses.
@@ -853,7 +885,7 @@ your code against:
 Alternatively, you can always run a single test. See documentation below.
 
 Unit tests
-"""""""""
+""""""""""
 
 Responses uses `Pytest <https://docs.pytest.org/en/latest/>`_ for
 testing. You can run all tests by:

@@ -5,6 +5,8 @@
 * Removed internal `_is_string` and `_ensure_str` functions
 * Removed internal `_quote` from `test_responses.py`
 * Removed internal `_matches` attribute of `RequestsMock` object.
+* Fix issue when Deprecation Warning was raised with default arguments
+  in `responses.add_callback`. See #464
 
 0.17.0
 ------
@@ -14,7 +16,7 @@
 * Fixed issue when `passthru_prefixes` persisted across tests.
   Now `add_passthru` is valid only within a context manager or for a single function and
   cleared on exit
-* Deprecate `match_querystring` argument in `Response`` and `CallbackResponse`.
+* Deprecate `match_querystring` argument in `Response` and `CallbackResponse`.
   Use `responses.matchers.query_param_matcher` or `responses.matchers.query_string_matcher`
 * Added support for non-UTF-8 bytes in `responses.matchers.multipart_matcher`
 * Added `responses.registries`. Now user can create custom registries to

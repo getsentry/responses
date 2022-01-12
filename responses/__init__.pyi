@@ -12,8 +12,11 @@ from typing import (
     List,
     Tuple,
     Union,
-    Iterable
+    Iterable,
+    overload,
+    Type
 )
+
 from io import BufferedReader, BytesIO
 from re import Pattern
 from requests.adapters import HTTPResponse, PreparedRequest
@@ -24,7 +27,6 @@ from urllib.parse import quote as quote
 from urllib3.response import HTTPHeaderDict # type: ignore # Not currently exposed in typestubs.
 
 from .matchers import urlencoded_params_matcher, json_params_matcher
-from .registries import FirstMatchRegistry
 
 
 def _clean_unicode(url: str) -> str: ...
@@ -279,7 +281,19 @@ class _Registered(Protocol):
     def __call__(self) -> List[Response]: ...
 
 
-activate: Any
+class _Activate(Protocol):
+    # see https://github.com/getsentry/responses/pull/469 for more details
+
+    @overload
+    def __call__(self, func: _F = ...) -> _F: ...
+    # use this overload for scenario when 'responses.activate' is used
+
+    @overload
+    def __call__(self, registry: Type[Any] = ...) -> Callable[['_F'], '_F']: ...
+    # use this overload for scenario when 'responses.activate(registry=)' is used
+
+
+activate: _Activate
 add: _Add
 add_callback: _AddCallback
 add_passthru: _AddPassthru

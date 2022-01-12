@@ -592,11 +592,11 @@ def test_callback_match_querystring_default_false():
         assert resp.status_code == status
         assert "foo" in resp.headers
 
-    from _pytest.outcomes import Failed
+    with pytest.warns(None) as record:
+        run()
 
-    with pytest.raises(Failed):
-        with pytest.deprecated_call():
-            run()
+    # check that no deprecation warning was raised
+    assert not record
 
     assert_reset()
 

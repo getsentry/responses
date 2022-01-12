@@ -521,7 +521,6 @@ class RequestsMock(object):
         self.passthru_prefixes = tuple(passthru_prefixes)
         self.target = target
         self._patcher = None
-        self._matches = []
 
     def _get_registry(self):
         return self._registry

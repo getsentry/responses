@@ -22,6 +22,7 @@ from typing_extensions import Literal
 from unittest import mock as std_mock
 from urllib.parse import quote as quote
 from urllib3.response import HTTPHeaderDict # type: ignore # Not currently exposed in typestubs.
+
 from .matchers import urlencoded_params_matcher, json_params_matcher
 from .registries import FirstMatchRegistry
 
@@ -60,6 +61,9 @@ class CallList(Sequence[Call], Sized):
     def __getitem__(self, idx: int) -> Call: ...  # type: ignore [override]
     def add(self, request: PreparedRequest, response: _Body) -> None: ...
     def reset(self) -> None: ...
+
+class FalseBool:
+    def __bool__(self) -> bool: ...
 
 class BaseResponse:
     passthrough: bool = ...
@@ -130,7 +134,7 @@ class CallbackResponse(BaseResponse):
         callback: Callable[[Any], Any],
         stream: bool = ...,
         content_type: Optional[str] = ...,
-        match_querystring: bool = ...,
+        match_querystring: Union[bool, FalseBool] = ...,
         match: MatcherIterable = ...,
     ) -> None: ...
     def get_response(  # type: ignore [override]

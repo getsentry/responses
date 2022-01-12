@@ -16,6 +16,7 @@ from typing import (
     overload,
     Type
 )
+
 from io import BufferedReader, BytesIO
 from re import Pattern
 from requests.adapters import HTTPResponse, PreparedRequest
@@ -277,11 +278,15 @@ class _Registered(Protocol):
 
 
 class _Activate(Protocol):
+    # see https://github.com/getsentry/responses/pull/469 for more details
+
     @overload
     def __call__(self, func: _F = ...) -> _F: ...
+    # use this overload for scenario when 'responses.activate' is used
 
     @overload
     def __call__(self, registry: Type[Any] = ...) -> Callable[['_F'], '_F']: ...
+    # use this overload for scenario when 'responses.activate(registry=)' is used
 
 
 activate: _Activate

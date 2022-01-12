@@ -12,7 +12,9 @@ from typing import (
     List,
     Tuple,
     Union,
-    Iterable
+    Iterable,
+    overload,
+    Type
 )
 from io import BufferedReader, BytesIO
 from re import Pattern
@@ -23,7 +25,6 @@ from unittest import mock as std_mock
 from urllib.parse import quote as quote
 from urllib3.response import HTTPHeaderDict # type: ignore # Not currently exposed in typestubs.
 from .matchers import urlencoded_params_matcher, json_params_matcher
-from .registries import FirstMatchRegistry
 
 
 def _clean_unicode(url: str) -> str: ...
@@ -275,7 +276,15 @@ class _Registered(Protocol):
     def __call__(self) -> List[Response]: ...
 
 
-activate: Any
+class _Activate(Protocol):
+    @overload
+    def __call__(self, func: _F = ...) -> _F: ...
+
+    @overload
+    def __call__(self, registry: Type[Any] = ...) -> Callable[['_F'], '_F']: ...
+
+
+activate: _Activate
 add: _Add
 add_callback: _AddCallback
 add_passthru: _AddPassthru

@@ -62,6 +62,15 @@ _real_send = HTTPAdapter.send
 logger = logging.getLogger("responses")
 
 
+class FalseBool:
+    # used for backwards compatibility, see
+    # https://github.com/getsentry/responses/issues/464
+    def __bool__(self):
+        return False
+
+    __nonzero__ = __bool__
+
+
 def urlencoded_params_matcher(params):
     warn(
         "Function is deprecated. Use 'from responses.matchers import urlencoded_params_matcher'",
@@ -277,14 +286,15 @@ class BaseResponse(object):
             return False
 
         if match_querystring_argument is not None:
-            warn(
-                (
-                    "Argument 'match_querystring' is deprecated. "
-                    "Use 'responses.matchers.query_param_matcher' or "
-                    "'responses.matchers.query_string_matcher'"
-                ),
-                DeprecationWarning,
-            )
+            if not isinstance(match_querystring_argument, FalseBool):
+                warn(
+                    (
+                        "Argument 'match_querystring' is deprecated. "
+                        "Use 'responses.matchers.query_param_matcher' or "
+                        "'responses.matchers.query_string_matcher'"
+                    ),
+                    DeprecationWarning,
+                )
             return match_querystring_argument
 
         return bool(urlparse(self.url).query)
@@ -659,7 +669,7 @@ class RequestsMock(object):
         method,
         url,
         callback,
-        match_querystring=False,
+        match_querystring=FalseBool(),
         content_type="text/plain",
         match=(),
     ):

@@ -559,9 +559,46 @@ def test_callback():
     assert_reset()
 
 
-def test_callback_deprecated_argument():
+def test_callback_deprecated_stream_argument():
     with pytest.deprecated_call():
         CallbackResponse(responses.GET, "url", lambda x: x, stream=False)
+
+
+def test_callback_deprecated_match_querystring_argument():
+    with pytest.deprecated_call():
+        CallbackResponse(responses.GET, "url", lambda x: x, match_querystring=False)
+
+
+def test_callback_match_querystring_default_false():
+    """
+    Test to ensure that by default 'match_querystring' in 'add_callback' is set to False
+    and does not raise deprecation
+    see: https://github.com/getsentry/responses/issues/464 and related PR
+    """
+    body = b"test callback"
+    status = 200
+    params = {"hello": "world", "I am": "a big test"}
+    headers = {"foo": "bar"}
+    url = "http://example.com/"
+
+    def request_callback(_request):
+        return status, headers, body
+
+    @responses.activate
+    def run():
+        responses.add_callback(responses.GET, url, request_callback, content_type=None)
+        resp = requests.get(url, params=params)
+        assert resp.text == "test callback"
+        assert resp.status_code == status
+        assert "foo" in resp.headers
+
+    from _pytest.outcomes import Failed
+
+    with pytest.raises(Failed):
+        with pytest.deprecated_call():
+            run()
+
+    assert_reset()
 
 
 def test_callback_exception_result():

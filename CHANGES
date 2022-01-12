@@ -6,7 +6,7 @@
 * Removed internal `_quote` from `test_responses.py`
 * Removed internal `_matches` attribute of `RequestsMock` object.
 * Fix issue when Deprecation Warning was raised with default arguments
-  in `responses.add_callback`. See #464
+  in `responses.add_callback` due to `match_querystring`. See #464
 
 0.17.0
 ------

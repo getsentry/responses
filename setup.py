@@ -20,7 +20,7 @@ if "test" in sys.argv:
     setup_requires.append("pytest")
 
 install_requires = [
-    "requests>=2.0",
+    "requests>=2.0,<3.0",
     "urllib3>=1.25.10",
 ]
 

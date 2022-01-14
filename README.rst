@@ -460,12 +460,67 @@ Note, ``PreparedRequest`` is customized and has additional attributes ``params``
 Response Registry
 ---------------------------
 
+Default Registry
+^^^^^^^^^^^^^^^^
+
 By default, ``responses`` will search all registered ``Response`` objects and
 return a match. If only one ``Response`` is registered, the registry is kept unchanged.
 However, if multiple matches are found for the same request, then first match is returned and
 removed from registry.
 
-Such behavior is suitable for most of use cases, but to handle special conditions, you can
+Ordered Registry
+^^^^^^^^^^^^^^^^
+
+In some scenarios it is important to preserve the order of the requests and responses.
+You can use ``registries.OrderedRegistry`` to force all ``Response`` objects to be dependent
+on the insertion order and invocation index.
+In following example we add multiple ``Response`` objects that target the same URL. However,
+you can see, that status code will depend on the invocation order.
+
+
+.. code-block:: python
+
+    @responses.activate(registry=OrderedRegistry)
+    def test_invocation_index():
+        responses.add(
+            responses.GET,
+            "http://twitter.com/api/1/foobar",
+            json={"msg": "not found"},
+            status=404,
+        )
+        responses.add(
+            responses.GET,
+            "http://twitter.com/api/1/foobar",
+            json={"msg": "OK"},
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            "http://twitter.com/api/1/foobar",
+            json={"msg": "OK"},
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            "http://twitter.com/api/1/foobar",
+            json={"msg": "not found"},
+            status=404,
+        )
+
+        resp = requests.get("http://twitter.com/api/1/foobar")
+        assert resp.status_code == 404
+        resp = requests.get("http://twitter.com/api/1/foobar")
+        assert resp.status_code == 200
+        resp = requests.get("http://twitter.com/api/1/foobar")
+        assert resp.status_code == 200
+        resp = requests.get("http://twitter.com/api/1/foobar")
+        assert resp.status_code == 404
+
+
+Custom Registry
+^^^^^^^^^^^^^^^
+
+Built-in ``registries`` are suitable for most of use cases, but to handle special conditions, you can
 implement custom registry which must follow interface of ``registries.FirstMatchRegistry``.
 Redefining the ``find`` method will allow you to create custom search logic and return
 appropriate ``Response``

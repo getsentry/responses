@@ -145,7 +145,7 @@ class TestOrderedRegistry:
             msg = str(excinfo.value)
             assert (
                 "- GET http://twitter.com/api/1/barfoo Next 'Response' in the "
-                "order doesn't match due to following reason: URL does not match"
+                "order doesn't match due to the following reason: URL does not match"
             ) in msg
 
         run()

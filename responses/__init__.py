@@ -130,7 +130,7 @@ def get_wrapped(func, responses, registry=None):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             with responses:
-                return func(*args, **kwargs)
+                return await func(*args, **kwargs)
 
     else:
 

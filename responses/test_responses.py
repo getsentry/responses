@@ -1925,3 +1925,19 @@ def test_requests_between_add():
 
     run()
     assert_reset()
+
+
+@responses.activate
+async def test_async_calls():
+    responses.add(
+        responses.GET,
+        "http://twitter.com/api/1/foobar",
+        json={"error": "not found"},
+        status=404,
+    )
+    print(("#" * 20 + "\n") * 10)
+
+    resp = requests.get("http://twitter.com/api/1/foobar")
+
+    assert resp.json() == {"error": "not found"}
+    assert responses.calls[0].request.url == "http://twitter.com/api/1/foobar"

@@ -28,6 +28,7 @@ tests_require = [
     "pytest>=4.6",
     "coverage >= 6.0.0",
     "pytest-cov",
+    "pytest-asyncio",
     "pytest-localserver",
     "flake8",
     "types-mock",

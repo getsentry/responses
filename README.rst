@@ -18,7 +18,7 @@ A utility library for mocking out the ``requests`` Python library.
 
 
 Table of Contents
-----------
+-----------------
 
 .. contents::
 

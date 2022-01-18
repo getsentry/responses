@@ -1,15 +1,30 @@
+from typing import (
+    TYPE_CHECKING,
+    List,
+    Optional,
+    Tuple,
+)
+
+if TYPE_CHECKING:  # pragma: no cover
+    # import only for linter run
+    from requests import PreparedRequest
+    from responses import BaseResponse
+
+
 class FirstMatchRegistry(object):
-    def __init__(self):
-        self._responses = []
+    def __init__(self) -> None:
+        self._responses: List["BaseResponse"] = []
 
     @property
-    def registered(self):
+    def registered(self) -> List["BaseResponse"]:
         return self._responses
 
-    def reset(self):
+    def reset(self) -> None:
         self._responses = []
 
-    def find(self, request):
+    def find(
+        self, request: "PreparedRequest"
+    ) -> Tuple[Optional["BaseResponse"], List[str]]:
         found = None
         found_match = None
         match_failed_reasons = []
@@ -31,14 +46,14 @@ class FirstMatchRegistry(object):
                 match_failed_reasons.append(reason)
         return found_match, match_failed_reasons
 
-    def add(self, response):
+    def add(self, response: "BaseResponse") -> None:
         self.registered.append(response)
 
-    def remove(self, response):
+    def remove(self, response: "BaseResponse") -> None:
         while response in self.registered:
             self.registered.remove(response)
 
-    def replace(self, response):
+    def replace(self, response: "BaseResponse") -> None:
         try:
             index = self.registered.index(response)
         except ValueError:

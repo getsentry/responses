@@ -80,36 +80,32 @@ class TestOrderedRegistry:
             responses.add(
                 responses.GET,
                 "http://twitter.com/api/1/foobar",
-                json={"msg": "not found"},
-                status=404,
+                status=666,
             )
             responses.add(
                 responses.GET,
                 "http://twitter.com/api/1/foobar",
-                json={"msg": "OK"},
-                status=200,
+                status=667,
             )
             responses.add(
                 responses.GET,
                 "http://twitter.com/api/1/foobar",
-                json={"msg": "OK"},
-                status=200,
+                status=668,
             )
             responses.add(
                 responses.GET,
                 "http://twitter.com/api/1/foobar",
-                json={"msg": "not found"},
-                status=404,
+                status=669,
             )
 
             resp = requests.get("http://twitter.com/api/1/foobar")
-            assert resp.status_code == 404
+            assert resp.status_code == 666
             resp = requests.get("http://twitter.com/api/1/foobar")
-            assert resp.status_code == 200
+            assert resp.status_code == 667
             resp = requests.get("http://twitter.com/api/1/foobar")
-            assert resp.status_code == 200
+            assert resp.status_code == 668
             resp = requests.get("http://twitter.com/api/1/foobar")
-            assert resp.status_code == 404
+            assert resp.status_code == 669
 
         run()
         assert_reset()
@@ -121,7 +117,7 @@ class TestOrderedRegistry:
                 responses.GET,
                 "http://twitter.com/api/1/foobar",
                 json={"msg": "not found"},
-                status=404,
+                status=667,
             )
             responses.add(
                 responses.GET,
@@ -137,7 +133,7 @@ class TestOrderedRegistry:
             )
 
             resp = requests.get("http://twitter.com/api/1/foobar")
-            assert resp.status_code == 404
+            assert resp.status_code == 667
 
             with pytest.raises(ConnectionError) as excinfo:
                 requests.get("http://twitter.com/api/1/foobar")

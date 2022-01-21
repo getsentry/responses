@@ -1,6 +1,7 @@
 0.19.0
 ------
 
+* Expose `get_registry()` method of `RequestsMock` object. Replaces internal `_get_registry()`.
 * Added support for `async/await` functions.
 
 0.18.0
@@ -14,7 +15,6 @@
 * Generated decorator wrapper now uses stdlib features instead of strings and exec
 * Fix issue when Deprecation Warning was raised with default arguments
   in `responses.add_callback` due to `match_querystring`. See #464
-* Expose `get_registry()` method of `RequestsMock` object.
 
 0.17.0
 ------

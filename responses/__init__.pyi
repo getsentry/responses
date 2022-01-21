@@ -168,6 +168,7 @@ class RequestsMock:
     passthru_prefixes: Tuple[Union[str, Pattern[str]], ...] = ...
     target: Any = ...
     _matches: List[Any]
+    _registry: Any
     def __init__(
         self,
         assert_all_requests_are_fired: bool = ...,

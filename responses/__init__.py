@@ -1,12 +1,9 @@
-from __future__ import absolute_import, print_function, division, unicode_literals
-
-import _io
 from http import client
 from http import cookies
 import json as json_module
 import logging
-import re
 from itertools import groupby
+from re import Pattern
 
 
 from collections import namedtuple
@@ -45,18 +42,14 @@ from urllib.parse import (
     quote,
 )
 
-from io import BytesIO as BufferIO
+from io import BytesIO
+from io import BufferedReader
 
 from unittest import mock as std_mock
 
-
-Pattern = re.Pattern
-
-UNSET = object()
-
 Call = namedtuple("Call", ["request", "response"])
-
 _real_send = HTTPAdapter.send
+_UNSET = object()
 
 logger = logging.getLogger("responses")
 
@@ -172,10 +165,10 @@ def _get_url_and_path(url):
 def _handle_body(body):
     if isinstance(body, str):
         body = body.encode("utf-8")
-    if isinstance(body, _io.BufferedReader):
+    if isinstance(body, BufferedReader):
         return body
 
-    data = BufferIO(body)
+    data = BytesIO(body)
 
     def is_closed():
         """
@@ -210,7 +203,6 @@ class BaseResponse(object):
     passthrough = False
     content_type = None
     headers = None
-
     stream = False
 
     def __init__(self, method, url, match_querystring=None, match=()):
@@ -318,7 +310,7 @@ class Response(BaseResponse):
         status=200,
         headers=None,
         stream=None,
-        content_type=UNSET,
+        content_type=_UNSET,
         auto_calculate_content_length=False,
         **kwargs
     ):
@@ -327,10 +319,10 @@ class Response(BaseResponse):
         if json is not None:
             assert not body
             body = json_module.dumps(json)
-            if content_type is UNSET:
+            if content_type is _UNSET:
                 content_type = "application/json"
 
-        if content_type is UNSET:
+        if content_type is _UNSET:
             if isinstance(body, str) and _has_unicode(body):
                 content_type = "text/plain; charset=utf-8"
             else:
@@ -349,7 +341,7 @@ class Response(BaseResponse):
         self.stream = stream
         self.content_type = content_type
         self.auto_calculate_content_length = auto_calculate_content_length
-        super(Response, self).__init__(method, url, **kwargs)
+        super().__init__(method, url, **kwargs)
 
     def get_response(self, request):
         if self.body and isinstance(self.body, Exception):
@@ -361,7 +353,7 @@ class Response(BaseResponse):
 
         if (
             self.auto_calculate_content_length
-            and isinstance(body, BufferIO)
+            and isinstance(body, BytesIO)
             and "Content-Length" not in headers
         ):
             content_length = len(body.getvalue())
@@ -401,7 +393,7 @@ class CallbackResponse(BaseResponse):
             )
         self.stream = stream
         self.content_type = content_type
-        super(CallbackResponse, self).__init__(method, url, **kwargs)
+        super().__init__(method, url, **kwargs)
 
     def get_response(self, request):
         headers = self.get_headers()
@@ -570,6 +562,7 @@ class RequestsMock(object):
 
         Regex can be used like:
 
+        >>> import re
         >>> responses.add_passthru(re.compile('https://example.com/\\w+'))
         """
         if not isinstance(prefix, Pattern) and _has_unicode(prefix):
@@ -604,7 +597,6 @@ class RequestsMock(object):
         >>> responses.replace(responses.GET, 'http://example.org', json={'data': 2})
         """
         if isinstance(method_or_response, BaseResponse):
-            url = method_or_response.url
             response = method_or_response
         else:
             response = Response(method=method_or_response, url=url, body=body, **kwargs)
@@ -635,8 +627,6 @@ class RequestsMock(object):
         content_type="text/plain",
         match=(),
     ):
-        # ensure the url has a default path set if the url is a string
-        # url = _ensure_url_default_path(url, match_querystring)
 
         self._registry.add(
             CallbackResponse(
@@ -670,8 +660,8 @@ class RequestsMock(object):
         if func is not None:
             return get_wrapped(func, self)
 
-        def deco_activate(func):
-            return get_wrapped(func, self, registry)
+        def deco_activate(function):
+            return get_wrapped(function, self, registry)
 
         return deco_activate
 
@@ -744,7 +734,7 @@ class RequestsMock(object):
             except BaseException as response:
                 match.call_count += 1
                 self._calls.add(request, response)
-                response = resp_callback(response) if resp_callback else response
+                resp_callback(response) if resp_callback else response
                 raise
 
         response = resp_callback(response) if resp_callback else response

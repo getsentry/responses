@@ -1,3 +1,4 @@
+import copy
 from typing import (
     TYPE_CHECKING,
     List,
@@ -47,6 +48,11 @@ class FirstMatchRegistry(object):
         return found_match, match_failed_reasons
 
     def add(self, response: "BaseResponse") -> None:
+        if response in self.registered:
+            # if user adds multiple responses that reference the same instance
+            # see https://github.com/getsentry/responses/issues/479
+            response = copy.deepcopy(response)
+
         self.registered.append(response)
 
     def remove(self, response: "BaseResponse") -> None:

@@ -1925,3 +1925,46 @@ def test_requests_between_add():
 
     run()
     assert_reset()
+
+
+def test_responses_reuse():
+    @responses.activate
+    def run():
+        url = "https://someapi.com/"
+        fail_response = responses.Response(
+            method="GET", url=url, body="fail", status=500
+        )
+        responses.add(responses.GET, url, "success", status=200)
+        responses.add(fail_response)
+        responses.add(fail_response)
+        responses.add(fail_response)
+        responses.add(responses.GET, url, "success", status=200)
+        responses.add(responses.GET, url, "", status=302)
+
+        response = requests.get(url)
+        assert response.content == b"success"
+
+        for _ in range(3):
+            response = requests.get(url)
+            assert response.content == b"fail"
+
+    run()
+    assert_reset()
+
+
+async def test_async_calls():
+    @responses.activate
+    async def run():
+        responses.add(
+            responses.GET,
+            "http://twitter.com/api/1/foobar",
+            json={"error": "not found"},
+            status=404,
+        )
+
+        resp = requests.get("http://twitter.com/api/1/foobar")
+        assert resp.json() == {"error": "not found"}
+        assert responses.calls[0].request.url == "http://twitter.com/api/1/foobar"
+
+    await run()
+    assert_reset()

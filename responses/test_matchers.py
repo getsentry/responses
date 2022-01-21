@@ -87,6 +87,23 @@ def test_request_matches_post_params():
     assert_reset()
 
 
+def test_query_params_numbers():
+    @responses.activate
+    def run():
+        expected_query_params = {"float": 5.0, "int": 2}
+        responses.add(
+            responses.GET,
+            "https://example.com/",
+            match=[
+                matchers.query_param_matcher(expected_query_params),
+            ],
+        )
+        requests.get("https://example.com", params=expected_query_params)
+
+    run()
+    assert_reset()
+
+
 def test_request_matches_empty_body():
     def run():
         with responses.RequestsMock(assert_all_requests_are_fired=True) as rsps:

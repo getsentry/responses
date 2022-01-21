@@ -1,3 +1,8 @@
+0.19.0
+------
+
+* Added support for `async/await` functions.
+
 0.18.0
 ------
 

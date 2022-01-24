@@ -1950,3 +1950,21 @@ def test_responses_reuse():
 
     run()
     assert_reset()
+
+
+async def test_async_calls():
+    @responses.activate
+    async def run():
+        responses.add(
+            responses.GET,
+            "http://twitter.com/api/1/foobar",
+            json={"error": "not found"},
+            status=404,
+        )
+
+        resp = requests.get("http://twitter.com/api/1/foobar")
+        assert resp.json() == {"error": "not found"}
+        assert responses.calls[0].request.url == "http://twitter.com/api/1/foobar"
+
+    await run()
+    assert_reset()

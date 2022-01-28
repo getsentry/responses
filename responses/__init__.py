@@ -742,7 +742,6 @@ class RequestsMock(object):
             response.request = request
 
             self._calls.add(request, response)
-            response = resp_callback(response) if resp_callback else response
             raise response
 
         if match.passthrough:

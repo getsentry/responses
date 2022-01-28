@@ -504,7 +504,7 @@ class RequestsMock(object):
         self.target = target
         self._patcher = None
 
-    def _get_registry(self):
+    def get_registry(self):
         return self._registry
 
     def _set_registry(self, new_registry):

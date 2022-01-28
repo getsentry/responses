@@ -1,4 +1,6 @@
 from http import client
+
+import inspect
 from http import cookies
 import json as json_module
 import logging
@@ -117,10 +119,19 @@ def get_wrapped(func, responses, registry=None):
     if registry is not None:
         responses._set_registry(registry)
 
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        with responses:
-            return func(*args, **kwargs)
+    if inspect.iscoroutinefunction(func):
+        # set asynchronous wrapper if requestor function is asynchronous
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            with responses:
+                return await func(*args, **kwargs)
+
+    else:
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            with responses:
+                return func(*args, **kwargs)
 
     return wrapper
 
@@ -486,7 +497,7 @@ class RequestsMock(object):
         self.target = target
         self._patcher = None
 
-    def _get_registry(self):
+    def get_registry(self):
         return self._registry
 
     def _set_registry(self, new_registry):

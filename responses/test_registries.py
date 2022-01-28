@@ -28,12 +28,12 @@ def test_set_registry():
 
     @responses.activate(registry=CustomRegistry)
     def run_with_registry():
-        assert type(responses.mock._get_registry()) == CustomRegistry
+        assert type(responses.mock.get_registry()) == CustomRegistry
 
     @responses.activate
     def run():
         # test that registry does not leak to another test
-        assert type(responses.mock._get_registry()) == registries.FirstMatchRegistry
+        assert type(responses.mock.get_registry()) == registries.FirstMatchRegistry
 
     run_with_registry()
     run()
@@ -48,8 +48,8 @@ def test_set_registry_context_manager():
         with responses.RequestsMock(
             assert_all_requests_are_fired=False, registry=CustomRegistry
         ) as rsps:
-            assert type(rsps._get_registry()) == CustomRegistry
-            assert type(responses.mock._get_registry()) == registries.FirstMatchRegistry
+            assert type(rsps.get_registry()) == CustomRegistry
+            assert type(responses.mock.get_registry()) == registries.FirstMatchRegistry
 
     run()
     assert_reset()
@@ -63,7 +63,7 @@ def test_registry_reset():
         with responses.RequestsMock(
             assert_all_requests_are_fired=False, registry=CustomRegistry
         ) as rsps:
-            rsps._get_registry().reset()
+            rsps.get_registry().reset()
             assert not rsps.registered()
 
     run()

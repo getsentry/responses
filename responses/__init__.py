@@ -754,7 +754,6 @@ class RequestsMock(object):
             except BaseException as response:
                 match.call_count += 1
                 self._calls.add(request, response)
-                response = resp_callback(response) if resp_callback else response
                 raise
 
         response = resp_callback(response) if resp_callback else response

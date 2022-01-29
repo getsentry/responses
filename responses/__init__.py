@@ -1,17 +1,15 @@
-from __future__ import absolute_import, print_function, division, unicode_literals
-
-import _io
 from http import client
-from http import cookies
+
 import inspect
+from http import cookies
 import json as json_module
 import logging
-import re
 from itertools import groupby
+from re import Pattern
 
 
 from collections import namedtuple
-from functools import update_wrapper
+from functools import wraps
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 from requests.utils import cookiejar_from_dict
@@ -46,20 +44,25 @@ from urllib.parse import (
     quote,
 )
 
-from io import BytesIO as BufferIO
+from io import BytesIO
+from io import BufferedReader
 
 from unittest import mock as std_mock
 
-
-Pattern = re.Pattern
-
-UNSET = object()
-
 Call = namedtuple("Call", ["request", "response"])
-
 _real_send = HTTPAdapter.send
+_UNSET = object()
 
 logger = logging.getLogger("responses")
+
+
+class FalseBool:
+    # used for backwards compatibility, see
+    # https://github.com/getsentry/responses/issues/464
+    def __bool__(self):
+        return False
+
+    __nonzero__ = __bool__
 
 
 def urlencoded_params_matcher(params):
@@ -76,10 +79,6 @@ def json_params_matcher(params):
         DeprecationWarning,
     )
     return _json_params_matcher(params)
-
-
-def _is_string(s):
-    return isinstance(s, str)
 
 
 def _has_unicode(s):
@@ -108,10 +107,6 @@ def _clean_unicode(url):
     return "".join(chars)
 
 
-def _ensure_str(s):
-    return s
-
-
 def _cookies_from_headers(headers):
     resp_cookie = cookies.SimpleCookie()
     resp_cookie.load(headers["set-cookie"])
@@ -120,52 +115,24 @@ def _cookies_from_headers(headers):
     return cookiejar_from_dict(cookies_dict)
 
 
-_wrapper_template = """\
-def wrapper%(wrapper_args)s:
-    with responses:
-        return func%(func_args)s
-"""
-
-
 def get_wrapped(func, responses, registry=None):
-    signature = inspect.signature(func)
-    signature = signature.replace(return_annotation=inspect.Signature.empty)
-    # If the function is wrapped, switch to *args, **kwargs for the parameters
-    # as we can't rely on the signature to give us the arguments the function will
-    # be called with. For example unittest.mock.patch uses required args that are
-    # not actually passed to the function when invoked.
-    if hasattr(func, "__wrapped__"):
-        wrapper_params = [
-            inspect.Parameter("args", inspect.Parameter.VAR_POSITIONAL),
-            inspect.Parameter("kwargs", inspect.Parameter.VAR_KEYWORD),
-        ]
-    else:
-        wrapper_params = [
-            param.replace(annotation=inspect.Parameter.empty)
-            for param in signature.parameters.values()
-        ]
-    signature = signature.replace(parameters=wrapper_params)
-
-    wrapper_args = str(signature)
-    params_without_defaults = [
-        param.replace(
-            annotation=inspect.Parameter.empty, default=inspect.Parameter.empty
-        )
-        for param in signature.parameters.values()
-    ]
-    signature = signature.replace(parameters=params_without_defaults)
-    func_args = str(signature)
-
     if registry is not None:
         responses._set_registry(registry)
 
-    evaldict = {"func": func, "responses": responses}
-    exec(
-        _wrapper_template % {"wrapper_args": wrapper_args, "func_args": func_args},
-        evaldict,
-    )
-    wrapper = evaldict["wrapper"]
-    update_wrapper(wrapper, func)
+    if inspect.iscoroutinefunction(func):
+        # set asynchronous wrapper if requestor function is asynchronous
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            with responses:
+                return await func(*args, **kwargs)
+
+    else:
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            with responses:
+                return func(*args, **kwargs)
+
     return wrapper
 
 
@@ -190,7 +157,7 @@ class CallList(Sequence, Sized):
 
 
 def _ensure_url_default_path(url):
-    if _is_string(url):
+    if isinstance(url, str):
         url_parts = list(urlsplit(url))
         if url_parts[2] == "":
             url_parts[2] = "/"
@@ -209,10 +176,10 @@ def _get_url_and_path(url):
 def _handle_body(body):
     if isinstance(body, str):
         body = body.encode("utf-8")
-    if isinstance(body, _io.BufferedReader):
+    if isinstance(body, BufferedReader):
         return body
 
-    data = BufferIO(body)
+    data = BytesIO(body)
 
     def is_closed():
         """
@@ -247,7 +214,6 @@ class BaseResponse(object):
     passthrough = False
     content_type = None
     headers = None
-
     stream = False
 
     def __init__(self, method, url, match_querystring=None, match=()):
@@ -285,20 +251,21 @@ class BaseResponse(object):
             return False
 
         if match_querystring_argument is not None:
-            warn(
-                (
-                    "Argument 'match_querystring' is deprecated. "
-                    "Use 'responses.matchers.query_param_matcher' or "
-                    "'responses.matchers.query_string_matcher'"
-                ),
-                DeprecationWarning,
-            )
+            if not isinstance(match_querystring_argument, FalseBool):
+                warn(
+                    (
+                        "Argument 'match_querystring' is deprecated. "
+                        "Use 'responses.matchers.query_param_matcher' or "
+                        "'responses.matchers.query_string_matcher'"
+                    ),
+                    DeprecationWarning,
+                )
             return match_querystring_argument
 
         return bool(urlparse(self.url).query)
 
     def _url_matches(self, url, other):
-        if _is_string(url):
+        if isinstance(url, str):
             if _has_unicode(url):
                 url = _clean_unicode(url)
 
@@ -354,7 +321,7 @@ class Response(BaseResponse):
         status=200,
         headers=None,
         stream=None,
-        content_type=UNSET,
+        content_type=_UNSET,
         auto_calculate_content_length=False,
         **kwargs
     ):
@@ -363,10 +330,10 @@ class Response(BaseResponse):
         if json is not None:
             assert not body
             body = json_module.dumps(json)
-            if content_type is UNSET:
+            if content_type is _UNSET:
                 content_type = "application/json"
 
-        if content_type is UNSET:
+        if content_type is _UNSET:
             if isinstance(body, str) and _has_unicode(body):
                 content_type = "text/plain; charset=utf-8"
             else:
@@ -385,7 +352,7 @@ class Response(BaseResponse):
         self.stream = stream
         self.content_type = content_type
         self.auto_calculate_content_length = auto_calculate_content_length
-        super(Response, self).__init__(method, url, **kwargs)
+        super().__init__(method, url, **kwargs)
 
     def get_response(self, request):
         if self.body and isinstance(self.body, Exception):
@@ -397,7 +364,7 @@ class Response(BaseResponse):
 
         if (
             self.auto_calculate_content_length
-            and isinstance(body, BufferIO)
+            and isinstance(body, BytesIO)
             and "Content-Length" not in headers
         ):
             content_length = len(body.getvalue())
@@ -437,7 +404,7 @@ class CallbackResponse(BaseResponse):
             )
         self.stream = stream
         self.content_type = content_type
-        super(CallbackResponse, self).__init__(method, url, **kwargs)
+        super().__init__(method, url, **kwargs)
 
     def get_response(self, request):
         headers = self.get_headers()
@@ -529,9 +496,8 @@ class RequestsMock(object):
         self.passthru_prefixes = tuple(passthru_prefixes)
         self.target = target
         self._patcher = None
-        self._matches = []
 
-    def _get_registry(self):
+    def get_registry(self):
         return self._registry
 
     def _set_registry(self, new_registry):
@@ -607,6 +573,7 @@ class RequestsMock(object):
 
         Regex can be used like:
 
+        >>> import re
         >>> responses.add_passthru(re.compile('https://example.com/\\w+'))
         """
         if not isinstance(prefix, Pattern) and _has_unicode(prefix):
@@ -641,7 +608,6 @@ class RequestsMock(object):
         >>> responses.replace(responses.GET, 'http://example.org', json={'data': 2})
         """
         if isinstance(method_or_response, BaseResponse):
-            url = method_or_response.url
             response = method_or_response
         else:
             response = Response(method=method_or_response, url=url, body=body, **kwargs)
@@ -668,12 +634,10 @@ class RequestsMock(object):
         method,
         url,
         callback,
-        match_querystring=False,
+        match_querystring=FalseBool(),
         content_type="text/plain",
         match=(),
     ):
-        # ensure the url has a default path set if the url is a string
-        # url = _ensure_url_default_path(url, match_querystring)
 
         self._registry.add(
             CallbackResponse(
@@ -707,8 +671,8 @@ class RequestsMock(object):
         if func is not None:
             return get_wrapped(func, self)
 
-        def deco_activate(func):
-            return get_wrapped(func, self, registry)
+        def deco_activate(function):
+            return get_wrapped(function, self, registry)
 
         return deco_activate
 

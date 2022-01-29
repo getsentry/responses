@@ -17,7 +17,6 @@ from responses import (
     PassthroughResponse,
     matchers,
     CallbackResponse,
-    registries,
 )
 
 
@@ -559,9 +558,46 @@ def test_callback():
     assert_reset()
 
 
-def test_callback_deprecated_argument():
+def test_callback_deprecated_stream_argument():
     with pytest.deprecated_call():
         CallbackResponse(responses.GET, "url", lambda x: x, stream=False)
+
+
+def test_callback_deprecated_match_querystring_argument():
+    with pytest.deprecated_call():
+        CallbackResponse(responses.GET, "url", lambda x: x, match_querystring=False)
+
+
+def test_callback_match_querystring_default_false():
+    """
+    Test to ensure that by default 'match_querystring' in 'add_callback' is set to False
+    and does not raise deprecation
+    see: https://github.com/getsentry/responses/issues/464 and related PR
+    """
+    body = b"test callback"
+    status = 200
+    params = {"hello": "world", "I am": "a big test"}
+    headers = {"foo": "bar"}
+    url = "http://example.com/"
+
+    def request_callback(_request):
+        return status, headers, body
+
+    @responses.activate
+    def run():
+        responses.add_callback(responses.GET, url, request_callback, content_type=None)
+        resp = requests.get(url, params=params)
+        assert resp.text == "test callback"
+        assert resp.status_code == status
+        assert "foo" in resp.headers
+
+    with pytest.warns(None) as record:
+        run()
+
+    # check that no deprecation warning was raised
+    assert not record
+
+    assert_reset()
 
 
 def test_callback_exception_result():
@@ -1663,13 +1699,9 @@ def test_custom_target(monkeypatch):
     assert patch_mock.call_args[1]["target"] == "something.else"
 
 
-def _quote(s):
-    return responses.quote(responses._ensure_str(s))
-
-
 def test_cookies_from_headers():
     text = "こんにちは/世界"
-    quoted_text = _quote(text)
+    quoted_text = responses.quote(text)
     expected = {"x": "a", "y": quoted_text}
     headers = {"set-cookie": "; ".join(k + "=" + v for k, v in expected.items())}
     cookiejar = responses._cookies_from_headers(headers)
@@ -1877,71 +1909,6 @@ def test_rfc_compliance(url, other_url):
     assert_reset()
 
 
-def test_set_registry_not_empty():
-    class CustomRegistry(registries.FirstMatchRegistry):
-        pass
-
-    @responses.activate
-    def run():
-        url = "http://fizzbuzz/foo"
-        responses.add(method=responses.GET, url=url)
-        with pytest.raises(AttributeError) as excinfo:
-            responses.mock._set_registry(CustomRegistry)
-        msg = str(excinfo.value)
-        assert "Cannot replace Registry, current registry has responses" in msg
-
-    run()
-    assert_reset()
-
-
-def test_set_registry():
-    class CustomRegistry(registries.FirstMatchRegistry):
-        pass
-
-    @responses.activate(registry=CustomRegistry)
-    def run_with_registry():
-        assert type(responses.mock._get_registry()) == CustomRegistry
-
-    @responses.activate
-    def run():
-        # test that registry does not leak to another test
-        assert type(responses.mock._get_registry()) == registries.FirstMatchRegistry
-
-    run_with_registry()
-    run()
-    assert_reset()
-
-
-def test_set_registry_context_manager():
-    def run():
-        class CustomRegistry(registries.FirstMatchRegistry):
-            pass
-
-        with responses.RequestsMock(
-            assert_all_requests_are_fired=False, registry=CustomRegistry
-        ) as rsps:
-            assert type(rsps._get_registry()) == CustomRegistry
-            assert type(responses.mock._get_registry()) == registries.FirstMatchRegistry
-
-    run()
-    assert_reset()
-
-
-def test_registry_reset():
-    def run():
-        class CustomRegistry(registries.FirstMatchRegistry):
-            pass
-
-        with responses.RequestsMock(
-            assert_all_requests_are_fired=False, registry=CustomRegistry
-        ) as rsps:
-            rsps._get_registry().reset()
-            assert not rsps.registered()
-
-    run()
-    assert_reset()
-
-
 def test_requests_between_add():
     @responses.activate
     def run():
@@ -1957,4 +1924,47 @@ def test_requests_between_add():
         assert requests.get("https://example.com/").content == b'{"response": "new"}'
 
     run()
+    assert_reset()
+
+
+def test_responses_reuse():
+    @responses.activate
+    def run():
+        url = "https://someapi.com/"
+        fail_response = responses.Response(
+            method="GET", url=url, body="fail", status=500
+        )
+        responses.add(responses.GET, url, "success", status=200)
+        responses.add(fail_response)
+        responses.add(fail_response)
+        responses.add(fail_response)
+        responses.add(responses.GET, url, "success", status=200)
+        responses.add(responses.GET, url, "", status=302)
+
+        response = requests.get(url)
+        assert response.content == b"success"
+
+        for _ in range(3):
+            response = requests.get(url)
+            assert response.content == b"fail"
+
+    run()
+    assert_reset()
+
+
+async def test_async_calls():
+    @responses.activate
+    async def run():
+        responses.add(
+            responses.GET,
+            "http://twitter.com/api/1/foobar",
+            json={"error": "not found"},
+            status=404,
+        )
+
+        resp = requests.get("http://twitter.com/api/1/foobar")
+        assert resp.json() == {"error": "not found"}
+        assert responses.calls[0].request.url == "http://twitter.com/api/1/foobar"
+
+    await run()
     assert_reset()

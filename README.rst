@@ -18,7 +18,7 @@ A utility library for mocking out the ``requests`` Python library.
 
 
 Table of Contents
-----------
+-----------------
 
 .. contents::
 
@@ -157,11 +157,16 @@ match (``list``)
 Matching Requests
 -----------------
 
+Matching Request Body Contents
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 When adding responses for endpoints that are sent request data you can add
 matchers to ensure your code is sending the right parameters and provide
-different responses based on the request body contents. Responses provides
-matchers for JSON and URL-encoded request bodies and you can supply your own for
-other formats.
+different responses based on the request body contents. ``responses`` provides
+matchers for JSON and URL-encoded request bodies.
+
+URL-encoded data
+""""""""""""""""
 
 .. code-block:: python
 
@@ -181,14 +186,46 @@ other formats.
         )
         requests.post("http://calc.com/sum", data={"left": 1, "right": 3})
 
-Matching JSON encoded data can be done with ``matchers.json_params_matcher()``.
-If your application uses other encodings you can build your own matcher that
-returns ``True`` or ``False`` if the request parameters match. Your matcher can
-expect a ``request`` parameter to be provided by responses.
 
-Similarly, you can use the ``matchers.query_param_matcher`` function to match
-against the ``params`` request parameter.
-Note, you must set ``match_querystring=False``
+JSON encoded data
+"""""""""""""""""
+
+Matching JSON encoded data can be done with ``matchers.json_params_matcher()``.
+
+.. code-block:: python
+
+    import responses
+    import requests
+    from responses import matchers
+
+    @responses.activate
+    def test_calc_api():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="one",
+            match=[matchers.json_params_matcher({"page": {"name": "first", "type": "json"}})],
+        )
+        resp = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={"Content-Type": "application/json"},
+            json={"page": {"name": "first", "type": "json"}},
+        )
+
+
+Query Parameters Matcher
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Query Parameters as a Dictionary
+""""""""""""""""""""""""""""""""
+
+You can use the ``matchers.query_param_matcher`` function to match
+against the ``params`` request parameter. Just use the same dictionary as you
+will use in ``params`` argument in ``request``.
+
+Note, do not use query parameters as part of the URL. Avoid using ``match_querystring``
+deprecated argument.
 
 .. code-block:: python
 
@@ -216,7 +253,11 @@ Note, you must set ``match_querystring=False``
         assert resp.request.params == params
 
 
-As alternative, you can use query string value in ``matchers.query_string_matcher``
+Query Parameters as a String
+""""""""""""""""""""""""""""
+
+As alternative, you can use query string value in ``matchers.query_string_matcher`` to match
+query parameters in your request
 
 .. code-block:: python
 
@@ -235,9 +276,14 @@ As alternative, you can use query string value in ``matchers.query_string_matche
 
     my_func()
 
+
+Request Keyword Arguments Matcher
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 To validate request arguments use the ``matchers.request_kwargs_matcher`` function to match
 against the request kwargs.
-Note, only arguments provided to ``matchers.request_kwargs_matcher`` will be validated
+
+Note, only arguments provided to ``matchers.request_kwargs_matcher`` will be validated.
 
 .. code-block:: python
 
@@ -259,6 +305,10 @@ Note, only arguments provided to ``matchers.request_kwargs_matcher`` will be val
         requests.get("http://111.com", stream=True)
 
         # >>>  Arguments don't match: {stream: True, verify: True} doesn't match {stream: True, verify: False}
+
+
+Request multipart/form-data Data Validation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To validate request body and headers for ``multipart/form-data`` data you can use
 ``matchers.multipart_matcher``. The ``data``, and ``files`` parameters provided will be compared
@@ -283,6 +333,8 @@ to the request:
     my_func()
     # >>> raises ConnectionError: multipart/form-data doesn't match. Request body differs.
 
+Request Fragment Identifier Validation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To validate request URL fragment identifier you can use ``matchers.fragment_identifier_matcher``.
 The matcher takes fragment string (everything after ``#`` sign) as input for comparison:
@@ -310,8 +362,8 @@ The matcher takes fragment string (everything after ``#`` sign) as input for com
 
     run()
 
-Matching Request Headers
-------------------------
+Request Headers Validation
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When adding responses you can specify matchers to ensure that your code is
 sending the right headers and provide different responses based on the request
@@ -393,6 +445,18 @@ include any additional headers.
         resp = session.send(prepped)
         assert resp.text == "hello world"
 
+
+Creating Custom Matcher
+^^^^^^^^^^^^^^^^^^^^^^^
+
+If your application requires other encodings or different data validation you can build
+your own matcher that returns ``Tuple[matches: bool, reason: str]``.
+Where boolean represents ``True`` or ``False`` if the request parameters match and
+the string is a reason in case of match failure. Your matcher can
+expect a ``PreparedRequest`` parameter to be provided by ``responses``.
+
+Note, ``PreparedRequest`` is customized and has additional attributes ``params`` and ``req_kwargs``.
+
 Response Registry
 ---------------------------
 
@@ -418,20 +482,26 @@ Example that shows how to set custom registry
         pass
 
 
+    print("Before tests:", responses.mock.get_registry())
     """ Before tests: <responses.registries.FirstMatchRegistry object> """
 
     # using function decorator
     @responses.activate(registry=CustomRegistry)
     def run():
+        print("Within test:", responses.mock.get_registry())
         """ Within test: <__main__.CustomRegistry object> """
 
     run()
+
+    print("After test:", responses.mock.get_registry())
     """ After test: <responses.registries.FirstMatchRegistry object> """
 
     # using context manager
     with responses.RequestsMock(registry=CustomRegistry) as rsps:
+        print("In context manager:", rsps.get_registry())
         """ In context manager: <__main__.CustomRegistry object> """
 
+    print("After exit from context manager:", responses.mock.get_registry())
     """
     After exit from context manager: <responses.registries.FirstMatchRegistry object>
     """
@@ -853,7 +923,7 @@ your code against:
 Alternatively, you can always run a single test. See documentation below.
 
 Unit tests
-"""""""""
+""""""""""
 
 Responses uses `Pytest <https://docs.pytest.org/en/latest/>`_ for
 testing. You can run all tests by:

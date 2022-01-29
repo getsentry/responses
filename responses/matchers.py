@@ -136,6 +136,10 @@ def query_param_matcher(params: Optional[Dict[str, str]]) -> Callable[..., Any]:
     :return: (func) matcher
     """
 
+    for k, v in params.items():
+        if isinstance(v, (int, float)):
+            params[k] = str(v)
+
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         request_params = request.params  # type: ignore[attr-defined]

@@ -22,7 +22,7 @@ repos:
     hooks:
       - id: isort
         name: isort (python)
-        args: ['-sl', '--profile', 'black']
+        args: ['--force-single-line-imports', '--profile', 'black']
       - id: isort
         name: isort (pyi)
         types: [ pyi ]

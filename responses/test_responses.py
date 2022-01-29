@@ -1,7 +1,5 @@
 # coding: utf-8
 
-from __future__ import absolute_import, print_function, division, unicode_literals
-
 import inspect
 import os
 import re
@@ -19,11 +17,7 @@ from responses import (
     CallbackResponse,
 )
 
-
-try:
-    from mock import patch, Mock
-except ImportError:
-    from unittest.mock import patch, Mock  # type: ignore
+from unittest.mock import patch, Mock
 
 
 def assert_reset():
@@ -797,7 +791,7 @@ def test_custom_adapter():
         class DummyAdapter(requests.adapters.HTTPAdapter):
             def send(self, *a, **k):
                 calls[0] += 1
-                return super(DummyAdapter, self).send(*a, **k)
+                return super().send(*a, **k)
 
         # Test that the adapter is actually used
         session = requests.Session()
@@ -1314,6 +1308,26 @@ def test_legacy_adding_headers():
         )
         resp = requests.get("http://example.com")
         assert resp.headers["X-Test"] == "foo"
+
+    run()
+    assert_reset()
+
+
+def test_legacy_adding_headers_with_content_type():
+    @responses.activate
+    def run():
+        with pytest.raises(RuntimeError) as excinfo:
+            responses.add(
+                responses.GET,
+                "http://example.com",
+                body="test",
+                content_type="text/html",
+                adding_headers={"Content-Type": "text/html; charset=utf-8"},
+            )
+        assert (
+            "You cannot define both `content_type` and `headers[Content-Type]`"
+            in str(excinfo.value)
+        )
 
     run()
     assert_reset()

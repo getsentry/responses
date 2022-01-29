@@ -537,20 +537,26 @@ Example that shows how to set custom registry
         pass
 
 
+    print("Before tests:", responses.mock.get_registry())
     """ Before tests: <responses.registries.FirstMatchRegistry object> """
 
     # using function decorator
     @responses.activate(registry=CustomRegistry)
     def run():
+        print("Within test:", responses.mock.get_registry())
         """ Within test: <__main__.CustomRegistry object> """
 
     run()
+
+    print("After test:", responses.mock.get_registry())
     """ After test: <responses.registries.FirstMatchRegistry object> """
 
     # using context manager
     with responses.RequestsMock(registry=CustomRegistry) as rsps:
+        print("In context manager:", rsps.get_registry())
         """ In context manager: <__main__.CustomRegistry object> """
 
+    print("After exit from context manager:", responses.mock.get_registry())
     """
     After exit from context manager: <responses.registries.FirstMatchRegistry object>
     """

@@ -25,9 +25,9 @@ from requests.adapters import HTTPResponse
 from requests.adapters import PreparedRequest
 from requests.cookies import RequestsCookieJar
 from typing_extensions import Literal
-from urllib3.response import (
-    HTTPHeaderDict,  # type: ignore # Not currently exposed in typestubs.
-)
+
+# Not currently exposed in typestubs, thus, ignore
+from urllib3.response import HTTPHeaderDict  # type: ignore
 
 from .matchers import json_params_matcher
 from .matchers import urlencoded_params_matcher

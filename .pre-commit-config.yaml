@@ -26,4 +26,4 @@ repos:
       - id: isort
         name: isort (pyi)
         types: [ pyi ]
-        args: ['-sl', '--profile', 'black']
+        args: ['--force-single-line-imports', '--profile', 'black']

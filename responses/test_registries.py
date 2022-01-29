@@ -1,11 +1,11 @@
 import pytest
 import requests
+from requests.exceptions import ConnectionError
 
 import responses
 from responses import registries
 from responses.registries import OrderedRegistry
 from responses.test_responses import assert_reset
-from requests.exceptions import ConnectionError
 
 
 def test_set_registry_not_empty():

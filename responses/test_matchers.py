@@ -1,7 +1,8 @@
 import pytest
 import requests
-import responses
 from requests.exceptions import ConnectionError
+
+import responses
 from responses import matchers
 
 

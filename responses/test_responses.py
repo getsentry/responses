@@ -3,21 +3,23 @@
 import inspect
 import os
 import re
-from io import BufferedReader, BytesIO
+from io import BufferedReader
+from io import BytesIO
+from unittest.mock import Mock
+from unittest.mock import patch
 
 import pytest
 import requests
-import responses
-from requests.exceptions import ConnectionError, HTTPError, ChunkedEncodingError
-from responses import (
-    BaseResponse,
-    Response,
-    PassthroughResponse,
-    matchers,
-    CallbackResponse,
-)
+from requests.exceptions import ChunkedEncodingError
+from requests.exceptions import ConnectionError
+from requests.exceptions import HTTPError
 
-from unittest.mock import patch, Mock
+import responses
+from responses import BaseResponse
+from responses import CallbackResponse
+from responses import PassthroughResponse
+from responses import Response
+from responses import matchers
 
 
 def assert_reset():

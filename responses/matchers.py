@@ -128,7 +128,7 @@ def fragment_identifier_matcher(identifier: Optional[str]) -> Callable[..., Any]
     return match
 
 
-def query_param_matcher(params: Optional[Dict[str, str]]) -> Callable[..., Any]:
+def query_param_matcher(params: Optional[Dict[str, Any]]) -> Callable[..., Any]:
     """
     Matcher to match 'params' argument in request
 
@@ -136,15 +136,16 @@ def query_param_matcher(params: Optional[Dict[str, str]]) -> Callable[..., Any]:
     :return: (func) matcher
     """
 
-    for k, v in params.items():
+    params_dict = params or {}
+
+    for k, v in params_dict.items():
         if isinstance(v, (int, float)):
-            params[k] = str(v)
+            params_dict[k] = str(v)
 
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         request_params = request.params  # type: ignore[attr-defined]
         request_params_dict = request_params or {}
-        params_dict = params or {}
         valid = (
             params is None
             if request_params is None

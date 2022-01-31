@@ -3,7 +3,7 @@
 
 * Expose `get_registry()` method of `RequestsMock` object. Replaces internal `_get_registry()`.
 * Added support for `async/await` functions.
-* `response_callback` is not executed on failed `Response`s
+* `response_callback` is no longer executed on exceptions raised by failed `Response`s
 
 0.18.0
 ------

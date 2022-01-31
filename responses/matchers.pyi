@@ -19,7 +19,7 @@ def urlencoded_params_matcher(
 ) -> Callable[..., Any]: ...
 
 def query_param_matcher(
-    params: Optional[Dict[str, str]]
+    params: Optional[Dict[str, Any]]
 ) -> Callable[..., Any]: ...
 
 def query_string_matcher(

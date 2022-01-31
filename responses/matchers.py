@@ -132,6 +132,10 @@ def query_param_matcher(params):
     :return: (func) matcher
     """
 
+    for k, v in params.items():
+        if isinstance(v, (int, float)):
+            params[k] = str(v)
+
     def match(request):
         reason = ""
         request_params = request.params

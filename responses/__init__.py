@@ -566,7 +566,7 @@ class RequestsMock(object):
         if adding_headers is not None:
             kwargs.setdefault("headers", adding_headers)
         if "content_type" in kwargs and "headers" in kwargs:
-            header_keys = list(map(lambda x: x.lower(), kwargs["headers"].keys()))
+            header_keys = [header.lower() for header in kwargs["headers"]]
             if "content-type" in header_keys:
                 raise RuntimeError(
                     "You cannot define both `content_type` and `headers[Content-Type]`."

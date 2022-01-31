@@ -565,6 +565,13 @@ class RequestsMock(object):
 
         if adding_headers is not None:
             kwargs.setdefault("headers", adding_headers)
+        if "content_type" in kwargs and "headers" in kwargs:
+            header_keys = list(map(lambda x: x.lower(), kwargs["headers"].keys()))
+            if "content-type" in header_keys:
+                raise RuntimeError(
+                    "You cannot define both `content_type` and `headers[Content-Type]`."
+                    " Using the `content_type` kwarg is recommended."
+                )
 
         self._registry.add(Response(method=method, url=url, body=body, **kwargs))
 

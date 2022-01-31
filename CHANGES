@@ -3,6 +3,7 @@
 
 * Expose `get_registry()` method of `RequestsMock` object. Replaces internal `_get_registry()`.
 * Added support for `async/await` functions.
+* An error is now raised when both `content_type` and `headers[content-type]` are provided as parameters.
 
 0.18.0
 ------

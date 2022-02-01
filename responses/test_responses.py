@@ -1319,6 +1319,26 @@ def test_legacy_adding_headers():
     assert_reset()
 
 
+def test_legacy_adding_headers_with_content_type():
+    @responses.activate
+    def run():
+        with pytest.raises(RuntimeError) as excinfo:
+            responses.add(
+                responses.GET,
+                "http://example.com",
+                body="test",
+                content_type="text/html",
+                adding_headers={"Content-Type": "text/html; charset=utf-8"},
+            )
+        assert (
+            "You cannot define both `content_type` and `headers[Content-Type]`"
+            in str(excinfo.value)
+        )
+
+    run()
+    assert_reset()
+
+
 def test_auto_calculate_content_length_string_body():
     @responses.activate
     def run():

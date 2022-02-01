@@ -4,6 +4,7 @@
 * Expose `get_registry()` method of `RequestsMock` object. Replaces internal `_get_registry()`.
 * `query_param_matcher` can now accept dictionaries with `int` and `float` values.
 * Added support for `async/await` functions.
+* An error is now raised when both `content_type` and `headers[content-type]` are provided as parameters.
 
 0.18.0
 ------

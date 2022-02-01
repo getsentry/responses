@@ -323,7 +323,7 @@ class Response(BaseResponse):
         stream=None,
         content_type=_UNSET,
         auto_calculate_content_length=False,
-        **kwargs
+        **kwargs,
     ):
         # if we were passed a `json` argument,
         # override the body and content_type
@@ -522,7 +522,7 @@ class RequestsMock(object):
         body="",
         adding_headers=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         """
         >>> import responses
@@ -728,8 +728,8 @@ class RequestsMock(object):
                 "Connection refused by Responses - the call doesn't "
                 "match any registered mock.\n\n"
                 "Request: \n"
-                "- %s %s\n\n"
-                "Available matches:\n" % (request.method, request.url)
+                f"- {request.method} {request.url}\n\n"
+                "Available matches:\n"
             )
             for i, m in enumerate(self.registered()):
                 error_msg += "- {} {} {}\n".format(
@@ -793,9 +793,7 @@ class RequestsMock(object):
             return True
         else:
             raise AssertionError(
-                "Expected URL '{0}' to be called {1} times. Called {2} times.".format(
-                    url, count, call_count
-                )
+                f"Expected URL '{url}' to be called {count} times. Called {call_count} times."
             )
 
 

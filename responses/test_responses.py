@@ -1,7 +1,5 @@
 # coding: utf-8
 
-from __future__ import absolute_import, print_function, division, unicode_literals
-
 import inspect
 import os
 import re
@@ -19,11 +17,7 @@ from responses import (
     CallbackResponse,
 )
 
-
-try:
-    from mock import patch, Mock
-except ImportError:
-    from unittest.mock import patch, Mock  # type: ignore
+from unittest.mock import patch, Mock
 
 
 def assert_reset():
@@ -797,7 +791,7 @@ def test_custom_adapter():
         class DummyAdapter(requests.adapters.HTTPAdapter):
             def send(self, *a, **k):
                 calls[0] += 1
-                return super(DummyAdapter, self).send(*a, **k)
+                return super().send(*a, **k)
 
         # Test that the adapter is actually used
         session = requests.Session()

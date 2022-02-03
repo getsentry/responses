@@ -1,8 +1,11 @@
 import pytest
+import requests
 
 import responses
 from responses import registries
+from responses.registries import OrderedRegistry
 from responses.test_responses import assert_reset
+from requests.exceptions import ConnectionError
 
 
 def test_set_registry_not_empty():
@@ -68,3 +71,87 @@ def test_registry_reset():
 
     run()
     assert_reset()
+
+
+class TestOrderedRegistry:
+    def test_invocation_index(self):
+        @responses.activate(registry=OrderedRegistry)
+        def run():
+            responses.add(
+                responses.GET,
+                "http://twitter.com/api/1/foobar",
+                status=666,
+            )
+            responses.add(
+                responses.GET,
+                "http://twitter.com/api/1/foobar",
+                status=667,
+            )
+            responses.add(
+                responses.GET,
+                "http://twitter.com/api/1/foobar",
+                status=668,
+            )
+            responses.add(
+                responses.GET,
+                "http://twitter.com/api/1/foobar",
+                status=669,
+            )
+
+            resp = requests.get("http://twitter.com/api/1/foobar")
+            assert resp.status_code == 666
+            resp = requests.get("http://twitter.com/api/1/foobar")
+            assert resp.status_code == 667
+            resp = requests.get("http://twitter.com/api/1/foobar")
+            assert resp.status_code == 668
+            resp = requests.get("http://twitter.com/api/1/foobar")
+            assert resp.status_code == 669
+
+        run()
+        assert_reset()
+
+    def test_not_match(self):
+        @responses.activate(registry=OrderedRegistry)
+        def run():
+            responses.add(
+                responses.GET,
+                "http://twitter.com/api/1/foobar",
+                json={"msg": "not found"},
+                status=667,
+            )
+            responses.add(
+                responses.GET,
+                "http://twitter.com/api/1/barfoo",
+                json={"msg": "not found"},
+                status=404,
+            )
+            responses.add(
+                responses.GET,
+                "http://twitter.com/api/1/foobar",
+                json={"msg": "OK"},
+                status=200,
+            )
+
+            resp = requests.get("http://twitter.com/api/1/foobar")
+            assert resp.status_code == 667
+
+            with pytest.raises(ConnectionError) as excinfo:
+                requests.get("http://twitter.com/api/1/foobar")
+
+            msg = str(excinfo.value)
+            assert (
+                "- GET http://twitter.com/api/1/barfoo Next 'Response' in the "
+                "order doesn't match due to the following reason: URL does not match"
+            ) in msg
+
+        run()
+        assert_reset()
+
+    def test_empty_registry(self):
+        @responses.activate(registry=OrderedRegistry)
+        def run():
+            with pytest.raises(ConnectionError):
+                requests.get("http://twitter.com/api/1/foobar")
+
+        run()
+        assert_reset()

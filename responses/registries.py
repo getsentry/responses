@@ -67,3 +67,25 @@ class FirstMatchRegistry(object):
                 "Response is not registered for URL {}".format(response.url)
             )
         self.registered[index] = response
+
+
+class OrderedRegistry(FirstMatchRegistry):
+    def find(
+        self, request: "PreparedRequest"
+    ) -> Tuple[Optional["BaseResponse"], List[str]]:
+
+        if not self.registered:
+            return None, ["No more registered responses"]
+
+        response = self.registered.pop(0)
+        match_result, reason = response.matches(request)
+        if not match_result:
+            self.reset()
+            self.add(response)
+            reason = (
+                "Next 'Response' in the order doesn't match "
+                f"due to the following reason: {reason}."
+            )
+            return None, [reason]
+
+        return response, []

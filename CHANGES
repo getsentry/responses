@@ -1,7 +1,7 @@
 0.19.0
 ------
 
-* Added support for the registry depending on the invocation index.
+* Added a registry that provides more strict ordering based on the invocation index.
   See `responses.registries.OrderedRegistry`.
 * Expose `get_registry()` method of `RequestsMock` object. Replaces internal `_get_registry()`.
 * `query_param_matcher` can now accept dictionaries with `int` and `float` values.

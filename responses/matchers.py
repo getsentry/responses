@@ -1,11 +1,17 @@
 import json as json_module
-from typing import Dict, Any, Optional, Callable, Tuple, Union, List
+from json.decoder import JSONDecodeError
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
+from urllib.parse import parse_qsl
+from urllib.parse import urlparse
 
 from requests import PreparedRequest
-from urllib.parse import parse_qsl, urlparse
-
 from requests.packages.urllib3.util.url import parse_url  # type: ignore[import]
-from json.decoder import JSONDecodeError
 
 
 def _create_key_val_str(input_dict: Union[Dict[Any, Any], Any]) -> str:

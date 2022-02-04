@@ -1,25 +1,24 @@
-from http import client
-
 import inspect
-from http import cookies
 import json as json_module
 import logging
+from collections import namedtuple
+from collections.abc import Sequence
+from collections.abc import Sized
+from functools import wraps
+from http import client
+from http import cookies
 from itertools import groupby
 from re import Pattern
+from warnings import warn
 
-
-from collections import namedtuple
-from functools import wraps
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
 from requests.utils import cookiejar_from_dict
+
 from responses.matchers import json_params_matcher as _json_params_matcher
+from responses.matchers import query_string_matcher as _query_string_matcher
 from responses.matchers import urlencoded_params_matcher as _urlencoded_params_matcher
 from responses.registries import FirstMatchRegistry
-from responses.matchers import query_string_matcher as _query_string_matcher
-from warnings import warn
-
-from collections.abc import Sequence, Sized
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -34,20 +33,15 @@ try:
 except ImportError:  # pragma: no cover
     from urllib3.util.url import parse_url  # pragma: no cover
 
-
-from urllib.parse import (
-    urlparse,
-    urlunparse,
-    parse_qsl,
-    urlsplit,
-    urlunsplit,
-    quote,
-)
-
-from io import BytesIO
 from io import BufferedReader
-
+from io import BytesIO
 from unittest import mock as std_mock
+from urllib.parse import parse_qsl
+from urllib.parse import quote
+from urllib.parse import urlparse
+from urllib.parse import urlsplit
+from urllib.parse import urlunparse
+from urllib.parse import urlunsplit
 
 Call = namedtuple("Call", ["request", "response"])
 _real_send = HTTPAdapter.send

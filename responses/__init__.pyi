@@ -1,33 +1,36 @@
-from collections import Sequence, Sized
-from typing import (
-    Any,
-    Callable,
-    Iterator,
-    Mapping,
-    Optional,
-    NamedTuple,
-    Protocol,
-    TypeVar,
-    Dict,
-    List,
-    Tuple,
-    Union,
-    Iterable,
-    overload,
-    Type
-)
-
-from io import BufferedReader, BytesIO
+from collections import Sequence
+from collections import Sized
+from io import BufferedReader
+from io import BytesIO
 from re import Pattern
-from requests.adapters import HTTPResponse, PreparedRequest
-from requests.cookies import RequestsCookieJar
-from typing_extensions import Literal
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Iterable
+from typing import Iterator
+from typing import List
+from typing import Mapping
+from typing import NamedTuple
+from typing import Optional
+from typing import Protocol
+from typing import Tuple
+from typing import Type
+from typing import TypeVar
+from typing import Union
+from typing import overload
 from unittest import mock as std_mock
 from urllib.parse import quote as quote
-from urllib3.response import HTTPHeaderDict # type: ignore # Not currently exposed in typestubs.
 
-from .matchers import urlencoded_params_matcher, json_params_matcher
+from requests.adapters import HTTPResponse
+from requests.adapters import PreparedRequest
+from requests.cookies import RequestsCookieJar
+from typing_extensions import Literal
 
+# Not currently exposed in typestubs, thus, ignore
+from urllib3.response import HTTPHeaderDict  # type: ignore
+
+from .matchers import json_params_matcher
+from .matchers import urlencoded_params_matcher
 
 def _clean_unicode(url: str) -> str: ...
 def _cookies_from_headers(headers: Dict[str, str]) -> RequestsCookieJar: ...

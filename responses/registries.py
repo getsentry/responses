@@ -1,14 +1,13 @@
 import copy
-from typing import (
-    TYPE_CHECKING,
-    List,
-    Optional,
-    Tuple,
-)
+from typing import TYPE_CHECKING
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
     from requests import PreparedRequest
+
     from responses import BaseResponse
 
 

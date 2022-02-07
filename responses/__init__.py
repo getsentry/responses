@@ -51,8 +51,12 @@ logger = logging.getLogger("responses")
 
 
 class FalseBool:
-    # used for backwards compatibility, see
-    # https://github.com/getsentry/responses/issues/464
+    """Class to mock up built-in False boolean.
+
+    Used for backwards compatibility, see
+    https://github.com/getsentry/responses/issues/464
+    """
+
     def __bool__(self):
         return False
 
@@ -80,7 +84,21 @@ def _has_unicode(s):
 
 
 def _clean_unicode(url):
-    # Clean up domain names, which use punycode to handle unicode chars
+    """Clean up URLs, which use punycode to handle unicode chars.
+
+    Applies percent encoding to URL path and query if required.
+
+    Parameters
+    ----------
+    url : str
+        URL that should be cleaned from unicode
+
+    Returns
+    -------
+    str
+        Cleaned URL
+
+    """
     urllist = list(urlsplit(url))
     netloc = urllist[1]
     if _has_unicode(netloc):
@@ -102,6 +120,21 @@ def _clean_unicode(url):
 
 
 def _cookies_from_headers(headers):
+    """Create Cookies from request Headers.
+
+    Converts ``set-cookie`` headers to real cookies.
+
+    Parameters
+    ----------
+    headers : dict
+        Request headers.
+
+    Returns
+    -------
+    CookieJar
+        CookieJar request object.
+
+    """
     resp_cookie = cookies.SimpleCookie()
     resp_cookie.load(headers["set-cookie"])
     cookies_dict = {name: v.value for name, v in resp_cookie.items()}
@@ -110,6 +143,26 @@ def _cookies_from_headers(headers):
 
 
 def get_wrapped(func, responses, registry=None):
+    """Wrap provided function inside ``responses`` context manager.
+
+    Provides a synchronous or asynchronous wrapper for the function.
+
+
+    Parameters
+    ----------
+    func : Callable
+        Function to wrap.
+    responses : RequestsMock
+        Mock object that is used as context manager.
+    registry : FirstMatchRegistry, optional
+        Custom registry that should be applied. See ``responses.registries``
+
+    Returns
+    -------
+    Callable
+        Wrapped function
+
+    """
     if registry is not None:
         responses._set_registry(registry)
 

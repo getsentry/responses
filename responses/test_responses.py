@@ -3,6 +3,7 @@
 import inspect
 import os
 import re
+import warnings
 from io import BufferedReader
 from io import BytesIO
 from unittest.mock import Mock
@@ -587,11 +588,9 @@ def test_callback_match_querystring_default_false():
         assert resp.status_code == status
         assert "foo" in resp.headers
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         run()
-
-    # check that no deprecation warning was raised
-    assert not record
 
     assert_reset()
 

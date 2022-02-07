@@ -252,6 +252,9 @@ deprecated argument.
         assert resp.request.url == constructed_url
         assert resp.request.params == params
 
+By default, matcher will validate that all parameters match strictly.
+To validate that only parameters specified in the matcher are present in original request
+use ``strict_match=False``.
 
 Query Parameters as a String
 """"""""""""""""""""""""""""

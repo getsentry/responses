@@ -135,7 +135,7 @@ def fragment_identifier_matcher(identifier: Optional[str]) -> Callable[..., Any]
 
 
 def query_param_matcher(
-    params: Optional[Dict[str, Any]], strict_match: bool = True
+    params: Optional[Dict[str, Any]], *, strict_match: bool = True
 ) -> Callable[..., Any]:
     """Matcher to match 'params' argument in request.
 

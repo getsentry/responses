@@ -1661,14 +1661,14 @@ def test_passthru_does_not_persist_across_tests(httpserver):
     def with_a_passthru():
         assert not responses._default_mock.passthru_prefixes
         responses.add_passthru(re.compile(".*"))
-        try:
-            response = requests.get("https://example.com")
-        except ConnectionError as err:  # pragma: no cover
-            if "Failed to establish" in str(err):  # pragma: no cover
-                pytest.skip("Cannot resolve DNS for example.com")  # pragma: no cover
-            raise err  # pragma: no cover
 
-        assert response.status_code == 200
+        # wrap request that is passed through with another mock. That helps
+        # to avoid issues if real URL is unavailble, allow to run tests offline
+        with responses.RequestsMock(target="responses._real_send") as rsp:
+            rsp.add(responses.GET, "https://example66.ru", status=969)
+            response = requests.get("https://example66.ru")
+
+            assert response.status_code == 969
 
     @responses.activate
     def without_a_passthru():

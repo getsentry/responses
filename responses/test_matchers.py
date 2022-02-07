@@ -103,6 +103,25 @@ def test_query_params_numbers():
     assert_reset()
 
 
+def test_query_param_matcher_loose():
+    @responses.activate
+    def run():
+        expected_query_params = {"only_one_param": "test"}
+        responses.add(
+            responses.GET,
+            "https://example.com/",
+            match=[
+                matchers.query_param_matcher(expected_query_params, strict_match=False),
+            ],
+        )
+        requests.get(
+            "https://example.com", params={"only_one_param": "test", "second": "param"}
+        )
+
+    run()
+    assert_reset()
+
+
 def test_request_matches_empty_body():
     def run():
         with responses.RequestsMock(assert_all_requests_are_fired=True) as rsps:

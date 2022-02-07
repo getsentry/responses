@@ -320,7 +320,6 @@ reset: Callable[[], None]
 response_callback: Callable[[Any], Any]
 start: Callable[[], None]
 stop: Callable[..., None]
-target: Any
 upsert: _Upsert
 
 __all__ = [
@@ -349,6 +348,5 @@ __all__ = [
     "response_callback",
     "start",
     "stop",
-    "target",
     "upsert",
 ]

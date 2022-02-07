@@ -301,7 +301,6 @@ activate: _Activate
 add: _Add
 add_callback: _AddCallback
 add_passthru: _AddPassthru
-assert_all_requests_are_fired: bool
 assert_call_count: Callable[[str, int], bool]
 calls: CallList
 DELETE: Literal["DELETE"]
@@ -333,7 +332,6 @@ __all__ = [
     "add",
     "add_callback",
     "add_passthru",
-    "assert_all_requests_are_fired",
     "assert_call_count",
     "calls",
     "DELETE",

@@ -855,7 +855,6 @@ __all__ = [
     "add",
     "add_callback",
     "add_passthru",
-    "assert_all_requests_are_fired",
     "assert_call_count",
     "calls",
     "DELETE",
@@ -873,7 +872,6 @@ __all__ = [
     "response_callback",
     "start",
     "stop",
-    "target",
     "upsert",
 ]
 
@@ -881,7 +879,6 @@ activate = _default_mock.activate
 add = _default_mock.add
 add_callback = _default_mock.add_callback
 add_passthru = _default_mock.add_passthru
-assert_all_requests_are_fired = _default_mock.assert_all_requests_are_fired
 assert_call_count = _default_mock.assert_call_count
 calls = _default_mock.calls
 DELETE = _default_mock.DELETE
@@ -899,5 +896,4 @@ reset = _default_mock.reset
 response_callback = _default_mock.response_callback
 start = _default_mock.start
 stop = _default_mock.stop
-target = _default_mock.target
 upsert = _default_mock.upsert

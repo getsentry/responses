@@ -1,7 +1,6 @@
 Responses
 =========
 
-
 .. image:: https://img.shields.io/pypi/v/responses.svg
     :target: https://pypi.python.org/pypi/responses/
 

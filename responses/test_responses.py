@@ -3,6 +3,7 @@
 import inspect
 import os
 import re
+import warnings
 from io import BufferedReader
 from io import BytesIO
 from unittest.mock import Mock
@@ -587,11 +588,9 @@ def test_callback_match_querystring_default_false():
         assert resp.status_code == status
         assert "foo" in resp.headers
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         run()
-
-    # check that no deprecation warning was raised
-    assert not record
 
     assert_reset()
 
@@ -1662,14 +1661,14 @@ def test_passthru_does_not_persist_across_tests(httpserver):
     def with_a_passthru():
         assert not responses._default_mock.passthru_prefixes
         responses.add_passthru(re.compile(".*"))
-        try:
-            response = requests.get("https://example.com")
-        except ConnectionError as err:  # pragma: no cover
-            if "Failed to establish" in str(err):  # pragma: no cover
-                pytest.skip("Cannot resolve DNS for example.com")  # pragma: no cover
-            raise err  # pragma: no cover
 
-        assert response.status_code == 200
+        # wrap request that is passed through with another mock. That helps
+        # to avoid issues if real URL is unavailable, allow to run tests offline
+        with responses.RequestsMock(target="responses._real_send") as rsp:
+            rsp.add(responses.GET, "https://example66.ru", status=969)
+            response = requests.get("https://example66.ru")
+
+            assert response.status_code == 969
 
     @responses.activate
     def without_a_passthru():

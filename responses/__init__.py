@@ -811,11 +811,13 @@ class RequestsMock(object):
             return self._on_request(adapter, request, *a, **kwargs)
 
         if not self._patcher:
+            # we must not override value of the _patcher if already applied
             self._patcher = std_mock.patch(target=self.target, new=unbound_on_send)
             self._patcher.start()
 
     def stop(self, allow_assert=True):
         if self._patcher:
+            # prevent stopping unstarted patchers
             self._patcher.stop()
 
         if not self.assert_all_requests_are_fired:

@@ -1983,3 +1983,38 @@ async def test_async_calls():
 
     await run()
     assert_reset()
+
+
+class TestMultipleWrappers:
+    """Test to validate that multiple decorators could be applied.
+
+    Ensures that we can call one function that is wrapped with
+    ``responses.activate`` decorator from within another wrapped function.
+
+    Validates that mock patch is not leaked to other tests.
+    For more detail refer to https://github.com/getsentry/responses/issues/481
+    """
+
+    @responses.activate
+    def test_wrapped(self):
+        responses.add(responses.GET, "http://example.com/1", body="Hello 1")
+        assert b"Hello 1" == requests.get("http://example.com/1").content
+
+    @responses.activate
+    def test_call_another_wrapped_function(self):
+        self.test_wrapped()
+
+    def test_mock_not_leaked(self, httpserver):
+        """
+        Validate that ``responses.activate`` does not leak to unpatched test.
+
+        Parameters
+        ----------
+        httpserver : ContentServer
+            Mock real HTTP server
+
+        """
+        httpserver.serve_content("OK", code=969, headers={"Content-Type": "text/plain"})
+
+        response = requests.get(httpserver.url)
+        assert response.status_code == 969

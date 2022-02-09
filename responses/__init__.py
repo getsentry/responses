@@ -561,6 +561,7 @@ class RequestsMock(object):
         self._registry = FirstMatchRegistry()
         self._calls.reset()
         self.passthru_prefixes = ()
+        self._patcher = None
 
     def add(
         self,
@@ -809,11 +810,14 @@ class RequestsMock(object):
         def unbound_on_send(adapter, request, *a, **kwargs):
             return self._on_request(adapter, request, *a, **kwargs)
 
-        self._patcher = std_mock.patch(target=self.target, new=unbound_on_send)
-        self._patcher.start()
+        if not self._patcher:
+            self._patcher = std_mock.patch(target=self.target, new=unbound_on_send)
+            self._patcher.start()
 
     def stop(self, allow_assert=True):
-        self._patcher.stop()
+        if self._patcher:
+            self._patcher.stop()
+
         if not self.assert_all_requests_are_fired:
             return
 

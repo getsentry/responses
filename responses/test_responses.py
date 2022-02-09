@@ -1663,7 +1663,7 @@ def test_passthru_does_not_persist_across_tests(httpserver):
         responses.add_passthru(re.compile(".*"))
 
         # wrap request that is passed through with another mock. That helps
-        # to avoid issues if real URL is unavailble, allow to run tests offline
+        # to avoid issues if real URL is unavailable, allow to run tests offline
         with responses.RequestsMock(target="responses._real_send") as rsp:
             rsp.add(responses.GET, "https://example66.ru", status=969)
             response = requests.get("https://example66.ru")

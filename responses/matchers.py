@@ -181,7 +181,9 @@ def query_param_matcher(
                 _create_key_val_str(params_dict),
             )
             if not strict_match:
-                reason += "\nNote that you use not strict parameters check."
+                reason += (
+                    "\nYou can use `strict_match=True` to do a strict parameters check."
+                )
 
         return valid, reason
 

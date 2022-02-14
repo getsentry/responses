@@ -142,7 +142,7 @@ def test_query_param_matcher_loose_fail():
         assert (
             "- GET https://example.com/ Parameters do not match. {} doesn't"
             " match {does_not_exist: test}\n"
-            "Note that you use not strict parameters check."
+            "You can use `strict_match=True` to do a strict parameters check."
         ) in str(exc.value)
 
     run()

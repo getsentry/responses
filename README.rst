@@ -7,6 +7,9 @@ Responses
 .. image:: https://img.shields.io/pypi/pyversions/responses.svg
     :target: https://pypi.org/project/responses/
 
+.. image:: https://img.shields.io/pypi/dm/responses
+   :target: https://pypi.python.org/pypi/responses/
+
 .. image:: https://codecov.io/gh/getsentry/responses/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/getsentry/responses/
 

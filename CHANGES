@@ -8,9 +8,9 @@
 * Added support for `async/await` functions.
 * `response_callback` is no longer executed on exceptions raised by failed `Response`s
 * An error is now raised when both `content_type` and `headers[content-type]` are provided as parameters.
-* Removed `responses.target` and `responses.assert_all_requests_are_fired` since they are not
-  actual properties of the class instance. Use `responses.mock.target` and
-  `responses.mock.assert_all_requests_are_fired` instead.
+* Deprecate `responses.target`, `responses.passthru_prefixes`, `responses.assert_all_requests_are_fired`
+  since they are not actual properties of the class instance. Use `responses.mock.target`,
+  `responses.mock.assert_all_requests_are_fired` and `responses.mock.passthru_prefixes` instead.
 
 
 0.18.0

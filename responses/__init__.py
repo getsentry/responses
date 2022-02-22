@@ -786,7 +786,7 @@ class RequestsMock(object):
             if self.passthru_prefixes:
                 error_msg += "Passthru prefixes:\n"
                 for p in self.passthru_prefixes:
-                    error_msg += "{}\n".format(p)
+                    error_msg += "- {}\n".format(p)
 
             response = ConnectionError(error_msg)
             response.request = request

@@ -1158,6 +1158,28 @@ def test_allow_redirects_samehost():
     assert_reset()
 
 
+def test_path_segments():
+    """Test that path segment after ``;`` is preserved.
+
+    Validate compliance with RFC 3986.
+    The path is terminated by the first question mark ("?") or
+    number sign ("#") character, or by the end of the URI.
+    See more about how path should be treated under:
+    https://datatracker.ietf.org/doc/html/rfc3986.html#section-3.3
+    """
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com/here/we", status=669)
+        responses.add(responses.GET, "http://example.com/here/we;go", status=777)
+
+        resp = requests.get("http://example.com/here/we;go")
+        assert resp.status_code == 777
+
+    run()
+    assert_reset()
+
+
 def test_handles_unicode_querystring():
     url = "http://example.com/test?type=2&ie=utf8&query=汉字"
 

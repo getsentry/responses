@@ -625,6 +625,9 @@ class RequestsMock(object):
     def head(self, *args, **kwargs):
         self.add(HEAD, *args, **kwargs)
 
+    def options(self, *args, **kwargs):
+        self.add(OPTIONS, *args, **kwargs)
+
     def patch(self, *args, **kwargs):
         self.add(PATCH, *args, **kwargs)
 
@@ -890,6 +893,7 @@ __all__ = [
     "GET",
     "head",
     "HEAD",
+    "options",
     "OPTIONS",
     "passthru_prefixes",
     "patch",
@@ -922,6 +926,7 @@ get = _default_mock.get
 GET = _default_mock.GET
 head = _default_mock.head
 HEAD = _default_mock.HEAD
+options = _default_mock.options
 OPTIONS = _default_mock.OPTIONS
 passthru_prefixes = _default_mock.passthru_prefixes
 patch = _default_mock.patch

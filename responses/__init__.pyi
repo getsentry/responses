@@ -226,6 +226,22 @@ class _Add(Protocol):
         match: MatcherIterable = ...,
     ) -> None: ...
 
+class _Shortcut(Protocol):
+    def __call__(
+        self,
+        url: Optional[Union[Pattern[str], str]] = ...,
+        body: _Body = ...,
+        json: Optional[Any] = ...,
+        status: int = ...,
+        headers: HeaderSet = ...,
+        stream: bool = ...,
+        content_type: Optional[str] = ...,
+        auto_calculate_content_length: bool = ...,
+        adding_headers: HeaderSet = ...,
+        match_querystring: bool = ...,
+        match: MatcherIterable = ...,
+    ) -> None: ...
+
 class _AddCallback(Protocol):
     def __call__(
         self,
@@ -304,15 +320,22 @@ add_passthru: _AddPassthru
 assert_all_requests_are_fired: bool
 assert_call_count: Callable[[str, int], bool]
 calls: CallList
+delete: _Shortcut
 DELETE: Literal["DELETE"]
+get: _Shortcut
 GET: Literal["GET"]
+head: _Shortcut
 HEAD: Literal["HEAD"]
 mock: RequestsMock
 _default_mock: RequestsMock
+options: _Shortcut
 OPTIONS: Literal["OPTIONS"]
 passthru_prefixes: Tuple[str, ...]
+patch: _Shortcut
 PATCH: Literal["PATCH"]
+post: _Shortcut
 POST: Literal["POST"]
+put: _Shortcut
 PUT: Literal["PUT"]
 registered: _Registered
 remove: _Remove
@@ -336,13 +359,20 @@ __all__ = [
     "assert_all_requests_are_fired",
     "assert_call_count",
     "calls",
+    "delete",
     "DELETE",
+    "get",
     "GET",
+    "head",
     "HEAD",
+    "options",
     "OPTIONS",
     "passthru_prefixes",
+    "patch",
     "PATCH",
+    "post",
     "POST",
+    "put",
     "PUT",
     "registered",
     "remove",

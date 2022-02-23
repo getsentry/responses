@@ -10,6 +10,9 @@
 * Add support for the `loose` version of `query_param_matcher` via named argument `strict_match`.
 * Added support for `async/await` functions.
 * `response_callback` is no longer executed on exceptions raised by failed `Response`s
+* Change logic of `_get_url_and_path` to comply with RFC 3986. Now URL match occurs by matching
+  schema, authority and path, where path is terminated by the first question mark ("?") or
+  number sign ("#") character, or by the end of the URI.
 * An error is now raised when both `content_type` and `headers[content-type]` are provided as parameters.
 
 

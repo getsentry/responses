@@ -3,6 +3,9 @@
 
 * Added a registry that provides more strict ordering based on the invocation index.
   See `responses.registries.OrderedRegistry`.
+* Added shortcuts for each request method: delete, get, head, options, patch, post, put.
+  For example, to add response for POST request you can use `responses.post()` instead
+  of `responses.add(responses.POST)`.
 * Prevent `responses.activate` decorator to leak, if wrapped function called from within another
   wrapped function. Also, allow calling of above mentioned chain. See #481 for more details.
 * Expose `get_registry()` method of `RequestsMock` object. Replaces internal `_get_registry()`.

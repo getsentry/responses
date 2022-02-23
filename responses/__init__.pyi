@@ -185,6 +185,13 @@ class RequestsMock:
         ...
     def reset(self) -> None: ...
     add: _Add
+    delete: _Shortcut
+    get: _Shortcut
+    head: _Shortcut
+    options: _Shortcut
+    patch: _Shortcut
+    post: _Shortcut
+    put: _Shortcut
     add_passthru: _AddPassthru
     def remove(
         self,

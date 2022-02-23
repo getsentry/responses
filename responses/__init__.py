@@ -616,6 +616,24 @@ class RequestsMock(object):
 
         self._registry.add(Response(method=method, url=url, body=body, **kwargs))
 
+    def delete(self, *args, **kwargs):
+        self.add(DELETE, *args, **kwargs)
+
+    def get(self, *args, **kwargs):
+        self.add(GET, *args, **kwargs)
+
+    def head(self, *args, **kwargs):
+        self.add(HEAD, *args, **kwargs)
+
+    def patch(self, *args, **kwargs):
+        self.add(PATCH, *args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        self.add(POST, *args, **kwargs)
+
+    def put(self, *args, **kwargs):
+        self.add(PUT, *args, **kwargs)
+
     def add_passthru(self, prefix):
         """
         Register a URL prefix or regex to passthru any non-matching mock requests to.
@@ -866,13 +884,19 @@ __all__ = [
     "assert_all_requests_are_fired",
     "assert_call_count",
     "calls",
+    "delete",
     "DELETE",
+    "get",
     "GET",
+    "head",
     "HEAD",
     "OPTIONS",
     "passthru_prefixes",
+    "patch",
     "PATCH",
+    "post",
     "POST",
+    "put",
     "PUT",
     "registered",
     "remove",
@@ -892,13 +916,19 @@ add_passthru = _default_mock.add_passthru
 assert_all_requests_are_fired = _default_mock.assert_all_requests_are_fired
 assert_call_count = _default_mock.assert_call_count
 calls = _default_mock.calls
+delete = _default_mock.delete
 DELETE = _default_mock.DELETE
+get = _default_mock.get
 GET = _default_mock.GET
+head = _default_mock.head
 HEAD = _default_mock.HEAD
 OPTIONS = _default_mock.OPTIONS
 passthru_prefixes = _default_mock.passthru_prefixes
+patch = _default_mock.patch
 PATCH = _default_mock.PATCH
+post = _default_mock.post
 POST = _default_mock.POST
+put = _default_mock.put
 PUT = _default_mock.PUT
 registered = _default_mock.registered
 remove = _default_mock.remove

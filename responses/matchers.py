@@ -134,12 +134,26 @@ def fragment_identifier_matcher(identifier: Optional[str]) -> Callable[..., Any]
     return match
 
 
-def query_param_matcher(params: Optional[Dict[str, Any]]) -> Callable[..., Any]:
-    """
-    Matcher to match 'params' argument in request
+def query_param_matcher(
+    params: Optional[Dict[str, Any]], *, strict_match: bool = True
+) -> Callable[..., Any]:
+    """Matcher to match 'params' argument in request.
 
-    :param params: (dict), same as provided to request
-    :return: (func) matcher
+    Parameters
+    ----------
+    params : dict
+        The same as provided to request or a part of it if used in
+        conjunction with ``strict_match=False``.
+    strict_match : bool, default=True
+        If set to ``True``, validates that all parameters match.
+        If set to ``False``, original request may contain additional parameters.
+
+
+    Returns
+    -------
+    Callable
+        Matcher function.
+
     """
 
     params_dict = params or {}
@@ -152,17 +166,24 @@ def query_param_matcher(params: Optional[Dict[str, Any]]) -> Callable[..., Any]:
         reason = ""
         request_params = request.params  # type: ignore[attr-defined]
         request_params_dict = request_params or {}
-        valid = (
-            params is None
-            if request_params is None
-            else params_dict == request_params_dict
-        )
+
+        if not strict_match:
+            # filter down to just the params specified in the matcher
+            request_params_dict = {
+                k: v for k, v in request_params_dict.items() if k in params_dict
+            }
+
+        valid = sorted(params_dict.items()) == sorted(request_params_dict.items())
 
         if not valid:
             reason = "Parameters do not match. {} doesn't match {}".format(
                 _create_key_val_str(request_params_dict),
                 _create_key_val_str(params_dict),
             )
+            if not strict_match:
+                reason += (
+                    "\nYou can use `strict_match=True` to do a strict parameters check."
+                )
 
         return valid, reason
 

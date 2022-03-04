@@ -38,7 +38,6 @@ from io import BytesIO
 from unittest import mock as std_mock
 from urllib.parse import parse_qsl
 from urllib.parse import quote
-from urllib.parse import urlparse
 from urllib.parse import urlsplit
 from urllib.parse import urlunparse
 from urllib.parse import urlunsplit
@@ -213,7 +212,7 @@ def _ensure_url_default_path(url):
 
 
 def _get_url_and_path(url):
-    url_parsed = urlparse(url)
+    url_parsed = urlsplit(url)
     url_and_path = urlunparse(
         [url_parsed.scheme, url_parsed.netloc, url_parsed.path, None, None, None]
     )
@@ -269,7 +268,7 @@ class BaseResponse(object):
         self.url = _ensure_url_default_path(url)
 
         if self._should_match_querystring(match_querystring):
-            match = tuple(match) + (_query_string_matcher(urlparse(self.url).query),)
+            match = tuple(match) + (_query_string_matcher(urlsplit(self.url).query),)
 
         self.match = match
         self.call_count = 0
@@ -309,7 +308,7 @@ class BaseResponse(object):
                 )
             return match_querystring_argument
 
-        return bool(urlparse(self.url).query)
+        return bool(urlsplit(self.url).query)
 
     def _url_matches(self, url, other):
         if isinstance(url, str):
@@ -561,6 +560,7 @@ class RequestsMock(object):
         self._registry = FirstMatchRegistry()
         self._calls.reset()
         self.passthru_prefixes = ()
+        self._patcher = None
 
     def add(
         self,
@@ -614,6 +614,27 @@ class RequestsMock(object):
                 )
 
         self._registry.add(Response(method=method, url=url, body=body, **kwargs))
+
+    def delete(self, *args, **kwargs):
+        self.add(DELETE, *args, **kwargs)
+
+    def get(self, *args, **kwargs):
+        self.add(GET, *args, **kwargs)
+
+    def head(self, *args, **kwargs):
+        self.add(HEAD, *args, **kwargs)
+
+    def options(self, *args, **kwargs):
+        self.add(OPTIONS, *args, **kwargs)
+
+    def patch(self, *args, **kwargs):
+        self.add(PATCH, *args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        self.add(POST, *args, **kwargs)
+
+    def put(self, *args, **kwargs):
+        self.add(PUT, *args, **kwargs)
 
     def add_passthru(self, prefix):
         """
@@ -743,7 +764,7 @@ class RequestsMock(object):
 
     def _parse_request_params(self, url):
         params = {}
-        for key, val in groupby(parse_qsl(urlparse(url).query), lambda kv: kv[0]):
+        for key, val in groupby(parse_qsl(urlsplit(url).query), lambda kv: kv[0]):
             values = list(map(lambda x: x[1], val))
             if len(values) == 1:
                 values = values[0]
@@ -783,6 +804,11 @@ class RequestsMock(object):
                     m.method, m.url, match_failed_reasons[i]
                 )
 
+            if self.passthru_prefixes:
+                error_msg += "Passthru prefixes:\n"
+                for p in self.passthru_prefixes:
+                    error_msg += "- {}\n".format(p)
+
             response = ConnectionError(error_msg)
             response.request = request
 
@@ -806,6 +832,10 @@ class RequestsMock(object):
         return response
 
     def start(self):
+        if self._patcher:
+            # we must not override value of the _patcher if already applied
+            return
+
         def unbound_on_send(adapter, request, *a, **kwargs):
             return self._on_request(adapter, request, *a, **kwargs)
 
@@ -813,7 +843,10 @@ class RequestsMock(object):
         self._patcher.start()
 
     def stop(self, allow_assert=True):
-        self._patcher.stop()
+        if self._patcher:
+            # prevent stopping unstarted patchers
+            self._patcher.stop()
+
         if not self.assert_all_requests_are_fired:
             return
 
@@ -858,13 +891,20 @@ __all__ = [
     "_deprecated_assert_all_requests_are_fired",
     "assert_call_count",
     "calls",
+    "delete",
     "DELETE",
+    "get",
     "GET",
+    "head",
     "HEAD",
+    "options",
     "OPTIONS",
     "_deprecated_passthru_prefixes",
+    "patch",
     "PATCH",
+    "post",
     "POST",
+    "put",
     "PUT",
     "registered",
     "remove",
@@ -885,13 +925,20 @@ add_passthru = _default_mock.add_passthru
 _deprecated_assert_all_requests_are_fired = _default_mock.assert_all_requests_are_fired
 assert_call_count = _default_mock.assert_call_count
 calls = _default_mock.calls
+delete = _default_mock.delete
 DELETE = _default_mock.DELETE
+get = _default_mock.get
 GET = _default_mock.GET
+head = _default_mock.head
 HEAD = _default_mock.HEAD
+options = _default_mock.options
 OPTIONS = _default_mock.OPTIONS
 _deprecated_passthru_prefixes = _default_mock.passthru_prefixes
+patch = _default_mock.patch
 PATCH = _default_mock.PATCH
+post = _default_mock.post
 POST = _default_mock.POST
+put = _default_mock.put
 PUT = _default_mock.PUT
 registered = _default_mock.registered
 remove = _default_mock.remove

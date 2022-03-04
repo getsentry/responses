@@ -1817,6 +1817,7 @@ def test_fail_request_error():
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
             rsps.add("POST", "http://example1.com")
             rsps.add("GET", "http://example.com")
+            rsps.add_passthru("http://other.example.com")
 
             with pytest.raises(ConnectionError) as excinfo:
                 requests.post("http://example.com", data={"id": "bad"})
@@ -1824,6 +1825,7 @@ def test_fail_request_error():
             msg = str(excinfo.value)
             assert "- POST http://example1.com/ URL does not match" in msg
             assert "- GET http://example.com/ Method does not match" in msg
+            assert "Passthru prefixes:\n- http://other.example.com" in msg
 
     run()
     assert_reset()

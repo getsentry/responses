@@ -784,6 +784,11 @@ class RequestsMock(object):
                     m.method, m.url, match_failed_reasons[i]
                 )
 
+            if self.passthru_prefixes:
+                error_msg += "Passthru prefixes:\n"
+                for p in self.passthru_prefixes:
+                    error_msg += "- {}\n".format(p)
+
             response = ConnectionError(error_msg)
             response.request = request
 

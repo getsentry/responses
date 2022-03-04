@@ -2042,3 +2042,75 @@ class TestMultipleWrappers:
 
         response = requests.get(httpserver.url)
         assert response.status_code == 969
+
+
+class TestShortcuts:
+    def test_delete(self):
+        @responses.activate
+        def run():
+            responses.delete("http://example.com/1", status=888)
+            resp = requests.delete("http://example.com/1")
+            assert resp.status_code == 888
+
+        run()
+        assert_reset()
+
+    def test_get(self):
+        @responses.activate
+        def run():
+            responses.get("http://example.com/1", status=888)
+            resp = requests.get("http://example.com/1")
+            assert resp.status_code == 888
+
+        run()
+        assert_reset()
+
+    def test_head(self):
+        @responses.activate
+        def run():
+            responses.head("http://example.com/1", status=888)
+            resp = requests.head("http://example.com/1")
+            assert resp.status_code == 888
+
+        run()
+        assert_reset()
+
+    def test_options(self):
+        @responses.activate
+        def run():
+            responses.options("http://example.com/1", status=888)
+            resp = requests.options("http://example.com/1")
+            assert resp.status_code == 888
+
+        run()
+        assert_reset()
+
+    def test_patch(self):
+        @responses.activate
+        def run():
+            responses.patch("http://example.com/1", status=888)
+            resp = requests.patch("http://example.com/1")
+            assert resp.status_code == 888
+
+        run()
+        assert_reset()
+
+    def test_post(self):
+        @responses.activate
+        def run():
+            responses.post("http://example.com/1", status=888)
+            resp = requests.post("http://example.com/1")
+            assert resp.status_code == 888
+
+        run()
+        assert_reset()
+
+    def test_put(self):
+        @responses.activate
+        def run():
+            responses.put("http://example.com/1", status=888)
+            resp = requests.put("http://example.com/1")
+            assert resp.status_code == 888
+
+        run()
+        assert_reset()

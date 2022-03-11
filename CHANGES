@@ -1,3 +1,8 @@
+0.20.0
+------
+
+* Removed internal `_cookies_from_headers` function
+
 0.19.0
 ------
 

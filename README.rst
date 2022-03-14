@@ -1035,5 +1035,3 @@ OR
 .. code-block:: shell
 
     pre-commit run --all-files
-
-Note: on some OS, you have to use ``pre_commit``

@@ -560,7 +560,6 @@ class RequestsMock(object):
         self._registry = FirstMatchRegistry()
         self._calls.reset()
         self.passthru_prefixes = ()
-        self._patcher = None
 
     def add(
         self,
@@ -834,6 +833,8 @@ class RequestsMock(object):
     def start(self):
         if self._patcher:
             # we must not override value of the _patcher if already applied
+            # this prevents issues when one decorated function is called from
+            # another decorated function
             return
 
         def unbound_on_send(adapter, request, *a, **kwargs):
@@ -846,6 +847,10 @@ class RequestsMock(object):
         if self._patcher:
             # prevent stopping unstarted patchers
             self._patcher.stop()
+
+            # once patcher is stopped, clean it. This is required to create a new
+            # fresh patcher on self.start()
+            self._patcher = None
 
         if not self.assert_all_requests_are_fired:
             return

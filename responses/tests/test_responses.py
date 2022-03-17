@@ -555,6 +555,19 @@ def test_callback():
     assert_reset()
 
 
+def test_deprecated_package_attributes():
+    """Validates that deprecation warning is raised when package attributes are called."""
+    # keep separate context manager to avoid leakage
+    with pytest.deprecated_call():
+        responses.assert_all_requests_are_fired
+
+    with pytest.deprecated_call():
+        responses.passthru_prefixes
+
+    with pytest.deprecated_call():
+        responses.target
+
+
 def test_callback_deprecated_stream_argument():
     with pytest.deprecated_call():
         CallbackResponse(responses.GET, "url", lambda x: x, stream=False)

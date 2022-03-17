@@ -863,7 +863,7 @@ __all__ = [
     "add",
     "add_callback",
     "add_passthru",
-    "assert_all_requests_are_fired",
+    "_deprecated_assert_all_requests_are_fired",
     "assert_call_count",
     "calls",
     "delete",
@@ -874,7 +874,7 @@ __all__ = [
     "HEAD",
     "options",
     "OPTIONS",
-    "passthru_prefixes",
+    "_deprecated_passthru_prefixes",
     "patch",
     "PATCH",
     "post",
@@ -888,15 +888,16 @@ __all__ = [
     "response_callback",
     "start",
     "stop",
-    "target",
+    "_deprecated_target",
     "upsert",
 ]
 
+# expose only methods and/or read-only methods
 activate = _default_mock.activate
 add = _default_mock.add
 add_callback = _default_mock.add_callback
 add_passthru = _default_mock.add_passthru
-assert_all_requests_are_fired = _default_mock.assert_all_requests_are_fired
+_deprecated_assert_all_requests_are_fired = _default_mock.assert_all_requests_are_fired
 assert_call_count = _default_mock.assert_call_count
 calls = _default_mock.calls
 delete = _default_mock.delete
@@ -907,7 +908,7 @@ head = _default_mock.head
 HEAD = _default_mock.HEAD
 options = _default_mock.options
 OPTIONS = _default_mock.OPTIONS
-passthru_prefixes = _default_mock.passthru_prefixes
+_deprecated_passthru_prefixes = _default_mock.passthru_prefixes
 patch = _default_mock.patch
 PATCH = _default_mock.PATCH
 post = _default_mock.post
@@ -921,5 +922,18 @@ reset = _default_mock.reset
 response_callback = _default_mock.response_callback
 start = _default_mock.start
 stop = _default_mock.stop
-target = _default_mock.target
+_deprecated_target = _default_mock.target
 upsert = _default_mock.upsert
+
+
+deprecated_names = ["assert_all_requests_are_fired", "passthru_prefixes", "target"]
+
+
+def __getattr__(name):
+    if name in deprecated_names:
+        warn(
+            f"{name} is deprecated. Please use 'responses.mock.{name}",
+            DeprecationWarning,
+        )
+        return globals()[f"_deprecated_{name}"]
+    raise AttributeError(f"module {__name__} has no attribute {name}")

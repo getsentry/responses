@@ -107,7 +107,7 @@ The following attributes can be passed to a Response mock:
 method (``str``)
     The HTTP method (GET, POST, etc).
 
-url (``str`` or compiled regular expression)
+url (``str`` or ``compiled regular expression``)
     The full resource URL.
 
 match_querystring (``bool``)
@@ -140,8 +140,9 @@ stream (``bool``)
 auto_calculate_content_length (``bool``)
     Disabled by default. Automatically calculates the length of a supplied string or JSON body.
 
-match (``list``)
-    A list of callbacks to match requests based on request attributes.
+match (``tuple``)
+    An iterable (``tuple`` is recommended) of callbacks to match requests
+    based on request attributes.
     Current module provides multiple matchers that you can use to match:
 
     * body contents in JSON format
@@ -785,8 +786,8 @@ the ``assert_all_requests_are_fired`` value:
                      body='{}', status=200,
                      content_type='application/json')
 
-assert_call_count
------------------
+Assert Request Call Count
+-------------------------
 
 Assert that the request was called exactly n times.
 
@@ -834,13 +835,13 @@ You can also add multiple responses for the same url:
 Using a callback to modify the response
 ---------------------------------------
 
-If you use customized processing in `requests` via subclassing/mixins, or if you
-have library tools that interact with `requests` at a low level, you may need
+If you use customized processing in ``requests`` via subclassing/mixins, or if you
+have library tools that interact with ``requests`` at a low level, you may need
 to add extended processing to the mocked Response object to fully simulate the
-environment for your tests.  A `response_callback` can be used, which will be
+environment for your tests.  A ``response_callback`` can be used, which will be
 wrapped by the library before being returned to the caller.  The callback
-accepts a `response` as it's single argument, and is expected to return a
-single `response` object.
+accepts a ``response`` as it's single argument, and is expected to return a
+single ``response`` object.
 
 ..  code-block:: python
 
@@ -884,7 +885,7 @@ need to allow an entire domain or path subtree to send requests:
     responses.add_passthru(re.compile('https://percy.io/\\w+'))
 
 
-Lastly, you can use the `response.passthrough` attribute on `BaseResponse` or
+Lastly, you can use the ``response.passthrough`` attribute on ``BaseResponse`` or
 use ``PassthroughResponse`` to enable a response to behave as a pass through.
 
 .. code-block:: python

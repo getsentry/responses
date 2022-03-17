@@ -32,6 +32,38 @@ Installing
 ``pip install responses``
 
 
+Deprecations and Migration Path
+-------------------------------
+
+Here you will find a list of deprecated functionality and a migration path for each.
+Please ensure to update your code according to the guidance.
+
+.. list-table:: Deprecation and Migration
+   :widths: 50 25 50
+   :header-rows: 1
+
+   * - Deprecated Functionality
+     - Deprecated in version
+     - Migration path
+   * - ``responses.json_params_matcher``
+     - 0.14.0
+     - ``responses.matchers.json_params_matcher``
+   * - ``responses.urlencoded_params_matcher``
+     - 0.14.0
+     - ``responses.matchers.urlencoded_params_matcher``
+   * - ``stream`` argument in ``Response`` and ``CallbackResponse``
+     - 0.15.0
+     - Use ``stream`` argument in request directly.
+   * - ``match_querystring`` argument in ``Response`` and ``CallbackResponse``.
+     - 0.17.0
+     - Use ``responses.matchers.query_param_matcher`` or ``responses.matchers.query_string_matcher``
+   * - ``responses.assert_all_requests_are_fired``, ``responses.passthru_prefixes``, ``responses.target``
+     - 0.20.0
+     - Use ``responses.mock.assert_all_requests_are_fired``,
+       ``responses.mock.passthru_prefixes``, ``responses.mock.target`` instead.
+
+
+
 Basics
 ------
 

@@ -28,7 +28,6 @@
 * An error is now raised when both `content_type` and `headers[content-type]` are provided as parameters.
 * When a request isn't matched the passthru prefixes are now included in error messages.
 
-
 0.18.0
 ------
 

@@ -43,8 +43,8 @@ Please ensure to update your code according to the guidance.
    :header-rows: 1
 
    * - Deprecated Functionality
-     - Deprecated in version
-     - Migration path
+     - Deprecated in Version
+     - Migration Path
    * - ``responses.json_params_matcher``
      - 0.14.0
      - ``responses.matchers.json_params_matcher``

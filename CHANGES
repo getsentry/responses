@@ -1,3 +1,11 @@
+0.20.0
+------
+
+* Deprecate `responses.assert_all_requests_are_fired`, `responses.passthru_prefixes`, `responses.target`
+  since they are not actual properties of the class instance.
+  Use `responses.mock.assert_all_requests_are_fired`,
+  `responses.mock.passthru_prefixes`, `responses.mock.target` instead.
+
 0.19.0
 ------
 
@@ -18,7 +26,6 @@
   number sign ("#") character, or by the end of the URI.
 * An error is now raised when both `content_type` and `headers[content-type]` are provided as parameters.
 * When a request isn't matched the passthru prefixes are now included in error messages.
-
 
 0.18.0
 ------

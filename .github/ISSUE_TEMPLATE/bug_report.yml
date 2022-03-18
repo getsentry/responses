@@ -30,9 +30,10 @@ body:
       description: |-
         Provide a minimal reproducible self-contained code snippet.
         Snippet must be as small as possible and ready to run.
-      placeholder: |-
+      value: |-
         ```python
         # your code goes here
+
         ```
     validations:
       required: true

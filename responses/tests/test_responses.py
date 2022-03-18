@@ -2116,3 +2116,16 @@ class TestShortcuts:
 
         run()
         assert_reset()
+
+
+def test_reset_in_the_middle():
+    @responses.activate
+    def run():
+        with responses.RequestsMock() as rsps2:
+            rsps2.reset()
+        responses.add(responses.GET, "https://example.invalid", status=200)
+        resp = requests.request("GET", "https://example.invalid")
+        assert resp.status_code == 200
+
+    run()
+    assert_reset()

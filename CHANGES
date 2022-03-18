@@ -1,7 +1,11 @@
-0.20.0
+0.21.0
 ------
 
 * Removed internal `_cookies_from_headers` function
+
+0.20.0
+------
+
 * Deprecate `responses.assert_all_requests_are_fired`, `responses.passthru_prefixes`, `responses.target`
   since they are not actual properties of the class instance.
   Use `responses.mock.assert_all_requests_are_fired`,

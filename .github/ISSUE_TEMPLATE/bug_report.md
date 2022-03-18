@@ -1,34 +1,52 @@
----
-name: Bug report
-about: Bug report for getsentry/responses project
-title: ''
-labels: ''
-assignees: ''
-
----
-
-**Describe the bug**
-<!--- A clear and concise description of what the bug is. -->
-
-
-**Additional context**
-<!---  Add any other context about the problem here. -->
-
-
-**`responses` version**
-<!--- Version of `responses` package. Please first validate in the latest available version. -->
-
-
-**To Reproduce**
-<!--- Provide a minimal reproducible self-contained code snippet. -->
-<!--- Snippet must be as small as possible and ready to run. -->
-```python
-# your code goes here
-```
-
-**Expected behavior**
-<!--- A clear and concise description of what you expected to happen. -->
-
-
-**Actual behavior**
-<!--- A clear and concise description of what actually happens. -->
+name: 🐞 Bug Report
+description: Bug report for getsentry/responses project
+body:
+  - type: textarea
+    id: descriptionshort
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: descriptionlong
+    attributes:
+      label: Additional context
+      description: Add any other context about the problem here.
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: Version of `responses`
+      placeholder: 0.20.0 ← should look like this
+      description: Version of `responses` package. Please first validate in the latest available version.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to Reproduce
+      description: |-
+        Provide a minimal reproducible self-contained code snippet.
+        Snippet must be as small as possible and ready to run.
+      placeholder: |-
+        ```python
+        # your code goes here
+        ```
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Result
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Result
+      description: A clear and concise description of what actually happens.
+    validations:
+      required: true

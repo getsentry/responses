@@ -173,7 +173,7 @@ def get_wrapped(
     return wrapper
 
 
-class CallList(Sequence[Call], Sized):
+class CallList(Sequence, Sized):
     def __init__(self) -> None:
         self._calls = []
 
@@ -193,7 +193,9 @@ class CallList(Sequence[Call], Sized):
         self._calls = []
 
 
-def _ensure_url_default_path(url: Union[Pattern[str], str]) -> Union[Pattern[str], str]:
+def _ensure_url_default_path(
+    url: "Union[Pattern[str], str]",
+) -> "Union[Pattern[str], str]":
     if isinstance(url, str):
         url_parts = list(urlsplit(url))
         if url_parts[2] == "":

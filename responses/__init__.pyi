@@ -1,11 +1,9 @@
 from collections import Sequence
 from collections import Sized
 from io import BufferedReader
-from io import BytesIO
 from re import Pattern
 from typing import Any
 from typing import Callable
-from typing import Dict
 from typing import Iterable
 from typing import Iterator
 from typing import List
@@ -23,7 +21,6 @@ from urllib.parse import quote as quote
 
 from requests.adapters import HTTPResponse
 from requests.adapters import PreparedRequest
-from requests.cookies import RequestsCookieJar
 from typing_extensions import Literal
 
 # Not currently exposed in typestubs, thus, ignore

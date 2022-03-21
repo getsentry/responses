@@ -6,14 +6,12 @@ from collections.abc import Sequence
 from collections.abc import Sized
 from functools import wraps
 from http import client
-from http import cookies
 from itertools import groupby
 from re import Pattern
 from warnings import warn
 
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError
-from requests.utils import cookiejar_from_dict
 
 from responses.matchers import json_params_matcher as _json_params_matcher
 from responses.matchers import query_string_matcher as _query_string_matcher
@@ -116,29 +114,6 @@ def _clean_unicode(url):
             chars[i] = quote(x)
 
     return "".join(chars)
-
-
-def _cookies_from_headers(headers):
-    """Create Cookies from request Headers.
-
-    Converts ``set-cookie`` headers to real cookies.
-
-    Parameters
-    ----------
-    headers : dict
-        Request headers.
-
-    Returns
-    -------
-    CookieJar
-        CookieJar request object.
-
-    """
-    resp_cookie = cookies.SimpleCookie()
-    resp_cookie.load(headers["set-cookie"])
-    cookies_dict = {name: v.value for name, v in resp_cookie.items()}
-
-    return cookiejar_from_dict(cookies_dict)
 
 
 def get_wrapped(func, responses, registry=None):

@@ -1,3 +1,8 @@
+0.21.0
+------
+
+* Removed internal `_cookies_from_headers` function
+
 0.20.0
 ------
 
@@ -27,6 +32,7 @@
   number sign ("#") character, or by the end of the URI.
 * An error is now raised when both `content_type` and `headers[content-type]` are provided as parameters.
 * When a request isn't matched the passthru prefixes are now included in error messages.
+
 
 0.18.0
 ------

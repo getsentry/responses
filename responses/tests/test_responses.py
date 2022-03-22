@@ -2035,14 +2035,15 @@ def test_strict_wrapper():
         requests.get("https://someapi3.com/")
         assert not responses.mock.assert_all_requests_are_fired
 
+    # keep the order of function calls to ensure that decorator does not leak to another function
     with pytest.raises(AssertionError) as exc_info:
         run_strict()
 
     # check that one URL is in uncalled assertion
     assert "https://notcalled1.com/" in str(exc_info.value)
 
-    run_not_strict()
     run_classic()
+    run_not_strict()
 
 
 class TestMultipleWrappers:

@@ -146,20 +146,35 @@ def get_wrapped(func, responses, *, registry=None, assert_all_requests_are_fired
         # set asynchronous wrapper if requestor function is asynchronous
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            with responses:
-                return await func(*args, **kwargs)
+            if assert_all_requests_are_fired is not None:
+                backup = responses.assert_all_requests_are_fired
+                responses.assert_all_requests_are_fired = assert_all_requests_are_fired
+
+            try:
+                with responses:
+                    ret = await func(*args, **kwargs)
+            finally:
+                if assert_all_requests_are_fired is not None:
+                    responses.assert_all_requests_are_fired = backup
+
+            return ret
 
     else:
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            with responses:
-                if assert_all_requests_are_fired is not None:
-                    responses.assert_all_requests_are_fired = (
-                        assert_all_requests_are_fired
-                    )
+            if assert_all_requests_are_fired is not None:
+                backup = responses.assert_all_requests_are_fired
+                responses.assert_all_requests_are_fired = assert_all_requests_are_fired
 
-                return func(*args, **kwargs)
+            try:
+                with responses:
+                    ret = func(*args, **kwargs)
+            finally:
+                if assert_all_requests_are_fired is not None:
+                    responses.assert_all_requests_are_fired = backup
+
+            return ret
 
     return wrapper
 

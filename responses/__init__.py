@@ -142,39 +142,32 @@ def get_wrapped(func, responses, *, registry=None, assert_all_requests_are_fired
     if registry is not None:
         responses._set_registry(registry)
 
+    assert_mock = std_mock.patch.object(
+        target=responses,
+        attribute="assert_all_requests_are_fired",
+        new=assert_all_requests_are_fired,
+    )
+
     if inspect.iscoroutinefunction(func):
         # set asynchronous wrapper if requestor function is asynchronous
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            if assert_all_requests_are_fired is not None:
-                backup = responses.assert_all_requests_are_fired
-                responses.assert_all_requests_are_fired = assert_all_requests_are_fired
 
-            try:
+            with assert_mock:
                 with responses:
-                    ret = await func(*args, **kwargs)
-            finally:
-                if assert_all_requests_are_fired is not None:
-                    responses.assert_all_requests_are_fired = backup
-
-            return ret
+                    return await func(*args, **kwargs)
 
     else:
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            if assert_all_requests_are_fired is not None:
-                backup = responses.assert_all_requests_are_fired
-                responses.assert_all_requests_are_fired = assert_all_requests_are_fired
 
-            try:
+            with assert_mock:
+                # set 'assert_all_requests_are_fired' temporarily for a single run.
+                # Mock automatically unsets to avoid leakage to another decorated
+                # function since we still apply the value on 'responses.mock' object
                 with responses:
-                    ret = func(*args, **kwargs)
-            finally:
-                if assert_all_requests_are_fired is not None:
-                    responses.assert_all_requests_are_fired = backup
-
-            return ret
+                    return func(*args, **kwargs)
 
     return wrapper
 

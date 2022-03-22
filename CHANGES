@@ -2,6 +2,8 @@
 ------
 
 * Removed internal `_cookies_from_headers` function
+* Added strict version of decorator. Now you can apply `@responses.activate(assert_all_requests_are_fired=True)`
+  to your function to validate that all requests were executed in the wrapped function. See #183
 
 0.20.0
 ------

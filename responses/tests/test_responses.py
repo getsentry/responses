@@ -2019,18 +2019,21 @@ def test_strict_wrapper():
         responses.add(responses.GET, "https://someapi1.com/", "success", status=200)
         responses.add(responses.GET, "https://notcalled1.com/", "success", status=200)
         requests.get("https://someapi1.com/")
+        assert responses.mock.assert_all_requests_are_fired
 
-    @responses.activate(assert_all_requests_are_fired=True)
+    @responses.activate(assert_all_requests_are_fired=False)
     def run_not_strict():
         responses.add(responses.GET, "https://someapi2.com/", "success", status=200)
         responses.add(responses.GET, "https://notcalled2.com/", "success", status=200)
         requests.get("https://someapi2.com/")
+        assert not responses.mock.assert_all_requests_are_fired
 
     @responses.activate
     def run_classic():
         responses.add(responses.GET, "https://someapi3.com/", "success", status=200)
         responses.add(responses.GET, "https://notcalled3.com/", "success", status=200)
         requests.get("https://someapi3.com/")
+        assert not responses.mock.assert_all_requests_are_fired
 
     with pytest.raises(AssertionError) as exc_info:
         run_strict()

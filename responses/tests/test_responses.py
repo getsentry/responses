@@ -2011,6 +2011,31 @@ async def test_async_calls():
     assert_reset()
 
 
+def test_strict_wrapper():
+    """Test that assert_all_requests_are_fired could be applied to the decorator."""
+
+    def register():
+        responses.add(responses.GET, "https://someapi.com/", "success", status=200)
+        responses.add(responses.GET, "https://notcalled.com/", "success", status=200)
+
+    @responses.activate(assert_all_requests_are_fired=True)
+    def run_strict():
+        register()
+        requests.get("https://someapi.com/")
+
+    @responses.activate(assert_all_requests_are_fired=False)
+    def run_not_strict():
+        register()
+
+    with pytest.raises(AssertionError) as exc_info:
+        run_strict()
+
+    # check that one URL is in uncalled assertion
+    assert "https://notcalled.com/" in str(exc_info.value)
+
+    run_not_strict()
+
+
 class TestMultipleWrappers:
     """Test to validate that multiple decorators could be applied.
 

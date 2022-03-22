@@ -44,7 +44,7 @@ def _handle_body(
 def _has_unicode(s: str) -> bool: ...
 def _is_string(s: Union[Pattern[str], str]) -> bool: ...
 def get_wrapped(
-    func: Callable[..., Any], responses: RequestsMock, registry: Optional[Any]
+    func: Callable[..., Any], responses: RequestsMock, registry: Optional[Any], assert_all_requests_are_fired: bool
 ) -> Callable[..., Any]: ...
 
 
@@ -315,8 +315,8 @@ class _Activate(Protocol):
     # use this overload for scenario when 'responses.activate' is used
 
     @overload
-    def __call__(self, registry: Type[Any] = ...) -> Callable[['_F'], '_F']: ...
-    # use this overload for scenario when 'responses.activate(registry=)' is used
+    def __call__(self, registry: Type[Any] = ..., assert_all_requests_are_fired: bool = ...) -> Callable[['_F'], '_F']: ...
+    # use this overload for scenario when 'responses.activate(registry=, assert_all_requests_are_fired=True)' is used
 
 
 activate: _Activate

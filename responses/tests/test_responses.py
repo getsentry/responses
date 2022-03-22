@@ -2014,26 +2014,32 @@ async def test_async_calls():
 def test_strict_wrapper():
     """Test that assert_all_requests_are_fired could be applied to the decorator."""
 
-    def register():
-        responses.add(responses.GET, "https://someapi.com/", "success", status=200)
-        responses.add(responses.GET, "https://notcalled.com/", "success", status=200)
-
     @responses.activate(assert_all_requests_are_fired=True)
     def run_strict():
-        register()
-        requests.get("https://someapi.com/")
+        responses.add(responses.GET, "https://someapi1.com/", "success", status=200)
+        responses.add(responses.GET, "https://notcalled1.com/", "success", status=200)
+        requests.get("https://someapi1.com/")
 
-    @responses.activate(assert_all_requests_are_fired=False)
+    @responses.activate(assert_all_requests_are_fired=True)
     def run_not_strict():
-        register()
+        responses.add(responses.GET, "https://someapi2.com/", "success", status=200)
+        responses.add(responses.GET, "https://notcalled2.com/", "success", status=200)
+        requests.get("https://someapi2.com/")
+
+    @responses.activate
+    def run_classic():
+        responses.add(responses.GET, "https://someapi3.com/", "success", status=200)
+        responses.add(responses.GET, "https://notcalled3.com/", "success", status=200)
+        requests.get("https://someapi3.com/")
 
     with pytest.raises(AssertionError) as exc_info:
         run_strict()
 
     # check that one URL is in uncalled assertion
-    assert "https://notcalled.com/" in str(exc_info.value)
+    assert "https://notcalled1.com/" in str(exc_info.value)
 
     run_not_strict()
+    run_classic()
 
 
 class TestMultipleWrappers:

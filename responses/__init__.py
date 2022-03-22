@@ -116,7 +116,7 @@ def _clean_unicode(url):
     return "".join(chars)
 
 
-def get_wrapped(func, responses, registry=None):
+def get_wrapped(func, responses, *, registry=None, assert_all_requests_are_fired=None):
     """Wrap provided function inside ``responses`` context manager.
 
     Provides a synchronous or asynchronous wrapper for the function.
@@ -130,6 +130,8 @@ def get_wrapped(func, responses, registry=None):
         Mock object that is used as context manager.
     registry : FirstMatchRegistry, optional
         Custom registry that should be applied. See ``responses.registries``
+    assert_all_requests_are_fired : bool
+        Raise an error if not all registered responses were executed.
 
     Returns
     -------
@@ -152,6 +154,11 @@ def get_wrapped(func, responses, registry=None):
         @wraps(func)
         def wrapper(*args, **kwargs):
             with responses:
+                if assert_all_requests_are_fired is not None:
+                    responses.assert_all_requests_are_fired = (
+                        assert_all_requests_are_fired
+                    )
+
                 return func(*args, **kwargs)
 
     return wrapper
@@ -716,12 +723,19 @@ class RequestsMock(object):
         self.reset()
         return success
 
-    def activate(self, func=None, registry=None):
+    def activate(
+        self, func=None, *, registry=None, assert_all_requests_are_fired=False
+    ):
         if func is not None:
             return get_wrapped(func, self)
 
         def deco_activate(function):
-            return get_wrapped(function, self, registry)
+            return get_wrapped(
+                function,
+                self,
+                registry=registry,
+                assert_all_requests_are_fired=assert_all_requests_are_fired,
+            )
 
         return deco_activate
 

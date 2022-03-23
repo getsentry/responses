@@ -2046,27 +2046,34 @@ class TestStrictWrapper:
         run_classic()
         run_not_strict()
 
-    def test_nested_decorators(self):
-        """Validate the value of assert_all_requests_are_fired is
-        applied from the correct function.
+    @pytest.mark.parametrize("assert_fired", (True, False, None))
+    def test_nested_decorators(self, assert_fired):
+        """Validate if assert_all_requests_are_fired is applied from the correct function.
+
+        assert_all_requests_are_fired must be applied from the function
+        where call to 'requests' is done.
+        Test matrix of True/False/None values applied to validate different scenarios.
         """
 
-        @responses.activate(assert_all_requests_are_fired=True)
+        @responses.activate(assert_all_requests_are_fired=assert_fired)
         def wrapped():
             responses.add(responses.GET, "https://notcalled1.com/", "success")
-            responses.add(responses.GET, "https://notcalled2.com/", "success")
             responses.add(responses.GET, "http://example.com/1", body="Hello 1")
             assert b"Hello 1" == requests.get("http://example.com/1").content
 
-        @responses.activate(assert_all_requests_are_fired=False)
+        @responses.activate(assert_all_requests_are_fired=not assert_fired)
         def call_another_wrapped_function():
+            responses.add(responses.GET, "https://notcalled2.com/", "success")
             wrapped()
 
-        with pytest.raises(AssertionError) as exc_info:
-            call_another_wrapped_function()
+        if assert_fired:
+            with pytest.raises(AssertionError) as exc_info:
+                call_another_wrapped_function()
 
-        assert "https://notcalled1.com/" in str(exc_info.value)
-        assert "https://notcalled2.com/" in str(exc_info.value)
+            assert "https://notcalled1.com/" in str(exc_info.value)
+            assert "https://notcalled2.com/" in str(exc_info.value)
+        else:
+            call_another_wrapped_function()
 
 
 class TestMultipleWrappers:

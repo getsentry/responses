@@ -154,19 +154,18 @@ def get_wrapped(func, responses, *, registry=None, assert_all_requests_are_fired
         async def wrapper(*args, **kwargs):
 
             with assert_mock, responses:
-                    return await func(*args, **kwargs)
+                return await func(*args, **kwargs)
 
     else:
 
         @wraps(func)
         def wrapper(*args, **kwargs):
 
-            with assert_mock:
+            with assert_mock, responses:
                 # set 'assert_all_requests_are_fired' temporarily for a single run.
                 # Mock automatically unsets to avoid leakage to another decorated
                 # function since we still apply the value on 'responses.mock' object
-                with responses:
-                    return func(*args, **kwargs)
+                return func(*args, **kwargs)
 
     return wrapper
 

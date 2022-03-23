@@ -864,6 +864,69 @@ You can also add multiple responses for the same url:
         assert resp.status_code == 200
 
 
+URL Redirection
+---------------
+
+In the following example you can see how to create a redirection chain and add custom exception that will be raised
+in the execution chain and contain the history of redirects.
+
+..  code-block::
+
+    A -> 301 redirect -> B
+    B -> 301 redirect -> C
+    C -> connection issue
+
+..  code-block:: python
+
+    import pytest
+    import requests
+
+    import responses
+
+
+    @responses.activate
+    def test_redirect():
+        # create multiple Response objects where first two contain redirect headers
+        rsp1 = responses.Response(
+            responses.GET,
+            "http://example.com/1",
+            status=301,
+            headers={"Location": "http://example.com/2"},
+        )
+        rsp2 = responses.Response(
+            responses.GET,
+            "http://example.com/2",
+            status=301,
+            headers={"Location": "http://example.com/3"},
+        )
+        rsp3 = responses.Response(responses.GET, "http://example.com/3", status=200)
+
+        # register above generated Responses in ``response`` module
+        responses.add(rsp1)
+        responses.add(rsp2)
+        responses.add(rsp3)
+
+        # do the first request in order to generate genuine ``requests`` response
+        # this object will contain genuine attributes of the response, like ``history``
+        rsp = requests.get("http://example.com/1")
+        responses.calls.reset()
+
+        # customize exception with ``response`` attribute
+        my_error = requests.ConnectionError("custom error")
+        my_error.response = rsp
+
+        # update body of the 3rd response with Exception, this will be raised during execution
+        rsp3.body = my_error
+
+        with pytest.raises(requests.ConnectionError) as exc_info:
+            requests.get("http://example.com/1")
+
+        assert exc_info.value.args[0] == "custom error"
+        assert rsp1.url in exc_info.value.response.history[0].url
+        assert rsp2.url in exc_info.value.response.history[1].url
+
+
+
 Using a callback to modify the response
 ---------------------------------------
 

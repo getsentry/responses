@@ -153,8 +153,7 @@ def get_wrapped(func, responses, *, registry=None, assert_all_requests_are_fired
         @wraps(func)
         async def wrapper(*args, **kwargs):
 
-            with assert_mock:
-                with responses:
+            with assert_mock, responses:
                     return await func(*args, **kwargs)
 
     else:

@@ -278,7 +278,6 @@ deprecated argument.
             url=url,
             body="test",
             match=[matchers.query_param_matcher(params)],
-            match_querystring=False,
         )
 
         resp = requests.get(url, params=params)
@@ -390,7 +389,6 @@ The matcher takes fragment string (everything after ``#`` sign) as input for com
         responses.add(
             responses.GET,
             url,
-            match_querystring=True,
             match=[fragment_identifier_matcher("test=1&foo=bar")],
             body=b"test",
         )
@@ -712,25 +710,6 @@ a callback function to give a slightly different result, you can use ``functools
             content_type='application/json',
         )
 
-
-You can see params passed in the original ``request`` in ``responses.calls[].request.params``:
-
-.. code-block:: python
-
-    import responses
-    import requests
-
-    @responses.activate
-    def test_request_params():
-        responses.add(
-            method=responses.GET,
-            url="http://example.com?hello=world",
-            body="test",
-            match_querystring=False,
-        )
-
-        resp = requests.get('http://example.com', params={"hello": "world"})
-        assert responses.calls[0].request.params == {"hello": "world"}
 
 Responses as a context manager
 ------------------------------

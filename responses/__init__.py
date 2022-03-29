@@ -180,8 +180,10 @@ class CallList(Sequence, Sized):
 def _ensure_url_default_path(url):
     """Add empty URL path '/' if doesn't exist.
 
-    For example,
-    http://example.com -> http://example.com/
+    Examples
+    --------
+    >>> _ensure_url_default_path("http://example.com")
+    "http://example.com/"
 
     Parameters
     ----------

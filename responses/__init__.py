@@ -207,6 +207,14 @@ def _ensure_url_default_path(url):
 def _get_url_and_path(url):
     """Construct URL only containing scheme, netloc and path by truncating other parts.
 
+    This method complies with RFC 3986.
+
+    Examples
+    --------
+    >>> _get_url_and_path("http://example.com/path;segment?ab=xy&zed=qwe#test=1&foo=bar")
+    "http://example.com/path;segment"
+
+
     Parameters
     ----------
     url : str

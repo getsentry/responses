@@ -229,11 +229,12 @@ def _handle_body(body):
     Parameters
     ----------
     body : str or bytes or BufferedReader
+        Input data to generate `Response` body.
 
     Returns
     -------
     body : BufferedReader or BytesIO
-        Response body
+        `Response` body
 
     """
     if isinstance(body, str):

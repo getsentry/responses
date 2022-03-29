@@ -1051,7 +1051,7 @@ def test_response_callback():
 
 
 def test_response_filebody():
-    """ Adds the possibility to use actual (binary) files as responses """
+    """Adds the possibility to use actual (binary) files as responses"""
 
     def run():
         current_file = os.path.abspath(__file__)
@@ -2126,6 +2126,52 @@ def test_reset_in_the_middle():
         responses.add(responses.GET, "https://example.invalid", status=200)
         resp = requests.request("GET", "https://example.invalid")
         assert resp.status_code == 200
+
+    run()
+    assert_reset()
+
+
+def test_redirect():
+    @responses.activate
+    def run():
+        # create multiple Response objects where first two contain redirect headers
+        rsp1 = responses.Response(
+            responses.GET,
+            "http://example.com/1",
+            status=301,
+            headers={"Location": "http://example.com/2"},
+        )
+        rsp2 = responses.Response(
+            responses.GET,
+            "http://example.com/2",
+            status=301,
+            headers={"Location": "http://example.com/3"},
+        )
+        rsp3 = responses.Response(responses.GET, "http://example.com/3", status=200)
+
+        # register above generated Responses in `response` module
+        responses.add(rsp1)
+        responses.add(rsp2)
+        responses.add(rsp3)
+
+        # do the first request in order to generate genuine `requests` response
+        # this object will contain genuine attributes of the response, like `history`
+        rsp = requests.get("http://example.com/1")
+        responses.calls.reset()
+
+        # customize exception with `response` attribute
+        my_error = requests.ConnectionError("custom error")
+        my_error.response = rsp
+
+        # update body of the 3rd response with Exception, this will be raised during execution
+        rsp3.body = my_error
+
+        with pytest.raises(requests.ConnectionError) as exc_info:
+            requests.get("http://example.com/1")
+
+        assert exc_info.value.args[0] == "custom error"
+        assert rsp1.url in exc_info.value.response.history[0].url
+        assert rsp2.url in exc_info.value.response.history[1].url
 
     run()
     assert_reset()

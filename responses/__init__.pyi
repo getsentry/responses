@@ -44,9 +44,11 @@ def _handle_body(
 def _has_unicode(s: str) -> bool: ...
 def _is_string(s: Union[Pattern[str], str]) -> bool: ...
 def get_wrapped(
-    func: Callable[..., Any], responses: RequestsMock, registry: Optional[Any], assert_all_requests_are_fired: bool
+    func: Callable[..., Any],
+    responses: RequestsMock,
+    registry: Optional[Any],
+    assert_all_requests_are_fired: bool,
 ) -> Callable[..., Any]: ...
-
 
 class Call(NamedTuple):
     request: PreparedRequest
@@ -212,7 +214,6 @@ class RequestsMock:
     def _set_registry(self, registry: Any) -> None: ...
     def get_registry(self) -> Any: ...
 
-
 HeaderSet = Optional[Union[Mapping[str, str], List[Tuple[str, str]]]]
 
 class _Add(Protocol):
@@ -253,16 +254,16 @@ class _AddCallback(Protocol):
         self,
         method: str,
         url: Union[Pattern[str], str],
-        callback: Callable[[PreparedRequest], Union[Exception, Tuple[int, Mapping[str, str], _Body]]],
+        callback: Callable[
+            [PreparedRequest], Union[Exception, Tuple[int, Mapping[str, str], _Body]]
+        ],
         match_querystring: bool = ...,
         content_type: Optional[str] = ...,
         match: MatcherIterable = ...,
     ) -> None: ...
 
 class _AddPassthru(Protocol):
-    def __call__(
-        self, prefix: Union[Pattern[str], str]
-    ) -> None: ...
+    def __call__(self, prefix: Union[Pattern[str], str]) -> None: ...
 
 class _Remove(Protocol):
     def __call__(
@@ -306,7 +307,6 @@ class _Upsert(Protocol):
 class _Registered(Protocol):
     def __call__(self) -> List[Response]: ...
 
-
 class _Activate(Protocol):
     # see https://github.com/getsentry/responses/pull/469 for more details
 
@@ -315,9 +315,10 @@ class _Activate(Protocol):
     # use this overload for scenario when 'responses.activate' is used
 
     @overload
-    def __call__(self, registry: Type[Any] = ..., assert_all_requests_are_fired: bool = ...) -> Callable[['_F'], '_F']: ...
+    def __call__(
+        self, registry: Type[Any] = ..., assert_all_requests_are_fired: bool = ...
+    ) -> Callable[["_F"], "_F"]: ...
     # use this overload for scenario when 'responses.activate(registry=, assert_all_requests_are_fired=True)' is used
-
 
 activate: _Activate
 add: _Add

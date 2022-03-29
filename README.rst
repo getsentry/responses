@@ -278,7 +278,6 @@ deprecated argument.
             url=url,
             body="test",
             match=[matchers.query_param_matcher(params)],
-            match_querystring=False,
         )
 
         resp = requests.get(url, params=params)
@@ -390,7 +389,6 @@ The matcher takes fragment string (everything after ``#`` sign) as input for com
         responses.add(
             responses.GET,
             url,
-            match_querystring=True,
             match=[fragment_identifier_matcher("test=1&foo=bar")],
             body=b"test",
         )
@@ -713,25 +711,6 @@ a callback function to give a slightly different result, you can use ``functools
         )
 
 
-You can see params passed in the original ``request`` in ``responses.calls[].request.params``:
-
-.. code-block:: python
-
-    import responses
-    import requests
-
-    @responses.activate
-    def test_request_params():
-        responses.add(
-            method=responses.GET,
-            url="http://example.com?hello=world",
-            body="test",
-            match_querystring=False,
-        )
-
-        resp = requests.get('http://example.com', params={"hello": "world"})
-        assert responses.calls[0].request.params == {"hello": "world"}
-
 Responses as a context manager
 ------------------------------
 
@@ -862,6 +841,69 @@ You can also add multiple responses for the same url:
         assert resp.status_code == 500
         resp = requests.get('http://twitter.com/api/1/foobar')
         assert resp.status_code == 200
+
+
+URL Redirection
+---------------
+
+In the following example you can see how to create a redirection chain and add custom exception that will be raised
+in the execution chain and contain the history of redirects.
+
+..  code-block::
+
+    A -> 301 redirect -> B
+    B -> 301 redirect -> C
+    C -> connection issue
+
+..  code-block:: python
+
+    import pytest
+    import requests
+
+    import responses
+
+
+    @responses.activate
+    def test_redirect():
+        # create multiple Response objects where first two contain redirect headers
+        rsp1 = responses.Response(
+            responses.GET,
+            "http://example.com/1",
+            status=301,
+            headers={"Location": "http://example.com/2"},
+        )
+        rsp2 = responses.Response(
+            responses.GET,
+            "http://example.com/2",
+            status=301,
+            headers={"Location": "http://example.com/3"},
+        )
+        rsp3 = responses.Response(responses.GET, "http://example.com/3", status=200)
+
+        # register above generated Responses in ``response`` module
+        responses.add(rsp1)
+        responses.add(rsp2)
+        responses.add(rsp3)
+
+        # do the first request in order to generate genuine ``requests`` response
+        # this object will contain genuine attributes of the response, like ``history``
+        rsp = requests.get("http://example.com/1")
+        responses.calls.reset()
+
+        # customize exception with ``response`` attribute
+        my_error = requests.ConnectionError("custom error")
+        my_error.response = rsp
+
+        # update body of the 3rd response with Exception, this will be raised during execution
+        rsp3.body = my_error
+
+        with pytest.raises(requests.ConnectionError) as exc_info:
+            requests.get("http://example.com/1")
+
+        assert exc_info.value.args[0] == "custom error"
+        assert rsp1.url in exc_info.value.response.history[0].url
+        assert rsp2.url in exc_info.value.response.history[1].url
+
 
 
 Using a callback to modify the response

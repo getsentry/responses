@@ -1,12 +1,11 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 22.3.0
     hooks:
     - id: black
       args: [--line-length=88, --safe]
-      python_version: python3
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.4.0
+    rev: v4.1.0
     hooks:
     - id: check-case-conflict
     - id: check-merge-conflict
@@ -14,8 +13,6 @@ repos:
     - id: end-of-file-fixer
     - id: trailing-whitespace
     - id: debug-statements
-    - id: flake8
-      log_file: '.artifacts/flake8.log'
     - id: requirements-txt-fixer
   - repo: https://github.com/pycqa/isort
     rev: 5.10.1
@@ -27,3 +24,8 @@ repos:
         name: isort (pyi)
         types: [ pyi ]
         args: ['--force-single-line-imports', '--profile', 'black']
+  - repo: https://github.com/pycqa/flake8
+    rev: 4.0.1
+    hooks:
+      - id: flake8
+        args: [ '--max-line-length', '100', '--max-doc-length', '120' ]

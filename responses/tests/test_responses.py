@@ -1051,7 +1051,7 @@ def test_response_callback():
 
 
 def test_response_filebody():
-    """ Adds the possibility to use actual (binary) files as responses """
+    """Adds the possibility to use actual (binary) files as responses"""
 
     def run():
         current_file = os.path.abspath(__file__)

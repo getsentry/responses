@@ -230,7 +230,7 @@ class _Add(Protocol):
         adding_headers: HeaderSet = ...,
         match_querystring: bool = ...,
         match: MatcherIterable = ...,
-    ) -> None: ...
+    ) -> BaseResponse: ...
 
 class _Shortcut(Protocol):
     def __call__(
@@ -269,7 +269,7 @@ class _Remove(Protocol):
         self,
         method_or_response: Optional[Union[str, BaseResponse]] = ...,
         url: Optional[Union[Pattern[str], str]] = ...,
-    ) -> None: ...
+    ) -> List[BaseResponse]: ...
 
 class _Replace(Protocol):
     def __call__(
@@ -285,7 +285,7 @@ class _Replace(Protocol):
         adding_headers: HeaderSet = ...,
         match_querystring: bool = ...,
         match: MatcherIterable = ...,
-    ) -> None: ...
+    ) -> BaseResponse: ...
 
 class _Upsert(Protocol):
     def __call__(
@@ -301,7 +301,7 @@ class _Upsert(Protocol):
         adding_headers: HeaderSet = ...,
         match_querystring: bool = ...,
         match: MatcherIterable = ...,
-    ) -> None: ...
+    ) -> BaseResponse: ...
 
 class _Registered(Protocol):
     def __call__(self) -> List[Response]: ...

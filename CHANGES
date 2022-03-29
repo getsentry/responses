@@ -2,6 +2,8 @@
 ------
 
 * Removed internal `_cookies_from_headers` function
+* Now `add`, `upsert`, `replace` methods return registered response.
+  `remove` method returns list of removed responses.
 
 0.20.0
 ------

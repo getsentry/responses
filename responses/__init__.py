@@ -178,15 +178,44 @@ class CallList(Sequence, Sized):
 
 
 def _ensure_url_default_path(url):
+    """Add empty URL path '/' if doesn't exist.
+
+    For example,
+    http://example.com -> http://example.com/
+
+    Parameters
+    ----------
+    url : str or re.Pattern
+        URL to validate.
+
+    Returns
+    -------
+    url : str or re.Pattern
+        Modified URL if str or unchanged re.Pattern
+
+    """
     if isinstance(url, str):
         url_parts = list(urlsplit(url))
         if url_parts[2] == "":
             url_parts[2] = "/"
-        url = urlunsplit(url_parts)
+            url = urlunsplit(url_parts)
     return url
 
 
 def _get_url_and_path(url):
+    """Construct URL only containing scheme, netloc and path by truncating other parts.
+
+    Parameters
+    ----------
+    url : str
+        URL to parse.
+
+    Returns
+    -------
+    url : str
+        URL with scheme, netloc and path
+
+    """
     url_parsed = urlsplit(url)
     url_and_path = urlunparse(
         [url_parsed.scheme, url_parsed.netloc, url_parsed.path, None, None, None]
@@ -195,6 +224,18 @@ def _get_url_and_path(url):
 
 
 def _handle_body(body):
+    """Generates `Response` body.
+
+    Parameters
+    ----------
+    body : str or bytes or BufferedReader
+
+    Returns
+    -------
+    body : BufferedReader or BytesIO
+        Response body
+
+    """
     if isinstance(body, str):
         body = body.encode("utf-8")
     if isinstance(body, BufferedReader):

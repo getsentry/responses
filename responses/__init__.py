@@ -574,8 +574,7 @@ class RequestsMock(object):
 
         """
         if isinstance(method, BaseResponse):
-            self._registry.add(method)
-            return method
+            return self._registry.add(method)
 
         if adding_headers is not None:
             kwargs.setdefault("headers", adding_headers)

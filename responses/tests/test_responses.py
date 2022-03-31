@@ -6,6 +6,7 @@ import re
 import warnings
 from io import BufferedReader
 from io import BytesIO
+from typing import Any
 from typing import Optional
 from unittest.mock import Mock
 from unittest.mock import patch
@@ -29,7 +30,9 @@ def assert_reset():
     assert len(responses.calls) == 0
 
 
-def assert_response(resp, body=None, content_type: "Optional[str]" = "text/plain"):
+def assert_response(
+    resp: Any, body: Optional[Any] = None, content_type: "Optional[str]" = "text/plain"
+) -> None:
     assert resp.status_code == 200
     assert resp.reason == "OK"
     if content_type is not None:

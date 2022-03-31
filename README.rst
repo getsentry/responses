@@ -732,8 +732,11 @@ Responses as a context manager
         resp = requests.get('http://twitter.com/api/1/foobar')
         resp.status_code == 404
 
-Responses as a pytest fixture
------------------------------
+Using ``responses`` in unit tests
+---------------------------------
+
+Responses as a ``pytest`` fixture
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: python
 
@@ -750,11 +753,12 @@ Responses as a pytest fixture
         resp = requests.get('http://twitter.com/api/1/foobar')
         assert resp.status_code == 200
 
-Responses inside a unittest setUp()
------------------------------------
+Add default responses for each test
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When run with unittest tests, this can be used to set up some
-generic class-level responses, that may be complemented by each test
+When run with ``unittest`` tests, this can be used to set up some
+generic class-level responses, that may be complemented by each test.
+Similar interface could be applied in ``pytest`` framework.
 
 .. code-block:: python
 
@@ -777,6 +781,43 @@ generic class-level responses, that may be complemented by each test
             # >>> within setup
             print(resp2.text)
             # >>> within test
+
+
+RequestMock methods: start, stop, reset
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``responses`` has ``start``, ``stop``, ``reset`` methods very analogous to
+`unittest.mock.patch <https://docs.python.org/3/library/unittest.mock.html#patch-methods-start-and-stop>`_.
+These make it simpler to do requests mocking in ``setup`` methods or where
+you want to do multiple patches without nesting decorators or with statements.
+
+.. code-block:: python
+
+    class TestUnitTestPatchSetup:
+        def setup(self):
+            """Creates ``RequestsMock`` instance and starts it."""
+            self.r_mock = responses.RequestsMock(assert_all_requests_are_fired=True)
+            self.r_mock.start()
+
+            # optionally some default responses could be registered
+            self.r_mock.get("https://example.com", status=505)
+            self.r_mock.put("https://example.com", status=506)
+
+        def teardown(self):
+            """Stops and resets RequestsMock instance.
+
+            If ``assert_all_requests_are_fired`` is set to ``True``, will raise an error
+            if some requests were not processed.
+            """
+            self.r_mock.stop()
+            self.r_mock.reset()
+
+        def test_function(self):
+            resp = requests.get("https://example.com")
+            assert resp.status_code == 505
+
+            resp = requests.put("https://example.com")
+            assert resp.status_code == 506
 
 
 Assertions on declared responses

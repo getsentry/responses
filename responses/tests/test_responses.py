@@ -6,6 +6,7 @@ import re
 import warnings
 from io import BufferedReader
 from io import BytesIO
+from typing import Optional
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -24,11 +25,11 @@ from responses import matchers
 
 
 def assert_reset():
-    assert len(responses._default_mock.registered()) == 0
+    assert len(responses.mock.registered()) == 0
     assert len(responses.calls) == 0
 
 
-def assert_response(resp, body=None, content_type="text/plain"):
+def assert_response(resp, body=None, content_type: "Optional[str]" = "text/plain"):
     assert resp.status_code == 200
     assert resp.reason == "OK"
     if content_type is not None:
@@ -612,7 +613,7 @@ def test_callback_exception_result():
     result = Exception()
     url = "http://example.com/"
 
-    def request_callback(request):
+    def request_callback(_request):
         return result
 
     @responses.activate
@@ -632,7 +633,7 @@ def test_callback_exception_body():
     body = Exception()
     url = "http://example.com/"
 
-    def request_callback(request):
+    def request_callback(_request):
         return 200, {}, body
 
     @responses.activate
@@ -673,7 +674,7 @@ def test_callback_no_content_type():
 
 
 def test_callback_content_type_dict():
-    def request_callback(request):
+    def request_callback(_request):
         return (
             200,
             {"Content-Type": "application/json"},
@@ -692,7 +693,7 @@ def test_callback_content_type_dict():
 
 
 def test_callback_matchers():
-    def request_callback(request):
+    def request_callback(_request):
         return (
             200,
             {"Content-Type": "application/json"},
@@ -748,7 +749,7 @@ def test_callback_matchers_fail():
 
 
 def test_callback_content_type_tuple():
-    def request_callback(request):
+    def request_callback(_request):
         return (
             200,
             [("Content-Type", "application/json")],
@@ -811,7 +812,7 @@ def test_custom_adapter():
         session = requests.Session()
         session.mount("http://", DummyAdapter())
 
-        resp = session.get(url, allow_redirects=False)
+        session.get(url, allow_redirects=False)
         assert calls[0] == 1
 
         # Test that the response is still correctly emulated
@@ -846,7 +847,7 @@ def test_responses_as_context_manager():
 
 def test_activate_doesnt_change_signature():
     def test_function(a, b=None):
-        return (a, b)
+        return a, b
 
     decorated_test_function = responses.activate(test_function)
     assert inspect.signature(test_function) == inspect.signature(
@@ -918,7 +919,7 @@ def test_activate_doesnt_change_signature_with_return_type():
 def test_activate_doesnt_change_signature_for_method():
     class TestCase(object):
         def test_function(self, a, b=None):
-            return (self, a, b)
+            return self, a, b
 
         decorated_test_function = responses.activate(test_function)
 
@@ -933,8 +934,8 @@ def test_response_cookies():
     headers = {"set-cookie": "session_id=12345; a=b; c=d"}
     url = "http://example.com/"
 
-    def request_callback(request):
-        return (status, headers, body)
+    def request_callback(_request):
+        return status, headers, body
 
     @responses.activate
     def run():
@@ -944,7 +945,7 @@ def test_response_cookies():
         assert resp.status_code == status
         assert "session_id" in resp.cookies
         assert resp.cookies["session_id"] == "12345"
-        assert set(resp.cookies.keys()) == set(["session_id"])
+        assert set(resp.cookies.keys()) == {"session_id"}
 
     run()
     assert_reset()
@@ -956,8 +957,8 @@ def test_response_cookies_secure():
     headers = {"set-cookie": "session_id=12345; a=b; c=d; secure"}
     url = "http://example.com/"
 
-    def request_callback(request):
-        return (status, headers, body)
+    def request_callback(_request):
+        return status, headers, body
 
     @responses.activate
     def run():
@@ -967,7 +968,7 @@ def test_response_cookies_secure():
         assert resp.status_code == status
         assert "session_id" in resp.cookies
         assert resp.cookies["session_id"] == "12345"
-        assert set(resp.cookies.keys()) == set(["session_id"])
+        assert set(resp.cookies.keys()) == {"session_id"}
 
     run()
     assert_reset()
@@ -982,8 +983,8 @@ def test_response_cookies_multiple():
     ]
     url = "http://example.com/"
 
-    def request_callback(request):
-        return (status, headers, body)
+    def request_callback(_request):
+        return status, headers, body
 
     @responses.activate
     def run():
@@ -991,7 +992,7 @@ def test_response_cookies_multiple():
         resp = requests.get(url)
         assert resp.text == "test callback"
         assert resp.status_code == status
-        assert set(resp.cookies.keys()) == set(["1P_JAR", "NID"])
+        assert set(resp.cookies.keys()) == {"1P_JAR", "NID"}
         assert resp.cookies["1P_JAR"] == "2019-12-31-23"
         assert resp.cookies["NID"] == "some=value"
 
@@ -1021,11 +1022,11 @@ def test_response_cookies_session(request_stream, responses_stream):
 
         assert "mycookie" in resp.cookies
         assert resp.cookies["mycookie"] == "cookieval"
-        assert set(resp.cookies.keys()) == set(["mycookie"])
+        assert set(resp.cookies.keys()) == {"mycookie"}
 
         assert "mycookie" in session.cookies
         assert session.cookies["mycookie"] == "cookieval"
-        assert set(session.cookies.keys()) == set(["mycookie"])
+        assert set(session.cookies.keys()) == {"mycookie"}
 
     run()
     assert_reset()
@@ -1035,9 +1036,9 @@ def test_response_callback():
     """adds a callback to decorate the response, then checks it"""
 
     def run():
-        def response_callback(resp):
-            resp._is_mocked = True
-            return resp
+        def response_callback(response):
+            response._is_mocked = True
+            return response
 
         with responses.RequestsMock(response_callback=response_callback) as m:
             m.add(responses.GET, "http://example.com", body=b"test")
@@ -1079,7 +1080,7 @@ def test_use_stream_twice_to_double_raw_io():
 
 
 def test_assert_all_requests_are_fired():
-    def request_callback(request):
+    def request_callback(_request):
         raise BaseException()
 
     def run():
@@ -1694,7 +1695,7 @@ def test_passthru_does_not_persist_across_tests(httpserver):
 
     @responses.activate
     def with_a_passthru():
-        assert not responses._default_mock.passthru_prefixes
+        assert not responses.mock.passthru_prefixes
         responses.add_passthru(re.compile(".*"))
 
         # wrap request that is passed through with another mock. That helps
@@ -1707,7 +1708,7 @@ def test_passthru_does_not_persist_across_tests(httpserver):
 
     @responses.activate
     def without_a_passthru():
-        assert not responses._default_mock.passthru_prefixes
+        assert not responses.mock.passthru_prefixes
         with pytest.raises(requests.exceptions.ConnectionError):
             requests.get("https://example.com")
 

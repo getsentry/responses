@@ -4,18 +4,8 @@ from requests.exceptions import ConnectionError
 
 import responses
 from responses import matchers
-
-
-def assert_response(resp, body=None, content_type="text/plain"):
-    assert resp.status_code == 200
-    assert resp.reason == "OK"
-    assert resp.headers["Content-Type"] == content_type
-    assert resp.text == body
-
-
-def assert_reset():
-    assert len(responses._default_mock.registered()) == 0
-    assert len(responses.calls) == 0
+from responses.tests.test_responses import assert_reset
+from responses.tests.test_responses import assert_response
 
 
 def test_query_string_matcher():
@@ -187,7 +177,7 @@ def test_request_matches_empty_body():
             )
 
             with pytest.raises(ConnectionError) as excinfo:
-                resp = requests.request(
+                requests.request(
                     "POST",
                     "http://example.com/",
                     json={"my": "data"},
@@ -205,7 +195,7 @@ def test_request_matches_empty_body():
                 match=[matchers.urlencoded_params_matcher(None)],
             )
             with pytest.raises(ConnectionError) as excinfo:
-                resp = requests.request(
+                requests.request(
                     "POST",
                     "http://example.com/",
                     headers={"Content-Type": "x-www-form-urlencoded"},

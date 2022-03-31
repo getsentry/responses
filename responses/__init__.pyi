@@ -246,7 +246,7 @@ class _Shortcut(Protocol):
         adding_headers: HeaderSet = ...,
         match_querystring: bool = ...,
         match: MatcherIterable = ...,
-    ) -> None: ...
+    ) -> BaseResponse: ...
 
 class _AddCallback(Protocol):
     def __call__(

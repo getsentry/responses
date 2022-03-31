@@ -2135,6 +2135,8 @@ class TestUnitTestPatchSetup:
         self.r_mock.stop()
         self.r_mock.reset()
 
+        assert_reset()
+
     def test_function(self):
         resp = requests.get("https://example.com")
         assert resp.status_code == 505
@@ -2162,6 +2164,8 @@ class TestUnitTestPatchSetupRaises:
         self.r_mock.reset()
 
         assert "[('PUT', 'https://example.com/')]" in str(exc.value)
+
+        assert_reset()
 
     def test_function(self):
         resp = requests.get("https://example.com")

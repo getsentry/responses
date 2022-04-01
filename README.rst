@@ -517,6 +517,11 @@ you can see, that status code will depend on the invocation order.
 
 .. code-block:: python
 
+    import requests
+
+    import responses
+    from responses.registries import OrderedRegistry
+
     @responses.activate(registry=OrderedRegistry)
     def test_invocation_index():
         responses.add(
@@ -1009,6 +1014,32 @@ will registered it like ``add``.
 matched responses from the registered list.
 
 Finally, ``reset`` will reset all registered responses.
+
+Coroutines and Multithreading
+-----------------------------
+
+``responses`` supports both Coroutines and Multithreading out of the box.
+Note, ``responses`` locks threading on ``RequestMock`` object allowing only
+single thread to access it.
+
+.. code-block:: python
+
+    async def test_async_calls():
+        @responses.activate
+        async def run():
+            responses.add(
+                responses.GET,
+                "http://twitter.com/api/1/foobar",
+                json={"error": "not found"},
+                status=404,
+            )
+
+            resp = requests.get("http://twitter.com/api/1/foobar")
+            assert resp.json() == {"error": "not found"}
+            assert responses.calls[0].request.url == "http://twitter.com/api/1/foobar"
+
+        await run()
+
 
 Contributing
 ------------

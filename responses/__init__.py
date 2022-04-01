@@ -8,6 +8,7 @@ from functools import wraps
 from http import client
 from itertools import groupby
 from re import Pattern
+from threading import Lock as _ThreadingLock
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
@@ -589,6 +590,7 @@ class RequestsMock(object):
         self.passthru_prefixes = tuple(passthru_prefixes)
         self.target = target
         self._patcher = None
+        self._thread_lock = _ThreadingLock()
 
     def get_registry(self):
         return self._registry
@@ -806,7 +808,8 @@ class RequestsMock(object):
             (Response) found match. If multiple found, then remove & return the first match.
             (list) list with reasons why other matches don't match
         """
-        return self._registry.find(request)
+        with self._thread_lock:
+            return self._registry.find(request)
 
     def _parse_request_params(self, url):
         params = {}

@@ -75,12 +75,14 @@ class FalseBool:
     __nonzero__ = __bool__
 
 
-def urlencoded_params_matcher(params: Optional[Dict[str, str]]) -> Callable[..., Any]:
+def urlencoded_params_matcher(
+    params: Optional[Dict[str, str]], **kwargs: Optional[Dict[str, str]]
+) -> Callable[..., Any]:
     warn(
         "Function is deprecated. Use 'from responses.matchers import urlencoded_params_matcher'",
         DeprecationWarning,
     )
-    return _urlencoded_params_matcher(params)
+    return _urlencoded_params_matcher(params, **kwargs)
 
 
 def json_params_matcher(params: Optional[Dict[str, Any]]) -> Callable[..., Any]:

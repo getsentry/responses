@@ -53,7 +53,9 @@ def _create_key_val_str(input_dict: Union[Dict[Any, Any], Any]) -> str:
     return key_val_str
 
 
-def urlencoded_params_matcher(params: Optional[Dict[str, str]]) -> Callable[..., Any]:
+def urlencoded_params_matcher(
+    params: Optional[Dict[str, str]], *, allow_blank: bool = False
+) -> Callable[..., Any]:
     """
     Matches URL encoded data
 
@@ -64,7 +66,11 @@ def urlencoded_params_matcher(params: Optional[Dict[str, str]]) -> Callable[...,
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         request_body = request.body
-        qsl_body = dict(parse_qsl(request_body)) if request_body else {}  # type: ignore[type-var]
+        qsl_body = (
+            dict(parse_qsl(request_body, keep_blank_values=allow_blank))
+            if request_body
+            else {}
+        )  # type: ignore[type-var]
         params_dict = params or {}
         valid = params is None if request_body is None else params_dict == qsl_body
         if not valid:

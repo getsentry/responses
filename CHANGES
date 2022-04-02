@@ -5,6 +5,7 @@
 * Removed internal `_cookies_from_headers` function
 * Now `add`, `upsert`, `replace` methods return registered response.
   `remove` method returns list of removed responses.
+* Added null value support in `urlencoded_params_matcher` via `allow_blank` keyword argument
 
 0.20.0
 ------

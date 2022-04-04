@@ -46,19 +46,24 @@ class FirstMatchRegistry(object):
                 match_failed_reasons.append(reason)
         return found_match, match_failed_reasons
 
-    def add(self, response: "BaseResponse") -> None:
-        if response in self.registered:
-            # if user adds multiple responses that reference the same instance
+    def add(self, response: "BaseResponse") -> "BaseResponse":
+        if any(response is resp for resp in self.registered):
+            # if user adds multiple responses that reference the same instance.
+            # do a comparison by memory allocation address.
             # see https://github.com/getsentry/responses/issues/479
             response = copy.deepcopy(response)
 
         self.registered.append(response)
+        return response
 
-    def remove(self, response: "BaseResponse") -> None:
+    def remove(self, response: "BaseResponse") -> List["BaseResponse"]:
+        removed_responses = []
         while response in self.registered:
             self.registered.remove(response)
+            removed_responses.append(response)
+        return removed_responses
 
-    def replace(self, response: "BaseResponse") -> None:
+    def replace(self, response: "BaseResponse") -> "BaseResponse":
         try:
             index = self.registered.index(response)
         except ValueError:
@@ -66,6 +71,7 @@ class FirstMatchRegistry(object):
                 "Response is not registered for URL {}".format(response.url)
             )
         self.registered[index] = response
+        return response
 
 
 class OrderedRegistry(FirstMatchRegistry):

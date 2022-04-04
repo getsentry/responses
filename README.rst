@@ -805,6 +805,42 @@ the ``assert_all_requests_are_fired`` value:
 Assert Request Call Count
 -------------------------
 
+Assert based on ``Response`` object
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Each ``Response`` object has ``call_count`` attribute that could be inspected
+to check how many times each request was matched.
+
+.. code-block:: python
+
+    @responses.activate
+    def test_call_count_with_matcher():
+
+        rsp = responses.add(
+            responses.GET,
+            "http://www.example.com",
+            match=(matchers.query_param_matcher({}),),
+        )
+        rsp2 = responses.add(
+            responses.GET,
+            "http://www.example.com",
+            match=(matchers.query_param_matcher({"hello": "world"}),),
+            status=777,
+        )
+        requests.get("http://www.example.com")
+        resp1 = requests.get("http://www.example.com")
+        requests.get("http://www.example.com?hello=world")
+        resp2 = requests.get("http://www.example.com?hello=world")
+
+        assert resp1.status_code == 200
+        assert resp2.status_code == 777
+
+        assert rsp.call_count == 2
+        assert rsp2.call_count == 2
+
+Assert based on the exact URL
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Assert that the request was called exactly n times.
 
 .. code-block:: python
@@ -823,6 +859,16 @@ Assert that the request was called exactly n times.
         with pytest.raises(AssertionError) as excinfo:
             responses.assert_call_count("http://example.com", 1)
         assert "Expected URL 'http://example.com' to be called 1 times. Called 2 times." in str(excinfo.value)
+
+    @responses.activate
+    def test_assert_call_count_always_match_qs():
+        responses.add(responses.GET, "http://www.example.com")
+        requests.get("http://www.example.com")
+        requests.get("http://www.example.com?hello=world")
+
+        # One call on each url, querystring is matched by default
+        responses.assert_call_count("http://www.example.com", 1) is True
+        responses.assert_call_count("http://www.example.com?hello=world", 1) is True
 
 
 Multiple Responses

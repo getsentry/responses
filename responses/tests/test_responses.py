@@ -1835,6 +1835,50 @@ def test_assert_call_count(url):
     assert_reset()
 
 
+def test_call_count_with_matcher():
+    @responses.activate
+    def run():
+        rsp = responses.add(
+            responses.GET,
+            "http://www.example.com",
+            match=(matchers.query_param_matcher({}),),
+        )
+        rsp2 = responses.add(
+            responses.GET,
+            "http://www.example.com",
+            match=(matchers.query_param_matcher({"hello": "world"}),),
+            status=777,
+        )
+        requests.get("http://www.example.com")
+        resp1 = requests.get("http://www.example.com")
+        requests.get("http://www.example.com?hello=world")
+        resp2 = requests.get("http://www.example.com?hello=world")
+
+        assert resp1.status_code == 200
+        assert resp2.status_code == 777
+
+        assert rsp.call_count == 2
+        assert rsp2.call_count == 2
+
+    run()
+    assert_reset()
+
+
+def test_call_count_without_matcher():
+    @responses.activate
+    def run():
+        rsp = responses.add(responses.GET, "http://www.example.com")
+        requests.get("http://www.example.com")
+        requests.get("http://www.example.com")
+        requests.get("http://www.example.com?hello=world")
+        requests.get("http://www.example.com?hello=world")
+
+        assert rsp.call_count == 4
+
+    run()
+    assert_reset()
+
+
 def test_fail_request_error():
     """
     Validate that exception is raised if request URL/Method/kwargs don't match

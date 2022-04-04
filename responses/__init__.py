@@ -648,8 +648,7 @@ class RequestsMock(object):
 
         """
         if isinstance(method, BaseResponse):
-            self._registry.add(method)
-            return
+            return self._registry.add(method)
 
         if adding_headers is not None:
             kwargs.setdefault("headers", adding_headers)
@@ -661,28 +660,29 @@ class RequestsMock(object):
                     " Using the `content_type` kwarg is recommended."
                 )
 
-        self._registry.add(Response(method=method, url=url, body=body, **kwargs))
+        response = Response(method=method, url=url, body=body, **kwargs)
+        return self._registry.add(response)
 
     def delete(self, *args, **kwargs):
-        self.add(DELETE, *args, **kwargs)
+        return self.add(DELETE, *args, **kwargs)
 
     def get(self, *args, **kwargs):
-        self.add(GET, *args, **kwargs)
+        return self.add(GET, *args, **kwargs)
 
     def head(self, *args, **kwargs):
-        self.add(HEAD, *args, **kwargs)
+        return self.add(HEAD, *args, **kwargs)
 
     def options(self, *args, **kwargs):
-        self.add(OPTIONS, *args, **kwargs)
+        return self.add(OPTIONS, *args, **kwargs)
 
     def patch(self, *args, **kwargs):
-        self.add(PATCH, *args, **kwargs)
+        return self.add(PATCH, *args, **kwargs)
 
     def post(self, *args, **kwargs):
-        self.add(POST, *args, **kwargs)
+        return self.add(POST, *args, **kwargs)
 
     def put(self, *args, **kwargs):
-        self.add(PUT, *args, **kwargs)
+        return self.add(PUT, *args, **kwargs)
 
     def add_passthru(self, prefix):
         """
@@ -718,7 +718,7 @@ class RequestsMock(object):
         else:
             response = BaseResponse(method=method_or_response, url=url)
 
-        self._registry.remove(response)
+        return self._registry.remove(response)
 
     def replace(self, method_or_response=None, url=None, body="", *args, **kwargs):
         """
@@ -735,7 +735,7 @@ class RequestsMock(object):
         else:
             response = Response(method=method_or_response, url=url, body=body, **kwargs)
 
-        self._registry.replace(response)
+        return self._registry.replace(response)
 
     def upsert(self, method_or_response=None, url=None, body="", *args, **kwargs):
         """
@@ -748,9 +748,9 @@ class RequestsMock(object):
         >>> responses.upsert(responses.GET, 'http://example.org', json={'data': 2})
         """
         try:
-            self.replace(method_or_response, url, body, *args, **kwargs)
+            return self.replace(method_or_response, url, body, *args, **kwargs)
         except ValueError:
-            self.add(method_or_response, url, body, *args, **kwargs)
+            return self.add(method_or_response, url, body, *args, **kwargs)
 
     def add_callback(
         self,

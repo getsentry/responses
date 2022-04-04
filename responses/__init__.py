@@ -9,6 +9,13 @@ from http import client
 from itertools import groupby
 from re import Pattern
 from threading import Lock as _ThreadingLock
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Iterator
+from typing import Optional
+from typing import Union
 from warnings import warn
 
 from requests.adapters import HTTPAdapter
@@ -41,6 +48,13 @@ from urllib.parse import urlsplit
 from urllib.parse import urlunparse
 from urllib.parse import urlunsplit
 
+if TYPE_CHECKING:  # pragma: no cover
+    # import only for linter run
+    from requests import PreparedRequest
+
+# Block of type annotations
+_Body = Union[str, BaseException, "Response", BufferedReader, bytes]
+
 Call = namedtuple("Call", ["request", "response"])
 _real_send = HTTPAdapter.send
 _UNSET = object()
@@ -55,13 +69,13 @@ class FalseBool:
     https://github.com/getsentry/responses/issues/464
     """
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return False
 
     __nonzero__ = __bool__
 
 
-def urlencoded_params_matcher(params):
+def urlencoded_params_matcher(params: Optional[Dict[str, str]]) -> Callable[..., Any]:
     warn(
         "Function is deprecated. Use 'from responses.matchers import urlencoded_params_matcher'",
         DeprecationWarning,
@@ -69,7 +83,7 @@ def urlencoded_params_matcher(params):
     return _urlencoded_params_matcher(params)
 
 
-def json_params_matcher(params):
+def json_params_matcher(params: Optional[Dict[str, Any]]) -> Callable[..., Any]:
     warn(
         "Function is deprecated. Use 'from responses.matchers import json_params_matcher'",
         DeprecationWarning,
@@ -77,11 +91,11 @@ def json_params_matcher(params):
     return _json_params_matcher(params)
 
 
-def _has_unicode(s):
+def _has_unicode(s: str) -> bool:
     return any(ord(char) > 128 for char in s)
 
 
-def _clean_unicode(url):
+def _clean_unicode(url: str) -> str:
     """Clean up URLs, which use punycode to handle unicode chars.
 
     Applies percent encoding to URL path and query if required.
@@ -117,7 +131,9 @@ def _clean_unicode(url):
     return "".join(chars)
 
 
-def get_wrapped(func, responses, registry=None):
+def get_wrapped(
+    func: Callable[..., Any], responses: "RequestsMock", registry: Optional[Any] = None
+) -> Callable[..., Any]:
     """Wrap provided function inside ``responses`` context manager.
 
     Provides a synchronous or asynchronous wrapper for the function.
@@ -159,26 +175,28 @@ def get_wrapped(func, responses, registry=None):
 
 
 class CallList(Sequence, Sized):
-    def __init__(self):
+    def __init__(self) -> None:
         self._calls = []
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Call]:
         return iter(self._calls)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._calls)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> Call:
         return self._calls[idx]
 
-    def add(self, request, response):
+    def add(self, request: "PreparedRequest", response: _Body) -> None:
         self._calls.append(Call(request, response))
 
-    def reset(self):
+    def reset(self) -> None:
         self._calls = []
 
 
-def _ensure_url_default_path(url):
+def _ensure_url_default_path(
+    url: "Union[Pattern[str], str]",
+) -> "Union[Pattern[str], str]":
     """Add empty URL path '/' if doesn't exist.
 
     Examples
@@ -205,7 +223,7 @@ def _ensure_url_default_path(url):
     return url
 
 
-def _get_url_and_path(url):
+def _get_url_and_path(url: str) -> str:
     """Construct URL only containing scheme, netloc and path by truncating other parts.
 
     This method complies with RFC 3986.
@@ -234,7 +252,9 @@ def _get_url_and_path(url):
     return parse_url(url_and_path).url
 
 
-def _handle_body(body):
+def _handle_body(
+    body: Optional[Union[bytes, BufferedReader, str]]
+) -> Union[BufferedReader, BytesIO]:
     """Generates `Response` body.
 
     Parameters

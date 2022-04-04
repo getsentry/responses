@@ -67,10 +67,10 @@ def urlencoded_params_matcher(
         reason = ""
         request_body = request.body
         qsl_body = (
-            dict(parse_qsl(request_body, keep_blank_values=allow_blank))
+            dict(parse_qsl(request_body, keep_blank_values=allow_blank))  # type: ignore[type-var]
             if request_body
             else {}
-        )  # type: ignore[type-var]
+        )
         params_dict = params or {}
         valid = params is None if request_body is None else params_dict == qsl_body
         if not valid:

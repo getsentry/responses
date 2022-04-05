@@ -134,7 +134,11 @@ def _clean_unicode(url: str) -> str:
 
 
 def get_wrapped(
-    func: Callable[..., Any], responses: "RequestsMock", registry: Optional[Any] = None
+    func: Callable[..., Any],
+    responses: "RequestsMock",
+    *,
+    registry: Optional[Any] = None,
+    assert_all_requests_are_fired: Optional[bool] = None,
 ) -> Callable[..., Any]:
     """Wrap provided function inside ``responses`` context manager.
 
@@ -149,6 +153,8 @@ def get_wrapped(
         Mock object that is used as context manager.
     registry : FirstMatchRegistry, optional
         Custom registry that should be applied. See ``responses.registries``
+    assert_all_requests_are_fired : bool
+        Raise an error if not all registered responses were executed.
 
     Returns
     -------
@@ -159,18 +165,29 @@ def get_wrapped(
     if registry is not None:
         responses._set_registry(registry)
 
+    assert_mock = std_mock.patch.object(
+        target=responses,
+        attribute="assert_all_requests_are_fired",
+        new=assert_all_requests_are_fired,
+    )
+
     if inspect.iscoroutinefunction(func):
         # set asynchronous wrapper if requestor function is asynchronous
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            with responses:
+
+            with assert_mock, responses:
                 return await func(*args, **kwargs)
 
     else:
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            with responses:
+
+            with assert_mock, responses:
+                # set 'assert_all_requests_are_fired' temporarily for a single run.
+                # Mock automatically unsets to avoid leakage to another decorated
+                # function since we still apply the value on 'responses.mock' object
                 return func(*args, **kwargs)
 
     return wrapper
@@ -792,12 +809,19 @@ class RequestsMock(object):
         self.reset()
         return success
 
-    def activate(self, func=None, registry=None):
+    def activate(
+        self, func=None, *, registry=None, assert_all_requests_are_fired=False
+    ):
         if func is not None:
             return get_wrapped(func, self)
 
         def deco_activate(function):
-            return get_wrapped(function, self, registry)
+            return get_wrapped(
+                function,
+                self,
+                registry=registry,
+                assert_all_requests_are_fired=assert_all_requests_are_fired,
+            )
 
         return deco_activate
 

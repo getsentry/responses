@@ -2231,6 +2231,60 @@ class TestShortcuts:
         assert_reset()
 
 
+class TestUnitTestPatchSetup:
+    """Validates that ``RequestsMock`` could be used as ``mock.patch``.
+
+    This class is present as example in README.rst
+
+    """
+
+    def setup(self):
+        self.r_mock = responses.RequestsMock(assert_all_requests_are_fired=True)
+        self.r_mock.start()
+        self.r_mock.get("https://example.com", status=505)
+        self.r_mock.put("https://example.com", status=506)
+
+    def teardown(self):
+        self.r_mock.stop()
+        self.r_mock.reset()
+
+        assert_reset()
+
+    def test_function(self):
+        resp = requests.get("https://example.com")
+        assert resp.status_code == 505
+
+        resp = requests.put("https://example.com")
+        assert resp.status_code == 506
+
+
+class TestUnitTestPatchSetupRaises:
+    """Validate that teardown raises if not all requests were executed.
+
+    Similar to ``TestUnitTestPatchSetup``.
+
+    """
+
+    def setup(self):
+        self.r_mock = responses.RequestsMock()
+        self.r_mock.start()
+        self.r_mock.get("https://example.com", status=505)
+        self.r_mock.put("https://example.com", status=506)
+
+    def teardown(self):
+        with pytest.raises(AssertionError) as exc:
+            self.r_mock.stop()
+        self.r_mock.reset()
+
+        assert "[('PUT', 'https://example.com/')]" in str(exc.value)
+
+        assert_reset()
+
+    def test_function(self):
+        resp = requests.get("https://example.com")
+        assert resp.status_code == 505
+
+
 def test_reset_in_the_middle():
     @responses.activate
     def run():

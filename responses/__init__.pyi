@@ -294,8 +294,10 @@ class _Activate(Protocol):
     # use this overload for scenario when 'responses.activate' is used
 
     @overload
-    def __call__(self, registry: Type[Any] = ...) -> Callable[["_F"], "_F"]: ...
-    # use this overload for scenario when 'responses.activate(registry=)' is used
+    def __call__(
+        self, registry: Type[Any] = ..., assert_all_requests_are_fired: bool = ...
+    ) -> Callable[["_F"], "_F"]: ...
+    # use this overload for scenario when 'responses.activate(registry=, assert_all_requests_are_fired=True)' is used
 
 activate: _Activate
 add: _Add

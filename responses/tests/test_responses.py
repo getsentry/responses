@@ -2059,6 +2059,71 @@ async def test_async_calls():
     assert_reset()
 
 
+class TestStrictWrapper:
+    def test_strict_wrapper(self):
+        """Test that assert_all_requests_are_fired could be applied to the decorator."""
+
+        @responses.activate(assert_all_requests_are_fired=True)
+        def run_strict():
+            responses.add(responses.GET, "https://someapi1.com/", "success")
+            responses.add(responses.GET, "https://notcalled1.com/", "success")
+            requests.get("https://someapi1.com/")
+            assert responses.mock.assert_all_requests_are_fired
+
+        @responses.activate(assert_all_requests_are_fired=False)
+        def run_not_strict():
+            responses.add(responses.GET, "https://someapi2.com/", "success")
+            responses.add(responses.GET, "https://notcalled2.com/", "success")
+            requests.get("https://someapi2.com/")
+            assert not responses.mock.assert_all_requests_are_fired
+
+        @responses.activate
+        def run_classic():
+            responses.add(responses.GET, "https://someapi3.com/", "success")
+            responses.add(responses.GET, "https://notcalled3.com/", "success")
+            requests.get("https://someapi3.com/")
+            assert not responses.mock.assert_all_requests_are_fired
+
+        # keep the order of function calls to ensure that decorator doesn't leak to another function
+        with pytest.raises(AssertionError) as exc_info:
+            run_strict()
+
+        # check that one URL is in uncalled assertion
+        assert "https://notcalled1.com/" in str(exc_info.value)
+
+        run_classic()
+        run_not_strict()
+
+    @pytest.mark.parametrize("assert_fired", (True, False, None))
+    def test_nested_decorators(self, assert_fired):
+        """Validate if assert_all_requests_are_fired is applied from the correct function.
+
+        assert_all_requests_are_fired must be applied from the function
+        where call to 'requests' is done.
+        Test matrix of True/False/None values applied to validate different scenarios.
+        """
+
+        @responses.activate(assert_all_requests_are_fired=assert_fired)
+        def wrapped():
+            responses.add(responses.GET, "https://notcalled1.com/", "success")
+            responses.add(responses.GET, "http://example.com/1", body="Hello 1")
+            assert b"Hello 1" == requests.get("http://example.com/1").content
+
+        @responses.activate(assert_all_requests_are_fired=not assert_fired)
+        def call_another_wrapped_function():
+            responses.add(responses.GET, "https://notcalled2.com/", "success")
+            wrapped()
+
+        if assert_fired:
+            with pytest.raises(AssertionError) as exc_info:
+                call_another_wrapped_function()
+
+            assert "https://notcalled1.com/" in str(exc_info.value)
+            assert "https://notcalled2.com/" in str(exc_info.value)
+        else:
+            call_another_wrapped_function()
+
+
 class TestMultipleWrappers:
     """Test to validate that multiple decorators could be applied.
 

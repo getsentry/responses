@@ -517,6 +517,11 @@ you can see, that status code will depend on the invocation order.
 
 .. code-block:: python
 
+    import requests
+
+    import responses
+    from responses.registries import OrderedRegistry
+
     @responses.activate(registry=OrderedRegistry)
     def test_invocation_index():
         responses.add(
@@ -841,6 +846,42 @@ the ``assert_all_requests_are_fired`` value:
 Assert Request Call Count
 -------------------------
 
+Assert based on ``Response`` object
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Each ``Response`` object has ``call_count`` attribute that could be inspected
+to check how many times each request was matched.
+
+.. code-block:: python
+
+    @responses.activate
+    def test_call_count_with_matcher():
+
+        rsp = responses.add(
+            responses.GET,
+            "http://www.example.com",
+            match=(matchers.query_param_matcher({}),),
+        )
+        rsp2 = responses.add(
+            responses.GET,
+            "http://www.example.com",
+            match=(matchers.query_param_matcher({"hello": "world"}),),
+            status=777,
+        )
+        requests.get("http://www.example.com")
+        resp1 = requests.get("http://www.example.com")
+        requests.get("http://www.example.com?hello=world")
+        resp2 = requests.get("http://www.example.com?hello=world")
+
+        assert resp1.status_code == 200
+        assert resp2.status_code == 777
+
+        assert rsp.call_count == 2
+        assert rsp2.call_count == 2
+
+Assert based on the exact URL
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Assert that the request was called exactly n times.
 
 .. code-block:: python
@@ -859,6 +900,16 @@ Assert that the request was called exactly n times.
         with pytest.raises(AssertionError) as excinfo:
             responses.assert_call_count("http://example.com", 1)
         assert "Expected URL 'http://example.com' to be called 1 times. Called 2 times." in str(excinfo.value)
+
+    @responses.activate
+    def test_assert_call_count_always_match_qs():
+        responses.add(responses.GET, "http://www.example.com")
+        requests.get("http://www.example.com")
+        requests.get("http://www.example.com?hello=world")
+
+        # One call on each url, querystring is matched by default
+        responses.assert_call_count("http://www.example.com", 1) is True
+        responses.assert_call_count("http://www.example.com?hello=world", 1) is True
 
 
 Multiple Responses
@@ -1050,6 +1101,32 @@ will registered it like ``add``.
 matched responses from the registered list.
 
 Finally, ``reset`` will reset all registered responses.
+
+Coroutines and Multithreading
+-----------------------------
+
+``responses`` supports both Coroutines and Multithreading out of the box.
+Note, ``responses`` locks threading on ``RequestMock`` object allowing only
+single thread to access it.
+
+.. code-block:: python
+
+    async def test_async_calls():
+        @responses.activate
+        async def run():
+            responses.add(
+                responses.GET,
+                "http://twitter.com/api/1/foobar",
+                json={"error": "not found"},
+                status=404,
+            )
+
+            resp = requests.get("http://twitter.com/api/1/foobar")
+            assert resp.json() == {"error": "not found"}
+            assert responses.calls[0].request.url == "http://twitter.com/api/1/foobar"
+
+        await run()
+
 
 Contributing
 ------------

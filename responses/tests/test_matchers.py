@@ -51,6 +51,24 @@ def test_request_matches_post_params():
             body="two",
             match=[urlencoded_params_matcher({"page": "second", "type": "urlencoded"})],
         )
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="three",
+            match=[
+                urlencoded_params_matcher(
+                    {"page": "", "type": "urlencoded"}, allow_blank=True
+                )
+            ],
+        )
+
+        resp = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={"Content-Type": "x-www-form-urlencoded"},
+            data={"page": "", "type": "urlencoded"},
+        )
+        assert_response(resp, "three")
 
         resp = requests.request(
             "POST",

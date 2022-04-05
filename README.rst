@@ -737,8 +737,8 @@ Responses as a context manager
         resp = requests.get('http://twitter.com/api/1/foobar')
         resp.status_code == 404
 
-Using ``responses`` in unit tests
----------------------------------
+Integration with unit test frameworks
+-------------------------------------
 
 Responses as a ``pytest`` fixture
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

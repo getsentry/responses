@@ -14,7 +14,11 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Iterator
+from typing import Literal
 from typing import Optional
+from typing import Protocol
+from typing import Tuple
+from typing import Type
 from typing import Union
 from warnings import warn
 
@@ -583,32 +587,51 @@ class OriginalResponseShim(object):
         return
 
 
+class _Shortcut(Protocol):
+    def __call__(
+        self,
+        url: Optional[Union[Pattern[str], str]] = ...,
+        body: _Body = ...,
+        json: Optional[Any] = ...,
+        status: int = ...,
+        # headers: "HeaderSet" = ..., #todo
+        stream: bool = ...,
+        content_type: Optional[str] = ...,
+        auto_calculate_content_length: bool = ...,
+        # adding_headers: "HeaderSet" = ..., #todo
+        match_querystring: bool = ...,
+        # match: "MatcherIterable" = ..., #todo
+    ) -> BaseResponse:
+        ...
+
+
 class RequestsMock(object):
-    DELETE = "DELETE"
-    GET = "GET"
-    HEAD = "HEAD"
-    OPTIONS = "OPTIONS"
-    PATCH = "PATCH"
-    POST = "POST"
-    PUT = "PUT"
-    response_callback = None
+    DELETE: Literal["DELETE"] = "DELETE"
+    GET: Literal["GET"] = "GET"
+    HEAD: Literal["HEAD"] = "HEAD"
+    OPTIONS: Literal["OPTIONS"] = "OPTIONS"
+    PATCH: Literal["PATCH"] = "PATCH"
+    POST: Literal["POST"] = "POST"
+    PUT: Literal["PUT"] = "PUT"
+
+    response_callback: Optional[Callable[[Any], Any]] = None
 
     def __init__(
         self,
-        assert_all_requests_are_fired=True,
-        response_callback=None,
-        passthru_prefixes=(),
-        target="requests.adapters.HTTPAdapter.send",
-        registry=FirstMatchRegistry,
+        assert_all_requests_are_fired: bool = True,
+        response_callback: Optional[Callable[[Any], Any]] = None,
+        passthru_prefixes: Tuple[str, ...] = (),
+        target: str = "requests.adapters.HTTPAdapter.send",
+        registry: Type[FirstMatchRegistry] = FirstMatchRegistry,
     ):
-        self._calls = CallList()
+        self._calls: CallList = CallList()
         self.reset()
-        self._registry = registry()  # call only after reset
-        self.assert_all_requests_are_fired = assert_all_requests_are_fired
-        self.response_callback = response_callback
-        self.passthru_prefixes = tuple(passthru_prefixes)
-        self.target = target
-        self._patcher = None
+        self._registry: FirstMatchRegistry = registry()  # call only after reset
+        self.assert_all_requests_are_fired: bool = assert_all_requests_are_fired
+        self.response_callback: Optional[Callable[[Any], Any]] = response_callback
+        self.passthru_prefixes: Tuple[str, ...] = tuple(passthru_prefixes)
+        self.target: str = target
+        self._patcher: Optional[Callable[[Any], Any]] = None
         self._thread_lock = _ThreadingLock()
 
     def get_registry(self):
@@ -631,10 +654,11 @@ class RequestsMock(object):
 
     def add(
         self,
-        method=None,  # method or ``Response``
-        url=None,
-        body="",
+        method: Optional[Union[str, BaseResponse]] = None,
+        url: "Optional[Union[Pattern[str], str]]" = None,
+        body: _Body = "",
         adding_headers=None,
+        # adding_headers: HeaderSet = None, # todo
         *args,
         **kwargs,
     ):
@@ -681,6 +705,14 @@ class RequestsMock(object):
 
         response = Response(method=method, url=url, body=body, **kwargs)
         return self._registry.add(response)
+
+    delete: _Shortcut
+    get: _Shortcut
+    head: _Shortcut
+    options: _Shortcut
+    patch: _Shortcut
+    post: _Shortcut
+    put: _Shortcut
 
     def delete(self, *args, **kwargs):
         return self.add(DELETE, *args, **kwargs)

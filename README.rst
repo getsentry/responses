@@ -997,6 +997,44 @@ in the execution chain and contain the history of redirects.
         assert rsp2.url in exc_info.value.response.history[1].url
 
 
+Validate ``Retry`` mechanism
+----------------------------
+
+If you are using the ``Retry`` features of ``urllib3`` and want to cover scenarios that test your retry limits, you can test those scenarios with ``responses`` as well. The best approach will be to use an `Ordered Registry`_
+
+..  code-block:: python
+
+    import requests
+
+    import responses
+    from responses import registries
+
+    @responses.activate(registry=registries.OrderedRegistry)
+    def test_max_retries():
+        url = 'https://example.com'
+        rsp1 = responses.get(url, body='Error', status=500)
+        rsp2 = responses.get(url, body='Error', status=500)
+        rsp3 = responses.get(url, body='Error', status=500)
+        rsp4 = responses.get(url, body='OK', status=200)
+
+        session = requests.Session()
+
+        adapter = requests.adapters.HTTPAdapter(max_retries=Retry(
+            total=4,
+            backoff_factor=0.1,
+            status_forcelist=[500],
+            method_whitelist=['GET', 'POST', 'PATCH']
+        ))
+        session.mount('https://', adapter)
+
+        resp = session.get(url)
+
+        assert resp.status_code == 200
+        assert rsp1.call_count == 1
+        assert rsp2.call_count == 1
+        assert rsp3.call_count == 1
+        assert rsp4.call_count == 1
+
 
 Using a callback to modify the response
 ---------------------------------------

@@ -14,7 +14,6 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Iterator
-from typing import Literal
 from typing import Optional
 from typing import Protocol
 from typing import Tuple
@@ -29,6 +28,11 @@ from responses.matchers import json_params_matcher as _json_params_matcher
 from responses.matchers import query_string_matcher as _query_string_matcher
 from responses.matchers import urlencoded_params_matcher as _urlencoded_params_matcher
 from responses.registries import FirstMatchRegistry
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -590,7 +594,7 @@ class OriginalResponseShim(object):
 class _Shortcut(Protocol):
     def __call__(
         self,
-        url: Optional[Union[Pattern[str], str]] = ...,
+        url: "Optional[Union[Pattern[str], str]]" = ...,
         body: _Body = ...,
         json: Optional[Any] = ...,
         status: int = ...,

@@ -20,6 +20,7 @@ from typing import Mapping
 from typing import Optional
 from typing import Tuple
 from typing import Type
+from typing import TypeVar
 from typing import Union
 from warnings import warn
 
@@ -34,10 +35,8 @@ from responses.registries import FirstMatchRegistry
 
 try:
     from typing import Literal
-    from typing import Protocol
 except ImportError:
     from typing_extensions import Literal
-    from typing_extensions import Protocol
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -67,6 +66,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
 # Block of type annotations
 _Body = Union[str, BaseException, "Response", BufferedReader, bytes]
+_F = TypeVar("_F", bound=Callable[..., Any])
+_HeaderSet = Optional[Union[Mapping[str, str], List[Tuple[str, str]]]]
 _MatcherIterable = Iterable[Callable[[Any], Callable[..., Any]]]
 
 Call = namedtuple("Call", ["request", "response"])
@@ -457,8 +458,8 @@ class Response(BaseResponse):
         json: Optional[Any] = None,
         status: int = 200,
         headers: Optional[Mapping[str, str]] = None,
-        stream: bool = None,
-        content_type: Optional[str] = _UNSET,
+        stream: Optional[bool] = None,
+        content_type: Optional[str, object] = _UNSET,
         auto_calculate_content_length: bool = False,
         **kwargs,
     ) -> None:
@@ -606,29 +607,11 @@ class OriginalResponseShim(object):
     def __init__(self, headers):
         self.msg = headers
 
-    def isclosed(self):
+    def isclosed(self) -> bool:
         return True
 
-    def close(self):
+    def close(self) -> None:
         return
-
-
-class _Shortcut(Protocol):
-    def __call__(
-        self,
-        url: "Optional[Union[Pattern[str], str]]" = ...,
-        body: _Body = ...,
-        json: Optional[Any] = ...,
-        status: int = ...,
-        # headers: "HeaderSet" = ..., #todo
-        stream: bool = ...,
-        content_type: Optional[str] = ...,
-        auto_calculate_content_length: bool = ...,
-        # adding_headers: "HeaderSet" = ..., #todo
-        match_querystring: bool = ...,
-        # match: "MatcherIterable" = ..., #todo
-    ) -> BaseResponse:
-        ...
 
 
 class RequestsMock(object):
@@ -683,11 +666,10 @@ class RequestsMock(object):
         method: Optional[Union[str, BaseResponse]] = None,
         url: "Optional[Union[Pattern[str], str]]" = None,
         body: _Body = "",
-        adding_headers=None,
-        # adding_headers: HeaderSet = None, # todo
+        adding_headers: _HeaderSet = None,
         *args,
         **kwargs,
-    ):
+    ) -> BaseResponse:
         """
         >>> import responses
 
@@ -732,15 +714,7 @@ class RequestsMock(object):
         response = Response(method=method, url=url, body=body, **kwargs)
         return self._registry.add(response)
 
-    delete: _Shortcut
-    get: _Shortcut
-    head: _Shortcut
-    options: _Shortcut
-    patch: _Shortcut
-    post: _Shortcut
-    put: _Shortcut
-
-    def delete(self, *args, **kwargs):
+    def delete(self, *args, **kwargs) -> BaseResponse:
         return self.add(DELETE, *args, **kwargs)
 
     def get(self, *args, **kwargs):
@@ -780,7 +754,11 @@ class RequestsMock(object):
             prefix = _clean_unicode(prefix)
         self.passthru_prefixes += (prefix,)
 
-    def remove(self, method_or_response=None, url=None):
+    def remove(
+        self,
+        method_or_response: Optional[Union[str, Response]] = None,
+        url: "Optional[Union[Pattern[str], str]]" = None,
+    ) -> List[BaseResponse]:
         """
         Removes a response previously added using ``add()``, identified
         either by a response object inheriting ``BaseResponse`` or
@@ -857,11 +835,11 @@ class RequestsMock(object):
     def calls(self):
         return self._calls
 
-    def __enter__(self):
+    def __enter__(self) -> "RequestsMock":
         self.start()
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, type: Any, value: Any, traceback: Any) -> bool:
         success = type is None
         self.stop(allow_assert=success)
         self.reset()
@@ -873,7 +851,7 @@ class RequestsMock(object):
         if func is not None:
             return get_wrapped(func, self)
 
-        def deco_activate(function):
+        def deco_activate(function: _F) -> Callable[..., Any]:
             return get_wrapped(
                 function,
                 self,
@@ -897,7 +875,7 @@ class RequestsMock(object):
         with self._thread_lock:
             return self._registry.find(request)
 
-    def _parse_request_params(self, url):
+    def _parse_request_params(self, url: str) -> Dict[str, Union[str, int, float]]:
         params = {}
         for key, val in groupby(parse_qsl(urlsplit(url).query), lambda kv: kv[0]):
             values = list(map(lambda x: x[1], val))
@@ -995,7 +973,7 @@ class RequestsMock(object):
         self._patcher = std_mock.patch(target=self.target, new=unbound_on_send)
         self._patcher.start()
 
-    def stop(self, allow_assert=True) -> None:
+    def stop(self, allow_assert: bool = True) -> None:
         if self._patcher:
             # prevent stopping unstarted patchers
             self._patcher.stop()
@@ -1018,7 +996,7 @@ class RequestsMock(object):
                 )
             )
 
-    def assert_call_count(self, url, count) -> bool:
+    def assert_call_count(self, url: str, count: int) -> bool:
         call_count = len(
             [
                 1
@@ -1111,7 +1089,7 @@ upsert = _default_mock.upsert
 deprecated_names = ["assert_all_requests_are_fired", "passthru_prefixes", "target"]
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     if name in deprecated_names:
         warn(
             f"{name} is deprecated. Please use 'responses.mock.{name}",

@@ -2,6 +2,7 @@
 ------
 
 * Add `threading.Lock()` to allow `responses` working with `threading` module.
+* Add `urllib3` `Retry` mechanism. See #135
 * Removed internal `_cookies_from_headers` function
 * Now `add`, `upsert`, `replace` methods return registered response.
   `remove` method returns list of removed responses.

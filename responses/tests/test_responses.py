@@ -13,9 +13,11 @@ from unittest.mock import patch
 
 import pytest
 import requests
+from requests.adapters import MaxRetryError
 from requests.exceptions import ChunkedEncodingError
 from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
+from urllib3.util.retry import Retry
 
 import responses
 from responses import BaseResponse
@@ -23,6 +25,7 @@ from responses import CallbackResponse
 from responses import PassthroughResponse
 from responses import Response
 from responses import matchers
+from responses import registries
 
 
 def assert_reset():
@@ -2342,3 +2345,114 @@ def test_redirect():
 
     run()
     assert_reset()
+
+
+class TestMaxRetry:
+    def test_max_retries(self):
+        """This example is present in README.rst"""
+
+        @responses.activate(registry=registries.OrderedRegistry)
+        def run():
+            url = "https://example.com"
+            rsp1 = responses.get(url, body="Error", status=500)
+            rsp2 = responses.get(url, body="Error", status=500)
+            rsp3 = responses.get(url, body="Error", status=500)
+            rsp4 = responses.get(url, body="OK", status=200)
+
+            session = requests.Session()
+
+            adapter = requests.adapters.HTTPAdapter(
+                max_retries=Retry(
+                    total=4,
+                    backoff_factor=0.1,
+                    status_forcelist=[500],
+                    method_whitelist=["GET", "POST", "PATCH"],
+                )
+            )
+            session.mount("https://", adapter)
+
+            resp = session.get(url)
+
+            assert resp.status_code == 200
+            assert rsp1.call_count == 1
+            assert rsp2.call_count == 1
+            assert rsp3.call_count == 1
+            assert rsp4.call_count == 1
+
+        run()
+        assert_reset()
+
+    @pytest.mark.parametrize("raise_on_status", (True, False))
+    def test_max_retries_exceed(self, raise_on_status):
+        @responses.activate(registry=registries.OrderedRegistry)
+        def run():
+            url = "https://example.com"
+            rsp1 = responses.get(url, body="Error", status=500)
+            rsp2 = responses.get(url, body="Error", status=500)
+            rsp3 = responses.get(url, body="Error", status=500)
+
+            session = requests.Session()
+
+            adapter = requests.adapters.HTTPAdapter(
+                max_retries=Retry(
+                    total=2,
+                    backoff_factor=0.1,
+                    status_forcelist=[500],
+                    method_whitelist=["GET", "POST", "PATCH"],
+                    raise_on_status=raise_on_status,
+                )
+            )
+            session.mount("https://", adapter)
+
+            if raise_on_status:
+                with pytest.raises(MaxRetryError):
+                    session.get(url)
+            else:
+                resp = session.get(url)
+                assert resp.status_code == 500
+
+            assert rsp1.call_count == 1
+            assert rsp2.call_count == 1
+            assert rsp3.call_count == 1
+
+        run()
+        assert_reset()
+
+    def test_adapter_retry_untouched(self):
+        """Validate that every new request uses brand-new Retry object"""
+
+        @responses.activate(registry=registries.OrderedRegistry)
+        def run():
+            url = "https://example.com"
+            error_rsp = responses.get(url, body="Error", status=500)
+            responses.add(error_rsp)
+            responses.add(error_rsp)
+            ok_rsp = responses.get(url, body="OK", status=200)
+
+            responses.add(error_rsp)
+            responses.add(error_rsp)
+            responses.add(error_rsp)
+            responses.add(ok_rsp)
+
+            session = requests.Session()
+
+            adapter = requests.adapters.HTTPAdapter(
+                max_retries=Retry(
+                    total=4,
+                    backoff_factor=0.1,
+                    status_forcelist=[500],
+                    method_whitelist=["GET", "POST", "PATCH"],
+                )
+            )
+            session.mount("https://", adapter)
+
+            resp = session.get(url)
+            assert resp.status_code == 200
+
+            resp = session.get(url)
+            assert resp.status_code == 200
+
+            assert len(responses.calls) == 8
+
+        run()
+        assert_reset()

@@ -19,6 +19,7 @@ from typing import Union
 from warnings import warn
 
 from requests.adapters import HTTPAdapter
+from requests.adapters import MaxRetryError
 from requests.exceptions import ConnectionError
 
 from responses.matchers import json_params_matcher as _json_params_matcher
@@ -846,7 +847,7 @@ class RequestsMock(object):
             params[key] = values
         return params
 
-    def _on_request(self, adapter, request, **kwargs):
+    def _on_request(self, adapter, request, *, retries=None, **kwargs):
         # add attributes params and req_kwargs to 'request' object for further match comparison
         # original request object does not have these attributes
         request.params = self._parse_request_params(request.path_url)
@@ -904,6 +905,22 @@ class RequestsMock(object):
         response = resp_callback(response) if resp_callback else response
         match.call_count += 1
         self._calls.add(request, response)
+
+        retries = retries or adapter.max_retries
+        # first validate that current request is eligible to be retried.
+        # See ``requests.packages.urllib3.util.retry.Retry`` documentation.
+        if retries.is_retry(
+            method=response.request.method, status_code=response.status_code
+        ):
+            try:
+                retries = retries.increment(
+                    method=response.request.method, url=response.url, response=response
+                )
+                return self._on_request(adapter, request, retries=retries, **kwargs)
+            except MaxRetryError:
+                if retries.raise_on_status:
+                    raise
+                return response
         return response
 
     def start(self):

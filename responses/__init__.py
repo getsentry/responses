@@ -36,7 +36,7 @@ from responses.registries import FirstMatchRegistry
 try:
     from typing_extensions import Literal
 except ImportError:
-    from typing import Literal  # type: ignore[attr-defined]
+    from typing import Literal  # type: ignore[attr-defined, no-redef]
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -69,7 +69,7 @@ if TYPE_CHECKING:  # pragma: no cover
 _Body = Union[str, BaseException, "Response", BufferedReader, bytes, None]
 _F = TypeVar("_F", bound=Callable[..., Any])
 _HeaderSet = Optional[Union[Mapping[str, str], List[Tuple[str, str]]]]
-_MatcherIterable = Iterable[Callable[[Any], Callable[..., Any]]]
+_MatcherIterable = Iterable[Callable[[Any], Callable[..., Tuple[bool, str]]]]
 
 Call = namedtuple("Call", ["request", "response"])
 _real_send = HTTPAdapter.send
@@ -91,14 +91,12 @@ class FalseBool:
     __nonzero__ = __bool__
 
 
-def urlencoded_params_matcher(
-    params: Optional[Dict[str, str]], **kwargs: Optional[Union[Dict[str, str], bool]]
-) -> Callable[..., Any]:
+def urlencoded_params_matcher(params: Optional[Dict[str, str]]) -> Callable[..., Any]:
     warn(
         "Function is deprecated. Use 'from responses.matchers import urlencoded_params_matcher'",
         DeprecationWarning,
     )
-    return _urlencoded_params_matcher(params, **kwargs)
+    return _urlencoded_params_matcher(params)
 
 
 def json_params_matcher(params: Optional[Dict[str, Any]]) -> Callable[..., Any]:
@@ -198,7 +196,7 @@ def get_wrapped(
     else:
 
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
 
             with assert_mock, responses:
                 # set 'assert_all_requests_are_fired' temporarily for a single run.
@@ -209,9 +207,9 @@ def get_wrapped(
     return wrapper
 
 
-class CallList(Sequence, Sized):
+class CallList(Sequence, Sized):  # ignore: type[type-arg]
     def __init__(self) -> None:
-        self._calls = []
+        self._calls: List[Call] = []
 
     def __iter__(self) -> Iterator[Call]:
         return iter(self._calls)
@@ -219,7 +217,7 @@ class CallList(Sequence, Sized):
     def __len__(self) -> int:
         return len(self._calls)
 
-    def __getitem__(self, idx: int) -> Call:
+    def __getitem__(self, idx: int) -> Call:  # ignore: type[override]
         return self._calls[idx]
 
     def add(self, request: "PreparedRequest", response: _Body) -> None:
@@ -343,7 +341,7 @@ class BaseResponse(object):
     passthrough: bool = False
     content_type: Optional[str] = None
     headers: Optional[Mapping[str, str]] = None
-    stream: bool = False
+    stream: Optional[bool] = False
 
     def __init__(
         self,
@@ -418,7 +416,7 @@ class BaseResponse(object):
 
     @staticmethod
     def _req_attr_matches(
-        match: "_MatcherIterable", request: "PreparedRequest"
+        match: "Iterable[Callable[..., Tuple[bool, str]]]", request: "PreparedRequest"
     ) -> Tuple[bool, str]:
         for matcher in match:
             valid, reason = matcher(request)
@@ -462,7 +460,7 @@ class Response(BaseResponse):
         status: int = 200,
         headers: Optional[Mapping[str, str]] = None,
         stream: Optional[bool] = None,
-        content_type: Optional[str, object] = _UNSET,
+        content_type: Optional[Union[str, object]] = _UNSET,
         auto_calculate_content_length: bool = False,
         **kwargs: Any,
     ) -> None:
@@ -490,7 +488,7 @@ class Response(BaseResponse):
                 DeprecationWarning,
             )
 
-        self.stream: bool = stream
+        self.stream: Optional[bool] = stream
         self.content_type: Optional[str] = content_type
         self.auto_calculate_content_length: bool = auto_calculate_content_length
         super().__init__(method, url, **kwargs)
@@ -900,7 +898,7 @@ class RequestsMock(object):
 
     def _parse_request_params(
         self, url: str
-    ) -> Dict[str, Union[str, int, float, List[Optional[str, int, float]]]]:
+    ) -> Dict[str, Union[str, int, float, List[Optional[Union[str, int, float]]]]]:
         params: Dict[str, Union[str, int, float, List[Any]]] = {}
         for key, val in groupby(parse_qsl(urlsplit(url).query), lambda kv: kv[0]):
             values = list(map(lambda x: x[1], val))

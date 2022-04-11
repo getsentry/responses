@@ -63,7 +63,10 @@ from urllib.parse import urlunsplit
 
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
+    from mypy.typeshed.stdlib.unittest.mock import _patcher as _mock_patcher
     from requests import PreparedRequest
+    from requests import models
+    from urllib3 import Retry as _Retry
 
 # Block of type annotations
 _Body = Union[str, BaseException, "Response", BufferedReader, bytes, None]
@@ -188,7 +191,7 @@ def get_wrapped(
     if inspect.iscoroutinefunction(func):
         # set asynchronous wrapper if requestor function is asynchronous
         @wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> Any:  # ignore: type[misc]
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[misc]
 
             with assert_mock, responses:
                 return await func(*args, **kwargs)
@@ -196,7 +199,7 @@ def get_wrapped(
     else:
 
         @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[misc]
 
             with assert_mock, responses:
                 # set 'assert_all_requests_are_fired' temporarily for a single run.
@@ -217,7 +220,7 @@ class CallList(Sequence, Sized):  # ignore: type[type-arg]
     def __len__(self) -> int:
         return len(self._calls)
 
-    def __getitem__(self, idx: int) -> Call:  # ignore: type[override]
+    def __getitem__(self, idx: int) -> Call:  # type: ignore[override]
         return self._calls[idx]
 
     def add(self, request: "PreparedRequest", response: _Body) -> None:
@@ -547,7 +550,7 @@ class CallbackResponse(BaseResponse):
                 "stream argument is deprecated. Use stream parameter in request directly",
                 DeprecationWarning,
             )
-        self.stream: bool = stream
+        self.stream: Optional[bool] = stream
         self.content_type: Optional[str] = content_type
         super().__init__(method, url, **kwargs)
 
@@ -638,10 +641,12 @@ class RequestsMock(object):
         self.reset()
         self._registry: FirstMatchRegistry = registry()  # call only after reset
         self.assert_all_requests_are_fired: bool = assert_all_requests_are_fired
-        self.response_callback: Optional[Callable[[Any], Any]] = response_callback
-        self.passthru_prefixes: Tuple[str, ...] = tuple(passthru_prefixes)
+        self.response_callback: Optional[Callable[[Any], Response]] = response_callback
+        self.passthru_prefixes: Tuple["Union[Pattern[str], str]", ...] = tuple(
+            passthru_prefixes
+        )
         self.target: str = target
-        self._patcher: Optional[Callable[[Any], Any]] = None
+        self._patcher: Optional[Union[Callable[[Any], Any], "_mock_patcher"]] = None
         self._thread_lock = _ThreadingLock()
 
     def get_registry(self) -> FirstMatchRegistry:
@@ -668,8 +673,8 @@ class RequestsMock(object):
         url: "Optional[Union[Pattern[str], str]]" = None,
         body: _Body = "",
         adding_headers: _HeaderSet = None,
-        *args,
-        **kwargs,
+        *args: Any,
+        **kwargs: Any,
     ) -> BaseResponse:
         """
         >>> import responses
@@ -830,12 +835,14 @@ class RequestsMock(object):
 
     def add_callback(
         self,
-        method,
-        url,
-        callback,
-        match_querystring=FalseBool(),
-        content_type="text/plain",
-        match=(),
+        method: str,
+        url: "Union[Pattern[str], str]",
+        callback: Callable[
+            [PreparedRequest], Union[Exception, Tuple[int, Mapping[str, str], _Body]]
+        ],
+        match_querystring: Union[bool, FalseBool] = FalseBool(),
+        content_type: Optional[str] = "text/plain",
+        match: "_MatcherIterable" = (),
     ) -> None:
 
         self._registry.add(
@@ -853,7 +860,7 @@ class RequestsMock(object):
         return self._registry.registered
 
     @property
-    def calls(self):
+    def calls(self) -> CallList:
         return self._calls
 
     def __enter__(self) -> "RequestsMock":
@@ -903,15 +910,22 @@ class RequestsMock(object):
         for key, val in groupby(parse_qsl(urlsplit(url).query), lambda kv: kv[0]):
             values = list(map(lambda x: x[1], val))
             if len(values) == 1:
-                values = values[0]
+                values = values[0]  # type: ignore[assignment]
             params[key] = values
         return params
 
-    def _on_request(self, adapter, request, *, retries=None, **kwargs):
+    def _on_request(
+        self,
+        adapter: "HTTPAdapter",
+        request: "PreparedRequest",
+        *,
+        retries: Optional["_Retry"] = None,
+        **kwargs: Any,
+    ) -> "models.Response":
         # add attributes params and req_kwargs to 'request' object for further match comparison
         # original request object does not have these attributes
-        request.params = self._parse_request_params(request.path_url)
-        request.req_kwargs = kwargs
+        request.params = self._parse_request_params(request.path_url)  # type: ignore[attr-defined]
+        request.req_kwargs = kwargs  # type: ignore[attr-defined]
 
         match, match_failed_reasons = self._find_match(request)
         resp_callback = self.response_callback
@@ -962,7 +976,8 @@ class RequestsMock(object):
                 self._calls.add(request, response)
                 raise
 
-        response = resp_callback(response) if resp_callback else response
+        if resp_callback:
+            response = resp_callback(response)
         match.call_count += 1
         self._calls.add(request, response)
 
@@ -990,7 +1005,9 @@ class RequestsMock(object):
             # another decorated function
             return
 
-        def unbound_on_send(adapter, request, *a, **kwargs):
+        def unbound_on_send(
+            adapter: "HTTPAdapter", request: "PreparedRequest", *a: Any, **kwargs: Any
+        ) -> Response:
             return self._on_request(adapter, request, *a, **kwargs)
 
         self._patcher = std_mock.patch(target=self.target, new=unbound_on_send)

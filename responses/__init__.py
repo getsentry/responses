@@ -16,7 +16,6 @@ from typing import Dict
 from typing import Iterator
 from typing import List
 from typing import Optional
-from typing import Protocol
 from typing import Tuple
 from typing import Type
 from typing import Union
@@ -32,8 +31,10 @@ from responses.registries import FirstMatchRegistry
 
 try:
     from typing import Literal
+    from typing import Protocol
 except ImportError:
     from typing_extensions import Literal
+    from typing_extensions import Protocol
 
 try:
     from requests.packages.urllib3.response import HTTPResponse

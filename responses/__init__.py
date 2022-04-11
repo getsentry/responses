@@ -35,8 +35,10 @@ from responses.registries import FirstMatchRegistry
 
 try:
     from typing_extensions import Literal
-except ImportError:
-    from typing import Literal  # type: ignore[attr-defined, no-redef]
+except ImportError:  # pragma: no cover
+    from typing import (
+        Literal,  # type: ignore[attr-defined, no-redef]  # pragma: no cover
+    )
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -878,7 +880,7 @@ class RequestsMock(object):
     @overload
     def activate(self, func: _F = ...) -> _F:
         """Overload for scenario when 'responses.activate' is used."""
-        ...
+        ...  # pragma: no cover
 
     @overload
     def activate(
@@ -893,7 +895,7 @@ class RequestsMock(object):
         See https://github.com/getsentry/responses/pull/469 for more details
 
         """
-        ...
+        ...  # pragma: no cover
 
     def activate(
         self,

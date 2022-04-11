@@ -16,12 +16,10 @@ from setuptools.command.test import test as TestCommand
 
 setup_requires = []
 
-if "test" in sys.argv:
-    setup_requires.append("pytest")
-
 install_requires = [
     "requests>=2.0,<3.0",
     "urllib3>=1.25.10",
+    "typing_extensions; python_version < '3.8'",
 ]
 
 tests_require = [
@@ -36,13 +34,18 @@ tests_require = [
     "mypy",
 ]
 
+if "test" in sys.argv:
+    setup_requires.extend(tests_require)
+
 extras_require = {"tests": tests_require}
 
 
 class PyTest(TestCommand):
+    """Designed to be run via `python setup.py test`"""
+
     def finalize_options(self):
         TestCommand.finalize_options(self)
-        self.test_args = ["test_responses.py"]
+        self.test_args = []
         self.test_suite = True
 
     def run_tests(self):
@@ -57,7 +60,7 @@ setup(
     name="responses",
     version="0.20.0",
     author="David Cramer",
-    description=("A utility library for mocking out the `requests` Python library."),
+    description="A utility library for mocking out the `requests` Python library.",
     url="https://github.com/getsentry/responses",
     license="Apache 2.0",
     long_description=open("README.rst").read(),
@@ -70,7 +73,6 @@ setup(
     tests_require=tests_require,
     setup_requires=setup_requires,
     cmdclass={"test": PyTest},
-    package_data={"responses": ["py.typed", "__init__.pyi"]},
     include_package_data=True,
     classifiers=[
         "Intended Audience :: Developers",

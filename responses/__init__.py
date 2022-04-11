@@ -65,7 +65,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from requests import PreparedRequest
 
 # Block of type annotations
-_Body = Union[str, BaseException, "Response", BufferedReader, bytes]
+_Body = Union[str, BaseException, "Response", BufferedReader, bytes, None]
 _F = TypeVar("_F", bound=Callable[..., Any])
 _HeaderSet = Optional[Union[Mapping[str, str], List[Tuple[str, str]]]]
 _MatcherIterable = Iterable[Callable[[Any], Callable[..., Any]]]
@@ -439,7 +439,7 @@ class BaseResponse(object):
         if request.method != self.method:
             return False, "Method does not match"
 
-        if not self._url_matches(self.url, request.url):
+        if not self._url_matches(self.url, str(request.url)):
             return False, "URL does not match"
 
         valid, reason = self._req_attr_matches(self.match, request)
@@ -711,6 +711,7 @@ class RequestsMock(object):
                     " Using the `content_type` kwarg is recommended."
                 )
 
+        assert url is not None
         response = Response(method=method, url=url, body=body, **kwargs)
         return self._registry.add(response)
 
@@ -756,7 +757,7 @@ class RequestsMock(object):
 
     def remove(
         self,
-        method_or_response: Optional[Union[str, Response]] = None,
+        method_or_response: Optional[Union[str, BaseResponse]] = None,
         url: "Optional[Union[Pattern[str], str]]" = None,
     ) -> List[BaseResponse]:
         """
@@ -771,11 +772,20 @@ class RequestsMock(object):
         if isinstance(method_or_response, BaseResponse):
             response = method_or_response
         else:
+            assert url is not None
+            assert isinstance(method_or_response, str)
             response = BaseResponse(method=method_or_response, url=url)
 
         return self._registry.remove(response)
 
-    def replace(self, method_or_response=None, url=None, body="", *args, **kwargs):
+    def replace(
+        self,
+        method_or_response: Optional[Union[str, BaseResponse]] = None,
+        url: "Optional[Union[Pattern[str], str]]" = None,
+        body: _Body = "",
+        *args,
+        **kwargs: Any,
+    ) -> BaseResponse:
         """
         Replaces a response previously added using ``add()``. The signature
         is identical to ``add()``. The response is identified using ``method``
@@ -788,6 +798,8 @@ class RequestsMock(object):
         if isinstance(method_or_response, BaseResponse):
             response = method_or_response
         else:
+            assert url is not None
+            assert isinstance(method_or_response, str)
             response = Response(method=method_or_response, url=url, body=body, **kwargs)
 
         return self._registry.replace(response)
@@ -875,8 +887,10 @@ class RequestsMock(object):
         with self._thread_lock:
             return self._registry.find(request)
 
-    def _parse_request_params(self, url: str) -> Dict[str, Union[str, int, float]]:
-        params = {}
+    def _parse_request_params(
+        self, url: str
+    ) -> Dict[str, Union[str, int, float, List[Optional[str, int, float]]]]:
+        params: Dict[str, Union[str, int, float, List[Any]]] = {}
         for key, val in groupby(parse_qsl(urlsplit(url).query), lambda kv: kv[0]):
             values = list(map(lambda x: x[1], val))
             if len(values) == 1:

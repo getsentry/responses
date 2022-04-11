@@ -34,9 +34,9 @@ from responses.matchers import urlencoded_params_matcher as _urlencoded_params_m
 from responses.registries import FirstMatchRegistry
 
 try:
-    from typing import Literal  # type: ignore[attr-defined]
-except ImportError:
     from typing_extensions import Literal
+except ImportError:
+    from typing import Literal  # type: ignore[attr-defined]
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -538,7 +538,7 @@ class CallbackResponse(BaseResponse):
         method: str,
         url: "Union[Pattern[str], str]",
         callback: Callable[[Any], Any],
-        stream: bool = None,
+        stream: Optional[bool] = None,
         content_type: Optional[str] = "text/plain",
         **kwargs: Any,
     ) -> None:
@@ -607,8 +607,8 @@ class OriginalResponseShim(object):
     [1]: https://github.com/psf/requests/blob/75bdc998e2d/requests/cookies.py#L125
     """
 
-    def __init__(self, headers):
-        self.msg = headers
+    def __init__(self, headers: Any) -> None:
+        self.msg: Any = headers
 
     def isclosed(self) -> bool:
         return True
@@ -715,31 +715,32 @@ class RequestsMock(object):
                 )
 
         assert url is not None
+        assert isinstance(method, str)
         response = Response(method=method, url=url, body=body, **kwargs)
         return self._registry.add(response)
 
-    def delete(self, *args, **kwargs) -> BaseResponse:
+    def delete(self, *args: Any, **kwargs: Any) -> BaseResponse:
         return self.add(DELETE, *args, **kwargs)
 
-    def get(self, *args, **kwargs):
+    def get(self, *args: Any, **kwargs: Any) -> BaseResponse:
         return self.add(GET, *args, **kwargs)
 
-    def head(self, *args, **kwargs):
+    def head(self, *args: Any, **kwargs: Any) -> BaseResponse:
         return self.add(HEAD, *args, **kwargs)
 
-    def options(self, *args, **kwargs):
+    def options(self, *args: Any, **kwargs: Any) -> BaseResponse:
         return self.add(OPTIONS, *args, **kwargs)
 
-    def patch(self, *args, **kwargs):
+    def patch(self, *args: Any, **kwargs: Any) -> BaseResponse:
         return self.add(PATCH, *args, **kwargs)
 
-    def post(self, *args, **kwargs):
+    def post(self, *args: Any, **kwargs: Any) -> BaseResponse:
         return self.add(POST, *args, **kwargs)
 
-    def put(self, *args, **kwargs):
+    def put(self, *args: Any, **kwargs: Any) -> BaseResponse:
         return self.add(PUT, *args, **kwargs)
 
-    def add_passthru(self, prefix) -> None:
+    def add_passthru(self, prefix: "Union[Pattern[str], str]") -> None:
         """
         Register a URL prefix or regex to passthru any non-matching mock requests to.
 
@@ -786,7 +787,7 @@ class RequestsMock(object):
         method_or_response: Optional[Union[str, BaseResponse]] = None,
         url: "Optional[Union[Pattern[str], str]]" = None,
         body: _Body = "",
-        *args,
+        *args: Any,
         **kwargs: Any,
     ) -> BaseResponse:
         """
@@ -807,7 +808,14 @@ class RequestsMock(object):
 
         return self._registry.replace(response)
 
-    def upsert(self, method_or_response=None, url=None, body="", *args, **kwargs):
+    def upsert(
+        self,
+        method_or_response: Optional[Union[str, BaseResponse]] = None,
+        url: "Optional[Union[Pattern[str], str]]" = None,
+        body: _Body = "",
+        *args: Any,
+        **kwargs: Any,
+    ) -> BaseResponse:
         """
         Replaces a response previously added using ``add()``, or adds the response
         if no response exists.  Responses are matched using ``method``and ``url``.

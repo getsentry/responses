@@ -34,20 +34,23 @@ from responses.matchers import urlencoded_params_matcher as _urlencoded_params_m
 from responses.registries import FirstMatchRegistry
 
 try:
-    from typing import Literal
+    from typing import Literal  # type: ignore[attr-defined]
 except ImportError:
     from typing_extensions import Literal
 
 try:
-    from requests.packages.urllib3.response import HTTPResponse
+    from requests.packages.urllib3.response import HTTPResponse  # type: ignore[import]
 except ImportError:  # pragma: no cover
     from urllib3.response import HTTPResponse  # pragma: no cover
+
 try:
-    from requests.packages.urllib3.connection import HTTPHeaderDict
+    from requests.packages.urllib3.connection import (
+        HTTPHeaderDict,  # type: ignore[import]
+    )
 except ImportError:  # pragma: no cover
-    from urllib3.response import HTTPHeaderDict  # pragma: no cover
+    from urllib3.response import HTTPHeaderDict  # type: ignore[attr-defined]
 try:
-    from requests.packages.urllib3.util.url import parse_url
+    from requests.packages.urllib3.util.url import parse_url  # type: ignore[import]
 except ImportError:  # pragma: no cover
     from urllib3.util.url import parse_url  # pragma: no cover
 
@@ -91,7 +94,7 @@ class FalseBool:
 
 
 def urlencoded_params_matcher(
-    params: Optional[Dict[str, str]], **kwargs: Optional[Dict[str, str]]
+    params: Optional[Dict[str, str]], **kwargs: Optional[Union[Dict[str, str], bool]]
 ) -> Callable[..., Any]:
     warn(
         "Function is deprecated. Use 'from responses.matchers import urlencoded_params_matcher'",
@@ -189,7 +192,7 @@ def get_wrapped(
     if inspect.iscoroutinefunction(func):
         # set asynchronous wrapper if requestor function is asynchronous
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:  # ignore: type[misc]
 
             with assert_mock, responses:
                 return await func(*args, **kwargs)
@@ -307,7 +310,7 @@ def _handle_body(
     if isinstance(body, BufferedReader):
         return body
 
-    data = BytesIO(body)
+    data = BytesIO(body)  # type: ignore[arg-type]
 
     def is_closed() -> bool:
         """
@@ -334,7 +337,7 @@ def _handle_body(
             # only if file really closed (by us) return True
             return True
 
-    data.isclosed = is_closed
+    data.isclosed = is_closed  # type: ignore[attr-defined]
     return data
 
 
@@ -356,7 +359,9 @@ class BaseResponse(object):
         self.url: "Union[Pattern[str], str]" = _ensure_url_default_path(url)
 
         if self._should_match_querystring(match_querystring):
-            match = tuple(match) + (_query_string_matcher(urlsplit(self.url).query),)
+            match = tuple(match) + (
+                _query_string_matcher(urlsplit(self.url).query),  # type: ignore[arg-type]
+            )
 
         self.match: "_MatcherIterable" = match
         self.call_count: int = 0
@@ -461,7 +466,7 @@ class Response(BaseResponse):
         stream: Optional[bool] = None,
         content_type: Optional[str, object] = _UNSET,
         auto_calculate_content_length: bool = False,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         # if we were passed a `json` argument,
         # override the body and content_type
@@ -537,7 +542,7 @@ class CallbackResponse(BaseResponse):
         callback: Callable[[Any], Any],
         stream: bool = None,
         content_type: Optional[str] = "text/plain",
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         self.callback = callback
 

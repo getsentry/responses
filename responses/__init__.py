@@ -20,8 +20,8 @@ from typing import Mapping
 from typing import Optional
 from typing import Tuple
 from typing import Type
-from typing import TypeVar
 from typing import Union
+from typing import overload
 from warnings import warn
 
 from requests.adapters import HTTPAdapter
@@ -70,9 +70,9 @@ if TYPE_CHECKING:  # pragma: no cover
 
 # Block of type annotations
 _Body = Union[str, BaseException, "Response", BufferedReader, bytes, None]
-_F = TypeVar("_F", bound=Callable[..., Any])
+_F = Callable[..., Any]
 _HeaderSet = Optional[Union[Mapping[str, str], List[Tuple[str, str]]]]
-_MatcherIterable = Iterable[Callable[[Any], Callable[..., Tuple[bool, str]]]]
+_MatcherIterable = Iterable[Callable[..., Tuple[bool, str]]]
 
 Call = namedtuple("Call", ["request", "response"])
 _real_send = HTTPAdapter.send
@@ -210,7 +210,7 @@ def get_wrapped(
     return wrapper
 
 
-class CallList(Sequence, Sized):  # ignore: type[type-arg]
+class CallList(Sequence, Sized):  # type: ignore[type-arg]
     def __init__(self) -> None:
         self._calls: List[Call] = []
 
@@ -419,7 +419,7 @@ class BaseResponse(object):
 
     @staticmethod
     def _req_attr_matches(
-        match: "Iterable[Callable[..., Tuple[bool, str]]]", request: "PreparedRequest"
+        match: "_MatcherIterable", request: "PreparedRequest"
     ) -> Tuple[bool, str]:
         for matcher in match:
             valid, reason = matcher(request)
@@ -436,7 +436,7 @@ class BaseResponse(object):
             headers.extend(self.headers)
         return headers
 
-    def get_response(self, request: "PreparedRequest") -> None:
+    def get_response(self, request: "PreparedRequest") -> HTTPResponse:
         raise NotImplementedError
 
     def matches(self, request: "PreparedRequest") -> Tuple[bool, str]:
@@ -463,7 +463,7 @@ class Response(BaseResponse):
         status: int = 200,
         headers: Optional[Mapping[str, str]] = None,
         stream: Optional[bool] = None,
-        content_type: Optional[Union[str, object]] = _UNSET,
+        content_type: Union[str, object] = _UNSET,
         auto_calculate_content_length: bool = False,
         **kwargs: Any,
     ) -> None:
@@ -492,7 +492,7 @@ class Response(BaseResponse):
             )
 
         self.stream: Optional[bool] = stream
-        self.content_type: Optional[str] = content_type
+        self.content_type: str = content_type  # type: ignore[assignment]
         self.auto_calculate_content_length: bool = auto_calculate_content_length
         super().__init__(method, url, **kwargs)
 
@@ -502,6 +502,8 @@ class Response(BaseResponse):
 
         headers = self.get_headers()
         status = self.status
+
+        assert not isinstance(self.body, (Response, BaseException))
         body = _handle_body(self.body)
 
         if (
@@ -646,7 +648,7 @@ class RequestsMock(object):
             passthru_prefixes
         )
         self.target: str = target
-        self._patcher: Optional[Union[Callable[[Any], Any], "_mock_patcher"]] = None
+        self._patcher: Optional["_mock_patcher"] = None
         self._thread_lock = _ThreadingLock()
 
     def get_registry(self) -> FirstMatchRegistry:
@@ -838,7 +840,7 @@ class RequestsMock(object):
         method: str,
         url: "Union[Pattern[str], str]",
         callback: Callable[
-            [PreparedRequest], Union[Exception, Tuple[int, Mapping[str, str], _Body]]
+            ["PreparedRequest"], Union[Exception, Tuple[int, Mapping[str, str], _Body]]
         ],
         match_querystring: Union[bool, FalseBool] = FalseBool(),
         content_type: Optional[str] = "text/plain",
@@ -873,9 +875,33 @@ class RequestsMock(object):
         self.reset()
         return success
 
+    @overload
+    def activate(self, func: _F = ...) -> _F:
+        """Overload for scenario when 'responses.activate' is used."""
+        ...
+
+    @overload
     def activate(
-        self, func=None, *, registry=None, assert_all_requests_are_fired=False
-    ):
+        self,
+        *,
+        registry: Type[Any] = ...,
+        assert_all_requests_are_fired: bool = ...,
+    ) -> Callable[["_F"], "_F"]:
+        """Overload for scenario when
+        'responses.activate(registry=, assert_all_requests_are_fired=True)' is used.
+
+        See https://github.com/getsentry/responses/pull/469 for more details
+
+        """
+        ...
+
+    def activate(
+        self,
+        func: Optional[_F] = None,
+        *,
+        registry: Optional[Type[Any]] = None,
+        assert_all_requests_are_fired: bool = False,
+    ) -> Union[Callable[["_F"], "_F"], _F]:
         if func is not None:
             return get_wrapped(func, self)
 
@@ -926,6 +952,7 @@ class RequestsMock(object):
         # original request object does not have these attributes
         request.params = self._parse_request_params(request.path_url)  # type: ignore[attr-defined]
         request.req_kwargs = kwargs  # type: ignore[attr-defined]
+        request_url = str(request.url)
 
         match, match_failed_reasons = self._find_match(request)
         resp_callback = self.response_callback
@@ -933,20 +960,20 @@ class RequestsMock(object):
         if match is None:
             if any(
                 [
-                    p.match(request.url)
+                    p.match(request_url)
                     if isinstance(p, Pattern)
-                    else request.url.startswith(p)
+                    else request_url.startswith(p)
                     for p in self.passthru_prefixes
                 ]
             ):
-                logger.info("request.allowed-passthru", extra={"url": request.url})
+                logger.info("request.allowed-passthru", extra={"url": request_url})
                 return _real_send(adapter, request, **kwargs)
 
             error_msg = (
                 "Connection refused by Responses - the call doesn't "
                 "match any registered mock.\n\n"
                 "Request: \n"
-                f"- {request.method} {request.url}\n\n"
+                f"- {request.method} {request_url}\n\n"
                 "Available matches:\n"
             )
             for i, m in enumerate(self.registered()):
@@ -966,30 +993,34 @@ class RequestsMock(object):
             raise response
 
         if match.passthrough:
-            logger.info("request.passthrough-response", extra={"url": request.url})
-            response = _real_send(adapter, request, **kwargs)
+            logger.info("request.passthrough-response", extra={"url": request_url})
+            response = _real_send(adapter, request, **kwargs)  # type: ignore[assignment]
         else:
             try:
-                response = adapter.build_response(request, match.get_response(request))
+                response = adapter.build_response(  # type: ignore[no-untyped-call]
+                    request, match.get_response(request)
+                )
             except BaseException as response:
                 match.call_count += 1
                 self._calls.add(request, response)
                 raise
 
         if resp_callback:
-            response = resp_callback(response)
+            response = resp_callback(response)  # type: ignore[misc]
         match.call_count += 1
-        self._calls.add(request, response)
+        self._calls.add(request, response)  # type: ignore[misc]
 
         retries = retries or adapter.max_retries
         # first validate that current request is eligible to be retried.
         # See ``requests.packages.urllib3.util.retry.Retry`` documentation.
         if retries.is_retry(
-            method=response.request.method, status_code=response.status_code
+            method=response.request.method, status_code=response.status_code  # type: ignore[misc]
         ):
             try:
                 retries = retries.increment(
-                    method=response.request.method, url=response.url, response=response
+                    method=response.request.method,  # type: ignore[misc]
+                    url=response.url,  # type: ignore[misc]
+                    response=response,  # type: ignore[misc]
                 )
                 return self._on_request(adapter, request, retries=retries, **kwargs)
             except MaxRetryError:
@@ -1007,7 +1038,7 @@ class RequestsMock(object):
 
         def unbound_on_send(
             adapter: "HTTPAdapter", request: "PreparedRequest", *a: Any, **kwargs: Any
-        ) -> Response:
+        ) -> "models.Response":
             return self._on_request(adapter, request, *a, **kwargs)
 
         self._patcher = std_mock.patch(target=self.target, new=unbound_on_send)

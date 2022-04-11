@@ -14,6 +14,7 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Iterator
+from typing import List
 from typing import Optional
 from typing import Protocol
 from typing import Tuple
@@ -638,10 +639,10 @@ class RequestsMock(object):
         self._patcher: Optional[Callable[[Any], Any]] = None
         self._thread_lock = _ThreadingLock()
 
-    def get_registry(self):
+    def get_registry(self) -> FirstMatchRegistry:
         return self._registry
 
-    def _set_registry(self, new_registry):
+    def _set_registry(self, new_registry: Type[FirstMatchRegistry]) -> None:
         if self.registered():
             err_msg = (
                 "Cannot replace Registry, current registry has responses.\n"
@@ -651,7 +652,7 @@ class RequestsMock(object):
 
         self._registry = new_registry()
 
-    def reset(self):
+    def reset(self) -> None:
         self._registry = FirstMatchRegistry()
         self._calls.reset()
         self.passthru_prefixes = ()
@@ -739,7 +740,7 @@ class RequestsMock(object):
     def put(self, *args, **kwargs):
         return self.add(PUT, *args, **kwargs)
 
-    def add_passthru(self, prefix):
+    def add_passthru(self, prefix) -> None:
         """
         Register a URL prefix or regex to passthru any non-matching mock requests to.
 
@@ -815,7 +816,7 @@ class RequestsMock(object):
         match_querystring=FalseBool(),
         content_type="text/plain",
         match=(),
-    ):
+    ) -> None:
 
         self._registry.add(
             CallbackResponse(
@@ -828,7 +829,7 @@ class RequestsMock(object):
             )
         )
 
-    def registered(self):
+    def registered(self) -> List["BaseResponse"]:
         return self._registry.registered
 
     @property
@@ -861,7 +862,9 @@ class RequestsMock(object):
 
         return deco_activate
 
-    def _find_match(self, request):
+    def _find_match(
+        self, request: "PreparedRequest"
+    ) -> Tuple[Optional["BaseResponse"], List[str]]:
         """
         Iterates through all available matches and validates if any of them matches the request
 
@@ -942,7 +945,7 @@ class RequestsMock(object):
         self._calls.add(request, response)
         return response
 
-    def start(self):
+    def start(self) -> None:
         if self._patcher:
             # we must not override value of the _patcher if already applied
             # this prevents issues when one decorated function is called from
@@ -955,7 +958,7 @@ class RequestsMock(object):
         self._patcher = std_mock.patch(target=self.target, new=unbound_on_send)
         self._patcher.start()
 
-    def stop(self, allow_assert=True):
+    def stop(self, allow_assert=True) -> None:
         if self._patcher:
             # prevent stopping unstarted patchers
             self._patcher.stop()
@@ -978,7 +981,7 @@ class RequestsMock(object):
                 )
             )
 
-    def assert_call_count(self, url, count):
+    def assert_call_count(self, url, count) -> bool:
         call_count = len(
             [
                 1

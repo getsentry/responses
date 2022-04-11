@@ -13,8 +13,10 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 from typing import Dict
+from typing import Iterable
 from typing import Iterator
 from typing import List
+from typing import Mapping
 from typing import Optional
 from typing import Tuple
 from typing import Type
@@ -22,6 +24,7 @@ from typing import Union
 from warnings import warn
 
 from requests.adapters import HTTPAdapter
+from requests.adapters import MaxRetryError
 from requests.exceptions import ConnectionError
 
 from responses.matchers import json_params_matcher as _json_params_matcher
@@ -64,6 +67,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 # Block of type annotations
 _Body = Union[str, BaseException, "Response", BufferedReader, bytes]
+_MatcherIterable = Iterable[Callable[[Any], Callable[..., Any]]]
 
 Call = namedtuple("Call", ["request", "response"])
 _real_send = HTTPAdapter.send
@@ -304,7 +308,7 @@ def _handle_body(
 
     data = BytesIO(body)
 
-    def is_closed():
+    def is_closed() -> bool:
         """
         Real Response uses HTTPResponse as body object.
         Thus, when method is_closed is called first to check if there is any more
@@ -334,23 +338,29 @@ def _handle_body(
 
 
 class BaseResponse(object):
-    passthrough = False
-    content_type = None
-    headers = None
-    stream = False
+    passthrough: bool = False
+    content_type: Optional[str] = None
+    headers: Optional[Mapping[str, str]] = None
+    stream: bool = False
 
-    def __init__(self, method, url, match_querystring=None, match=()):
-        self.method = method
+    def __init__(
+        self,
+        method: str,
+        url: "Union[Pattern[str], str]",
+        match_querystring: Union[bool, object] = None,
+        match: "_MatcherIterable" = (),
+    ) -> None:
+        self.method: str = method
         # ensure the url has a default path set if the url is a string
-        self.url = _ensure_url_default_path(url)
+        self.url: "Union[Pattern[str], str]" = _ensure_url_default_path(url)
 
         if self._should_match_querystring(match_querystring):
             match = tuple(match) + (_query_string_matcher(urlsplit(self.url).query),)
 
-        self.match = match
-        self.call_count = 0
+        self.match: "_MatcherIterable" = match
+        self.call_count: int = 0
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, BaseResponse):
             return False
 
@@ -365,10 +375,12 @@ class BaseResponse(object):
 
         return self_url == other_url
 
-    def __ne__(self, other):
+    def __ne__(self, other: Any) -> bool:
         return not self.__eq__(other)
 
-    def _should_match_querystring(self, match_querystring_argument):
+    def _should_match_querystring(
+        self, match_querystring_argument: Union[bool, object]
+    ) -> Union[bool, object]:
         if isinstance(self.url, Pattern):
             # the old default from <= 0.9.0
             return False
@@ -387,7 +399,7 @@ class BaseResponse(object):
 
         return bool(urlsplit(self.url).query)
 
-    def _url_matches(self, url, other):
+    def _url_matches(self, url: "Union[Pattern[str], str]", other: str) -> bool:
         if isinstance(url, str):
             if _has_unicode(url):
                 url = _clean_unicode(url)
@@ -401,7 +413,9 @@ class BaseResponse(object):
             return False
 
     @staticmethod
-    def _req_attr_matches(match, request):
+    def _req_attr_matches(
+        match: "_MatcherIterable", request: "PreparedRequest"
+    ) -> Tuple[bool, str]:
         for matcher in match:
             valid, reason = matcher(request)
             if not valid:
@@ -409,7 +423,7 @@ class BaseResponse(object):
 
         return True, ""
 
-    def get_headers(self):
+    def get_headers(self) -> HTTPHeaderDict:
         headers = HTTPHeaderDict()  # Duplicate headers are legal
         if self.content_type is not None:
             headers["Content-Type"] = self.content_type
@@ -417,10 +431,10 @@ class BaseResponse(object):
             headers.extend(self.headers)
         return headers
 
-    def get_response(self, request):
+    def get_response(self, request: "PreparedRequest") -> None:
         raise NotImplementedError
 
-    def matches(self, request):
+    def matches(self, request: "PreparedRequest") -> Tuple[bool, str]:
         if request.method != self.method:
             return False, "Method does not match"
 
@@ -437,17 +451,17 @@ class BaseResponse(object):
 class Response(BaseResponse):
     def __init__(
         self,
-        method,
-        url,
-        body="",
-        json=None,
-        status=200,
-        headers=None,
-        stream=None,
-        content_type=_UNSET,
-        auto_calculate_content_length=False,
+        method: str,
+        url: "Union[Pattern[str], str]",
+        body: _Body = "",
+        json: Optional[Any] = None,
+        status: int = 200,
+        headers: Optional[Mapping[str, str]] = None,
+        stream: bool = None,
+        content_type: Optional[str] = _UNSET,
+        auto_calculate_content_length: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         # if we were passed a `json` argument,
         # override the body and content_type
         if json is not None:
@@ -462,9 +476,9 @@ class Response(BaseResponse):
             else:
                 content_type = "text/plain"
 
-        self.body = body
-        self.status = status
-        self.headers = headers
+        self.body: _Body = body
+        self.status: int = status
+        self.headers: Optional[Mapping[str, str]] = headers
 
         if stream is not None:
             warn(
@@ -472,12 +486,12 @@ class Response(BaseResponse):
                 DeprecationWarning,
             )
 
-        self.stream = stream
-        self.content_type = content_type
-        self.auto_calculate_content_length = auto_calculate_content_length
+        self.stream: bool = stream
+        self.content_type: Optional[str] = content_type
+        self.auto_calculate_content_length: bool = auto_calculate_content_length
         super().__init__(method, url, **kwargs)
 
-    def get_response(self, request):
+    def get_response(self, request: "PreparedRequest") -> HTTPResponse:
         if self.body and isinstance(self.body, Exception):
             raise self.body
 
@@ -502,7 +516,7 @@ class Response(BaseResponse):
             preload_content=False,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             "<Response(url='{url}' status={status} "
             "content_type='{content_type}' headers='{headers}')>".format(
@@ -516,8 +530,14 @@ class Response(BaseResponse):
 
 class CallbackResponse(BaseResponse):
     def __init__(
-        self, method, url, callback, stream=None, content_type="text/plain", **kwargs
-    ):
+        self,
+        method: str,
+        url: "Union[Pattern[str], str]",
+        callback: Callable[[Any], Any],
+        stream: bool = None,
+        content_type: Optional[str] = "text/plain",
+        **kwargs,
+    ) -> None:
         self.callback = callback
 
         if stream is not None:
@@ -525,11 +545,11 @@ class CallbackResponse(BaseResponse):
                 "stream argument is deprecated. Use stream parameter in request directly",
                 DeprecationWarning,
             )
-        self.stream = stream
-        self.content_type = content_type
+        self.stream: bool = stream
+        self.content_type: Optional[str] = content_type
         super().__init__(method, url, **kwargs)
 
-    def get_response(self, request):
+    def get_response(self, request: "PreparedRequest") -> HTTPResponse:
         headers = self.get_headers()
 
         result = self.callback(request)
@@ -567,7 +587,7 @@ class CallbackResponse(BaseResponse):
 
 
 class PassthroughResponse(BaseResponse):
-    passthrough = True
+    passthrough: bool = True
 
 
 class OriginalResponseShim(object):
@@ -886,7 +906,7 @@ class RequestsMock(object):
             params[key] = values
         return params
 
-    def _on_request(self, adapter, request, **kwargs):
+    def _on_request(self, adapter, request, *, retries=None, **kwargs):
         # add attributes params and req_kwargs to 'request' object for further match comparison
         # original request object does not have these attributes
         request.params = self._parse_request_params(request.path_url)
@@ -944,6 +964,22 @@ class RequestsMock(object):
         response = resp_callback(response) if resp_callback else response
         match.call_count += 1
         self._calls.add(request, response)
+
+        retries = retries or adapter.max_retries
+        # first validate that current request is eligible to be retried.
+        # See ``requests.packages.urllib3.util.retry.Retry`` documentation.
+        if retries.is_retry(
+            method=response.request.method, status_code=response.status_code
+        ):
+            try:
+                retries = retries.increment(
+                    method=response.request.method, url=response.url, response=response
+                )
+                return self._on_request(adapter, request, retries=retries, **kwargs)
+            except MaxRetryError:
+                if retries.raise_on_status:
+                    raise
+                return response
         return response
 
     def start(self) -> None:

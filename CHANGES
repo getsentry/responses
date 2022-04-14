@@ -1,3 +1,8 @@
+0.22.0
+------
+
+* [BETA] Added possibility to record responses to YAML files via `@_recorder.record(file_path="out.yml")` decorator.
+
 0.21.0
 ------
 

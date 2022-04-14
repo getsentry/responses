@@ -9,7 +9,7 @@ from responses import _real_send
 from responses.registries import OrderedRegistry
 
 
-class Recorder(object):
+class Recorder:
     def __init__(
         self, target="requests.adapters.HTTPAdapter.send", registry=OrderedRegistry
     ):
@@ -33,8 +33,8 @@ class Recorder(object):
     def get_registry(self):
         return self._registry
 
-    def record(self, func=None, *, file_path=None):
-        def deco_activate(function):
+    def record(self, *, file_path=None):
+        def deco_record(function):
             @wraps(function)
             def wrapper(*args, **kwargs):
                 with self:
@@ -46,7 +46,7 @@ class Recorder(object):
 
             return wrapper
 
-        return deco_activate
+        return deco_record
 
     def _parse_request_params(self, url):
         params = {}

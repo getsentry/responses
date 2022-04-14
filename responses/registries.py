@@ -8,15 +8,15 @@ if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
     from requests import PreparedRequest
 
-    from responses import BaseResponse
+    from responses import Response
 
 
 class FirstMatchRegistry(object):
     def __init__(self) -> None:
-        self._responses: List["BaseResponse"] = []
+        self._responses: List["Response"] = []
 
     @property
-    def registered(self) -> List["BaseResponse"]:
+    def registered(self) -> List["Response"]:
         return self._responses
 
     def reset(self) -> None:
@@ -24,7 +24,7 @@ class FirstMatchRegistry(object):
 
     def find(
         self, request: "PreparedRequest"
-    ) -> Tuple[Optional["BaseResponse"], List[str]]:
+    ) -> Tuple[Optional["Response"], List[str]]:
         found = None
         found_match = None
         match_failed_reasons = []
@@ -46,7 +46,7 @@ class FirstMatchRegistry(object):
                 match_failed_reasons.append(reason)
         return found_match, match_failed_reasons
 
-    def add(self, response: "BaseResponse") -> "BaseResponse":
+    def add(self, response: "Response") -> "Response":
         if any(response is resp for resp in self.registered):
             # if user adds multiple responses that reference the same instance.
             # do a comparison by memory allocation address.
@@ -56,14 +56,14 @@ class FirstMatchRegistry(object):
         self.registered.append(response)
         return response
 
-    def remove(self, response: "BaseResponse") -> List["BaseResponse"]:
+    def remove(self, response: "Response") -> List["Response"]:
         removed_responses = []
         while response in self.registered:
             self.registered.remove(response)
             removed_responses.append(response)
         return removed_responses
 
-    def replace(self, response: "BaseResponse") -> "BaseResponse":
+    def replace(self, response: "Response") -> "Response":
         try:
             index = self.registered.index(response)
         except ValueError:
@@ -73,11 +73,31 @@ class FirstMatchRegistry(object):
         self.registered[index] = response
         return response
 
+    def _dump(self, destination):
+        import yaml
+
+        data = {"responses": []}
+        for rsp in self.registered:
+            data["responses"].append(
+                {
+                    "response": {
+                        "method": rsp.method,
+                        "url": rsp.url,
+                        "body": rsp.body,
+                        "status": rsp.status,
+                        "headers": rsp.headers,
+                        "content_type": rsp.content_type,
+                        "auto_calculate_content_length": rsp.auto_calculate_content_length,
+                    }
+                }
+            )
+        yaml.dump(data, destination)
+
 
 class OrderedRegistry(FirstMatchRegistry):
     def find(
         self, request: "PreparedRequest"
-    ) -> Tuple[Optional["BaseResponse"], List[str]]:
+    ) -> Tuple[Optional["Response"], List[str]]:
 
         if not self.registered:
             return None, ["No more registered responses"]

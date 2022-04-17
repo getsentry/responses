@@ -217,6 +217,20 @@ class CallList(Sequence, Sized):
     def reset(self) -> None:
         self._calls = []
 
+    def get(self, method: str, url: str, idx: int = 0) -> Optional[Call]:
+        """Get a call by method and url. If multiple calls match, take the `idx` one."""
+        url = _ensure_url_default_path(url)
+        matches = [
+            call
+            for call in self
+            if call.request.method == method and _url_matches(call.request.url, url)
+        ]
+
+        if not matches:
+            return None
+
+        return matches[idx]
+
 
 def _ensure_url_default_path(
     url: "Union[Pattern[str], str]",
@@ -328,6 +342,20 @@ def _handle_body(
     return data
 
 
+def _url_matches(url: "Union[Pattern[str], str]", other: str) -> bool:
+    if isinstance(url, str):
+        if _has_unicode(url):
+            url = _clean_unicode(url)
+
+        return _get_url_and_path(url) == _get_url_and_path(other)
+
+    elif isinstance(url, Pattern) and url.match(other):
+        return True
+
+    else:
+        return False
+
+
 class BaseResponse(object):
     passthrough: bool = False
     content_type: Optional[str] = None
@@ -390,19 +418,6 @@ class BaseResponse(object):
 
         return bool(urlsplit(self.url).query)
 
-    def _url_matches(self, url: "Union[Pattern[str], str]", other: str) -> bool:
-        if isinstance(url, str):
-            if _has_unicode(url):
-                url = _clean_unicode(url)
-
-            return _get_url_and_path(url) == _get_url_and_path(other)
-
-        elif isinstance(url, Pattern) and url.match(other):
-            return True
-
-        else:
-            return False
-
     @staticmethod
     def _req_attr_matches(
         match: "_MatcherIterable", request: "PreparedRequest"
@@ -429,7 +444,7 @@ class BaseResponse(object):
         if request.method != self.method:
             return False, "Method does not match"
 
-        if not self._url_matches(self.url, request.url):
+        if not _url_matches(self.url, request.url):
             return False, "URL does not match"
 
         valid, reason = self._req_attr_matches(self.match, request)

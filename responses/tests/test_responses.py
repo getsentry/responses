@@ -1882,6 +1882,62 @@ def test_call_count_without_matcher():
     assert_reset()
 
 
+def test_call_list_get_call():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com", body=b"test")
+        responses.add(responses.POST, "http://example.com", body=b"test")
+
+        requests.get("http://example.com")
+        requests.post("http://example.com", json={})
+
+        assert (
+            responses.calls.get(responses.GET, "http://example.com")
+            == responses.calls[0]
+        )
+        assert (
+            responses.calls.get(responses.POST, "http://example.com")
+            == responses.calls[1]
+        )
+
+    run()
+    assert_reset()
+
+
+def test_call_list_get_call_none():
+    @responses.activate
+    def run():
+        assert responses.calls.get(responses.GET, "http://example.com") is None
+
+    run()
+    assert_reset()
+
+
+def test_call_list_get_call_multiple():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com", body=b"test")
+
+        requests.get("http://example.com")
+        requests.get("http://example.com")
+
+        assert (
+            responses.calls.get(responses.GET, "http://example.com")
+            == responses.calls[0]
+        )
+        assert (
+            responses.calls.get(responses.GET, "http://example.com", idx=0)
+            == responses.calls[0]
+        )
+        assert (
+            responses.calls.get(responses.GET, "http://example.com", idx=1)
+            == responses.calls[1]
+        )
+
+    run()
+    assert_reset()
+
+
 def test_fail_request_error():
     """
     Validate that exception is raised if request URL/Method/kwargs don't match

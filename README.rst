@@ -69,52 +69,60 @@ Basics
 
 The core of ``responses`` comes from registering mock responses:
 
-..  code-block:: python
+.. code-block:: python
 
     import responses
     import requests
 
+
     @responses.activate
     def test_simple():
-        responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
-                      json={'error': 'not found'}, status=404)
+        responses.add(
+            responses.GET,
+            "http://twitter.com/api/1/foobar",
+            json={"error": "not found"},
+            status=404,
+        )
 
-        resp = requests.get('http://twitter.com/api/1/foobar')
+        resp = requests.get("http://twitter.com/api/1/foobar")
 
         assert resp.json() == {"error": "not found"}
 
         assert len(responses.calls) == 1
-        assert responses.calls[0].request.url == 'http://twitter.com/api/1/foobar'
+        assert responses.calls[0].request.url == "http://twitter.com/api/1/foobar"
         assert responses.calls[0].response.text == '{"error": "not found"}'
 
 If you attempt to fetch a url which doesn't hit a match, ``responses`` will raise
 a ``ConnectionError``:
 
-..  code-block:: python
+.. code-block:: python
 
     import responses
     import requests
 
     from requests.exceptions import ConnectionError
 
+
     @responses.activate
     def test_simple():
         with pytest.raises(ConnectionError):
-            requests.get('http://twitter.com/api/1/foobar')
+            requests.get("http://twitter.com/api/1/foobar")
 
 Lastly, you can pass an ``Exception`` as the body to trigger an error on the request:
 
-..  code-block:: python
+.. code-block:: python
 
     import responses
     import requests
 
+
     @responses.activate
     def test_simple():
-        responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
-                      body=Exception('...'))
+        responses.add(
+            responses.GET, "http://twitter.com/api/1/foobar", body=Exception("...")
+        )
         with pytest.raises(Exception):
-            requests.get('http://twitter.com/api/1/foobar')
+            requests.get("http://twitter.com/api/1/foobar")
 
 
 Response Parameters
@@ -123,14 +131,14 @@ Response Parameters
 Responses are automatically registered via params on ``add``, but can also be
 passed directly:
 
-..  code-block:: python
+.. code-block:: python
 
     import responses
 
     responses.add(
         responses.Response(
-            method='GET',
-            url='http://example.com',
+            method="GET",
+            url="http://example.com",
         )
     )
 
@@ -616,47 +624,48 @@ Dynamic Responses
 You can utilize callbacks to provide dynamic responses. The callback must return
 a tuple of (``status``, ``headers``, ``body``).
 
-..  code-block:: python
+.. code-block:: python
 
     import json
 
     import responses
     import requests
 
+
     @responses.activate
     def test_calc_api():
-
         def request_callback(request):
             payload = json.loads(request.body)
-            resp_body = {'value': sum(payload['numbers'])}
-            headers = {'request-id': '728d329e-0e86-11e4-a748-0c84dc037c13'}
+            resp_body = {"value": sum(payload["numbers"])}
+            headers = {"request-id": "728d329e-0e86-11e4-a748-0c84dc037c13"}
             return (200, headers, json.dumps(resp_body))
 
         responses.add_callback(
-            responses.POST, 'http://calc.com/sum',
+            responses.POST,
+            "http://calc.com/sum",
             callback=request_callback,
-            content_type='application/json',
+            content_type="application/json",
         )
 
         resp = requests.post(
-            'http://calc.com/sum',
-            json.dumps({'numbers': [1, 2, 3]}),
-            headers={'content-type': 'application/json'},
+            "http://calc.com/sum",
+            json.dumps({"numbers": [1, 2, 3]}),
+            headers={"content-type": "application/json"},
         )
 
-        assert resp.json() == {'value': 6}
+        assert resp.json() == {"value": 6}
 
         assert len(responses.calls) == 1
-        assert responses.calls[0].request.url == 'http://calc.com/sum'
+        assert responses.calls[0].request.url == "http://calc.com/sum"
         assert responses.calls[0].response.text == '{"value": 6}'
         assert (
-            responses.calls[0].response.headers['request-id'] ==
-            '728d329e-0e86-11e4-a748-0c84dc037c13'
+            responses.calls[0].response.headers["request-id"]
+            == "728d329e-0e86-11e4-a748-0c84dc037c13"
         )
 
 You can also pass a compiled regex to ``add_callback`` to match multiple urls:
 
-..  code-block:: python
+.. code-block:: python
 
     import re, json
 
@@ -666,37 +675,38 @@ You can also pass a compiled regex to ``add_callback`` to match multiple urls:
     import requests
 
     operators = {
-      'sum': lambda x, y: x+y,
-      'prod': lambda x, y: x*y,
-      'pow': lambda x, y: x**y
+        "sum": lambda x, y: x + y,
+        "prod": lambda x, y: x * y,
+        "pow": lambda x, y: x**y,
     }
+
 
     @responses.activate
     def test_regex_url():
-
         def request_callback(request):
             payload = json.loads(request.body)
             operator_name = request.path_url[1:]
 
             operator = operators[operator_name]
 
-            resp_body = {'value': reduce(operator, payload['numbers'])}
-            headers = {'request-id': '728d329e-0e86-11e4-a748-0c84dc037c13'}
+            resp_body = {"value": reduce(operator, payload["numbers"])}
+            headers = {"request-id": "728d329e-0e86-11e4-a748-0c84dc037c13"}
             return (200, headers, json.dumps(resp_body))
 
         responses.add_callback(
             responses.POST,
-            re.compile('http://calc.com/(sum|prod|pow|unsupported)'),
+            re.compile("http://calc.com/(sum|prod|pow|unsupported)"),
             callback=request_callback,
-            content_type='application/json',
+            content_type="application/json",
         )
 
         resp = requests.post(
-            'http://calc.com/prod',
-            json.dumps({'numbers': [2, 3, 4]}),
-            headers={'content-type': 'application/json'},
+            "http://calc.com/prod",
+            json.dumps({"numbers": [2, 3, 4]}),
+            headers={"content-type": "application/json"},
         )
-        assert resp.json() == {'value': 24}
+        assert resp.json() == {"value": 24}
+
 
     test_regex_url()
 
@@ -727,22 +737,27 @@ a callback function to give a slightly different result, you can use ``functools
 Responses as a context manager
 ------------------------------
 
-..  code-block:: python
+.. code-block:: python
 
     import responses
     import requests
 
+
     def test_my_api():
         with responses.RequestsMock() as rsps:
-            rsps.add(responses.GET, 'http://twitter.com/api/1/foobar',
-                     body='{}', status=200,
-                     content_type='application/json')
-            resp = requests.get('http://twitter.com/api/1/foobar')
+            rsps.add(
+                responses.GET,
+                "http://twitter.com/api/1/foobar",
+                body="{}",
+                status=200,
+                content_type="application/json",
+            )
+            resp = requests.get("http://twitter.com/api/1/foobar")
 
             assert resp.status_code == 200
 
         # outside the context manager requests will hit the remote server
-        resp = requests.get('http://twitter.com/api/1/foobar')
+        resp = requests.get("http://twitter.com/api/1/foobar")
         resp.status_code == 404
 
 Integration with unit test frameworks
@@ -941,21 +956,26 @@ Multiple Responses
 
 You can also add multiple responses for the same url:
 
-..  code-block:: python
+.. code-block:: python
 
     import responses
     import requests
 
+
     @responses.activate
     def test_my_api():
-        responses.add(responses.GET, 'http://twitter.com/api/1/foobar', status=500)
-        responses.add(responses.GET, 'http://twitter.com/api/1/foobar',
-                      body='{}', status=200,
-                      content_type='application/json')
+        responses.add(responses.GET, "http://twitter.com/api/1/foobar", status=500)
+        responses.add(
+            responses.GET,
+            "http://twitter.com/api/1/foobar",
+            body="{}",
+            status=200,
+            content_type="application/json",
+        )
 
-        resp = requests.get('http://twitter.com/api/1/foobar')
+        resp = requests.get("http://twitter.com/api/1/foobar")
         assert resp.status_code == 500
-        resp = requests.get('http://twitter.com/api/1/foobar')
+        resp = requests.get("http://twitter.com/api/1/foobar")
         assert resp.status_code == 200
 
 
@@ -971,7 +991,7 @@ in the execution chain and contain the history of redirects.
     B -> 301 redirect -> C
     C -> connection issue
 
-..  code-block:: python
+.. code-block:: python
 
     import pytest
     import requests
@@ -1026,30 +1046,33 @@ Validate ``Retry`` mechanism
 
 If you are using the ``Retry`` features of ``urllib3`` and want to cover scenarios that test your retry limits, you can test those scenarios with ``responses`` as well. The best approach will be to use an `Ordered Registry`_
 
-..  code-block:: python
+.. code-block:: python
 
     import requests
 
     import responses
     from responses import registries
 
+
     @responses.activate(registry=registries.OrderedRegistry)
     def test_max_retries():
-        url = 'https://example.com'
-        rsp1 = responses.get(url, body='Error', status=500)
-        rsp2 = responses.get(url, body='Error', status=500)
-        rsp3 = responses.get(url, body='Error', status=500)
-        rsp4 = responses.get(url, body='OK', status=200)
+        url = "https://example.com"
+        rsp1 = responses.get(url, body="Error", status=500)
+        rsp2 = responses.get(url, body="Error", status=500)
+        rsp3 = responses.get(url, body="Error", status=500)
+        rsp4 = responses.get(url, body="OK", status=200)
 
         session = requests.Session()
 
-        adapter = requests.adapters.HTTPAdapter(max_retries=Retry(
-            total=4,
-            backoff_factor=0.1,
-            status_forcelist=[500],
-            method_whitelist=['GET', 'POST', 'PATCH']
-        ))
-        session.mount('https://', adapter)
+        adapter = requests.adapters.HTTPAdapter(
+            max_retries=Retry(
+                total=4,
+                backoff_factor=0.1,
+                status_forcelist=[500],
+                method_whitelist=["GET", "POST", "PATCH"],
+            )
+        )
+        session.mount("https://", adapter)
 
         resp = session.get(url)
 
@@ -1071,20 +1094,22 @@ wrapped by the library before being returned to the caller.  The callback
 accepts a ``response`` as it's single argument, and is expected to return a
 single ``response`` object.
 
-..  code-block:: python
+.. code-block:: python
 
     import responses
     import requests
+
 
     def response_callback(resp):
         resp.callback_processed = True
         return resp
 
+
     with responses.RequestsMock(response_callback=response_callback) as m:
-        m.add(responses.GET, 'http://example.com', body=b'test')
-        resp = requests.get('http://example.com')
+        m.add(responses.GET, "http://example.com", body=b"test")
+        resp = requests.get("http://example.com")
         assert resp.text == "test"
-        assert hasattr(resp, 'callback_processed')
+        assert hasattr(resp, "callback_processed")
         assert resp.callback_processed is True
 
 
@@ -1140,20 +1165,21 @@ changed. The method signature is identical to ``add``. ``response`` s are
 identified using ``method`` and ``url``. Only the first matched ``response`` is
 replaced.
 
-..  code-block:: python
+.. code-block:: python
 
     import responses
     import requests
 
+
     @responses.activate
     def test_replace():
 
-        responses.add(responses.GET, 'http://example.org', json={'data': 1})
-        responses.replace(responses.GET, 'http://example.org', json={'data': 2})
+        responses.add(responses.GET, "http://example.org", json={"data": 1})
+        responses.replace(responses.GET, "http://example.org", json={"data": 2})
 
-        resp = requests.get('http://example.org')
+        resp = requests.get("http://example.org")
 
-        assert resp.json() == {'data': 2}
+        assert resp.json() == {"data": 2}
 
 
 The ``upsert`` function allows a previously registered ``response`` to be

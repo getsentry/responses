@@ -67,7 +67,57 @@ Please ensure to update your code according to the guidance.
 Basics
 ------
 
-The core of ``responses`` comes from registering mock responses:
+The core of ``responses`` comes from registering mock responses. ``responses`` provides
+similar interface as ``requests``. Following methods allows to register common methods:
+
+Main Interface
+^^^^^^^^^^^^^^
+
+* responses.add(``Response`` or ``Response args``) - allows either to register ``Response`` object or directly
+  provide arguments of ``Response`` object. See `Response Parameters`_
+
+..  code-block:: python
+
+    import responses
+    import requests
+
+    @responses.activate
+    def test_simple():
+        # Register via 'Response' object
+        responses.add(
+        responses.Response(
+            method='PUT',
+            url='http://example.com',
+        )
+    )
+        # register via direct arguments
+        responses.add(
+        responses.GET,
+        'http://twitter.com/api/1/foobar',
+                      json={'error': 'not found'}, status=404)
+
+        resp = requests.get('http://twitter.com/api/1/foobar')
+        resp2 = requests.put('http://example.com')
+
+        assert resp.json() == {"error": "not found"}
+        assert resp.status_code == 404
+
+        assert resp2.status_code == 200
+        assert resp2.request.method == "PUT"
+
+
+Shortcuts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Shortcuts provide a shorten version of ``responses.add()`` where method argument is prefilled
+
+* responses.delete(``Response args``) - register DELETE response
+* responses.get(``Response args``) - register GET response
+* responses.head(``Response args``) - register HEAD response
+* responses.options(``Response args``) - register OPTIONS response
+* responses.patch(``Response args``) - register PATCH response
+* responses.post(``Response args``) - register POST response
+* responses.put(``Response args``) - register PUT response
 
 ..  code-block:: python
 
@@ -119,20 +169,6 @@ Lastly, you can pass an ``Exception`` as the body to trigger an error on the req
 
 Response Parameters
 -------------------
-
-Responses are automatically registered via params on ``add``, but can also be
-passed directly:
-
-..  code-block:: python
-
-    import responses
-
-    responses.add(
-        responses.Response(
-            method='GET',
-            url='http://example.com',
-        )
-    )
 
 The following attributes can be passed to a Response mock:
 

@@ -210,15 +210,14 @@ URL-encoded data
     import requests
     from responses import matchers
 
+
     @responses.activate
     def test_calc_api():
         responses.add(
             responses.POST,
-            url='http://calc.com/sum',
+            url="http://calc.com/sum",
             body="4",
-            match=[
-                matchers.urlencoded_params_matcher({"left": "1", "right": "3"})
-            ]
+            match=[matchers.urlencoded_params_matcher({"left": "1", "right": "3"})],
         )
         requests.post("http://calc.com/sum", data={"left": 1, "right": 3})
 
@@ -234,13 +233,16 @@ Matching JSON encoded data can be done with ``matchers.json_params_matcher()``.
     import requests
     from responses import matchers
 
+
     @responses.activate
     def test_calc_api():
         responses.add(
             method=responses.POST,
             url="http://example.com/",
             body="one",
-            match=[matchers.json_params_matcher({"page": {"name": "first", "type": "json"}})],
+            match=[
+                matchers.json_params_matcher({"page": {"name": "first", "type": "json"}})
+            ],
         )
         resp = requests.request(
             "POST",
@@ -268,6 +270,7 @@ deprecated argument.
     import responses
     import requests
     from responses import matchers
+
 
     @responses.activate
     def test_calc_api():
@@ -303,6 +306,7 @@ query parameters in your request
     import responses
     from responses import matchers
 
+
     @responses.activate
     def my_func():
         responses.add(
@@ -311,6 +315,7 @@ query parameters in your request
             match=[matchers.query_string_matcher("didi=pro&test=1")],
         )
         resp = requests.get("https://httpbin.org/get", params={"test": 1, "didi": "pro"})
+
 
     my_func()
 
@@ -358,15 +363,18 @@ to the request:
     import responses
     from responses.matchers import multipart_matcher
 
+
     @responses.activate
     def my_func():
         req_data = {"some": "other", "data": "fields"}
         req_files = {"file_name": b"Old World!"}
         responses.add(
-            responses.POST, url="http://httpbin.org/post",
-            match=[multipart_matcher(req_files, data=req_data)]
+            responses.POST,
+            url="http://httpbin.org/post",
+            match=[multipart_matcher(req_files, data=req_data)],
         )
         resp = requests.post("http://httpbin.org/post", files={"file_name": b"New World!"})
+
 
     my_func()
     # >>> raises ConnectionError: multipart/form-data doesn't match. Request body differs.
@@ -383,6 +391,7 @@ The matcher takes fragment string (everything after ``#`` sign) as input for com
     import responses
     from responses.matchers import fragment_identifier_matcher
 
+
     @responses.activate
     def run():
         url = "http://example.com?ab=xy&zed=qwe#test=1&foo=bar"
@@ -396,6 +405,7 @@ The matcher takes fragment string (everything after ``#`` sign) as input for com
         # two requests to check reversed order of fragment identifier
         resp = requests.get("http://example.com?ab=xy&zed=qwe#test=1&foo=bar")
         resp = requests.get("http://example.com?zed=qwe&ab=xy#foo=bar&test=1")
+
 
     run()
 
@@ -419,18 +429,14 @@ headers.
             responses.GET,
             url="http://example.com/",
             body="hello world",
-            match=[
-                matchers.header_matcher({"Accept": "text/plain"})
-            ]
+            match=[matchers.header_matcher({"Accept": "text/plain"})],
         )
 
         responses.add(
             responses.GET,
             url="http://example.com/",
             json={"content": "hello world"},
-            match=[
-                matchers.header_matcher({"Accept": "application/json"})
-            ]
+            match=[matchers.header_matcher({"Accept": "application/json"})],
         )
 
         # request in reverse order to how they were added!
@@ -454,15 +460,14 @@ include any additional headers.
     import requests
     from responses import matchers
 
+
     @responses.activate
     def test_content_type():
         responses.add(
             responses.GET,
             url="http://example.com/",
             body="hello world",
-            match=[
-                matchers.header_matcher({"Accept": "text/plain"}, strict_match=True)
-            ]
+            match=[matchers.header_matcher({"Accept": "text/plain"}, strict_match=True)],
         )
 
         # this will fail because requests adds its own headers
@@ -521,6 +526,7 @@ you can see, that status code will depend on the invocation order.
 
     import responses
     from responses.registries import OrderedRegistry
+
 
     @responses.activate(registry=OrderedRegistry)
     def test_invocation_index():
@@ -587,6 +593,7 @@ Example that shows how to set custom registry
     def run():
         print("Within test:", responses.mock.get_registry())
         """ Within test: <__main__.CustomRegistry object> """
+
 
     run()
 
@@ -701,19 +708,20 @@ a callback function to give a slightly different result, you can use ``functools
 
     from functools import partial
 
-    ...
 
-        def request_callback(request, id=None):
-            payload = json.loads(request.body)
-            resp_body = {'value': sum(payload['numbers'])}
-            headers = {'request-id': id}
-            return (200, headers, json.dumps(resp_body))
+    def request_callback(request, id=None):
+        payload = json.loads(request.body)
+        resp_body = {"value": sum(payload["numbers"])}
+        headers = {"request-id": id}
+        return (200, headers, json.dumps(resp_body))
 
-        responses.add_callback(
-            responses.POST, 'http://calc.com/sum',
-            callback=partial(request_callback, id='728d329e-0e86-11e4-a748-0c84dc037c13'),
-            content_type='application/json',
-        )
+
+    responses.add_callback(
+        responses.POST,
+        "http://calc.com/sum",
+        callback=partial(request_callback, id="728d329e-0e86-11e4-a748-0c84dc037c13"),
+        content_type="application/json",
+    )
 
 
 Responses as a context manager
@@ -750,12 +758,16 @@ Responses as a ``pytest`` fixture
         with responses.RequestsMock() as rsps:
             yield rsps
 
+
     def test_api(mocked_responses):
         mocked_responses.add(
-            responses.GET, 'http://twitter.com/api/1/foobar',
-            body='{}', status=200,
-            content_type='application/json')
-        resp = requests.get('http://twitter.com/api/1/foobar')
+            responses.GET,
+            "http://twitter.com/api/1/foobar",
+            body="{}",
+            status=200,
+            content_type="application/json",
+        )
+        resp = requests.get("http://twitter.com/api/1/foobar")
         assert resp.status_code == 200
 
 Add default responses for each test
@@ -769,7 +781,7 @@ Similar interface could be applied in ``pytest`` framework.
 
     class TestMyApi(unittest.TestCase):
         def setUp(self):
-            responses.add(responses.GET, 'https://example.com', body="within setup")
+            responses.add(responses.GET, "https://example.com", body="within setup")
             # here go other self.responses.add(...)
 
         @responses.activate
@@ -778,10 +790,12 @@ Similar interface could be applied in ``pytest`` framework.
                 responses.GET,
                 "https://httpbin.org/get",
                 match=[matchers.query_param_matcher({"test": "1", "didi": "pro"})],
-                body="within test"
+                body="within test",
             )
             resp = requests.get("https://example.com")
-            resp2 = requests.get("https://httpbin.org/get", params={"test": "1", "didi": "pro"})
+            resp2 = requests.get(
+                "https://httpbin.org/get", params={"test": "1", "didi": "pro"}
+            )
             print(resp.text)
             # >>> within setup
             print(resp2.text)
@@ -837,11 +851,16 @@ the ``assert_all_requests_are_fired`` value:
     import responses
     import requests
 
+
     def test_my_api():
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
-            rsps.add(responses.GET, 'http://twitter.com/api/1/foobar',
-                     body='{}', status=200,
-                     content_type='application/json')
+            rsps.add(
+                responses.GET,
+                "http://twitter.com/api/1/foobar",
+                body="{}",
+                status=200,
+                content_type="application/json",
+            )
 
 Assert Request Call Count
 -------------------------
@@ -889,6 +908,7 @@ Assert that the request was called exactly n times.
     import responses
     import requests
 
+
     @responses.activate
     def test_assert_call_count():
         responses.add(responses.GET, "http://example.com")
@@ -899,7 +919,11 @@ Assert that the request was called exactly n times.
         requests.get("http://example.com")
         with pytest.raises(AssertionError) as excinfo:
             responses.assert_call_count("http://example.com", 1)
-        assert "Expected URL 'http://example.com' to be called 1 times. Called 2 times." in str(excinfo.value)
+        assert (
+            "Expected URL 'http://example.com' to be called 1 times. Called 2 times."
+            in str(excinfo.value)
+        )
+
 
     @responses.activate
     def test_assert_call_count_always_match_qs():
@@ -1074,9 +1098,10 @@ and hit a real server. This can be done with the ``add_passthru`` methods:
 
     import responses
 
+
     @responses.activate
     def test_my_api():
-        responses.add_passthru('https://percy.io')
+        responses.add_passthru("https://percy.io")
 
 This will allow any requests matching that prefix, that is otherwise not
 registered as a mock response, to passthru using the standard behavior.
@@ -1086,7 +1111,7 @@ need to allow an entire domain or path subtree to send requests:
 
 .. code-block:: python
 
-    responses.add_passthru(re.compile('https://percy.io/\\w+'))
+    responses.add_passthru(re.compile("https://percy.io/\\w+"))
 
 
 Lastly, you can use the ``response.passthrough`` attribute on ``BaseResponse`` or
@@ -1095,12 +1120,12 @@ use ``PassthroughResponse`` to enable a response to behave as a pass through.
 .. code-block:: python
 
     # Enable passthrough for a single response
-    response = Response(responses.GET, 'http://example.com', body='not used')
+    response = Response(responses.GET, "http://example.com", body="not used")
     response.passthrough = True
     responses.add(response)
 
     # Use PassthroughResponse
-    response = PassthroughResponse(responses.GET, 'http://example.com')
+    response = PassthroughResponse(responses.GET, "http://example.com")
     responses.add(response)
 
 Viewing/Modifying registered responses

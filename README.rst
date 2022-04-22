@@ -76,28 +76,31 @@ Main Interface
 * responses.add(``Response`` or ``Response args``) - allows either to register ``Response`` object or directly
   provide arguments of ``Response`` object. See `Response Parameters`_
 
-..  code-block:: python
+.. code-block:: python
 
     import responses
     import requests
+
 
     @responses.activate
     def test_simple():
         # Register via 'Response' object
         responses.add(
-        responses.Response(
-            method='PUT',
-            url='http://example.com',
+            responses.Response(
+                method="PUT",
+                url="http://example.com",
+            )
         )
-    )
         # register via direct arguments
         responses.add(
-        responses.GET,
-        'http://twitter.com/api/1/foobar',
-                      json={'error': 'not found'}, status=404)
+            responses.GET,
+            "http://twitter.com/api/1/foobar",
+            json={"error": "not found"},
+            status=404,
+        )
 
-        resp = requests.get('http://twitter.com/api/1/foobar')
-        resp2 = requests.put('http://example.com')
+        resp = requests.get("http://twitter.com/api/1/foobar")
+        resp2 = requests.put("http://example.com")
 
         assert resp.json() == {"error": "not found"}
         assert resp.status_code == 404

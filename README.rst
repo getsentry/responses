@@ -67,8 +67,8 @@ Please ensure to update your code according to the guidance.
 Basics
 ------
 
-The core of ``responses`` comes from registering mock responses. ``responses`` provides
-similar interface as ``requests``. Following methods allows to register common methods:
+The core of ``responses`` comes from registering mock responses and covering test function
+with ``responses.activate`` decorator. ``responses`` provides similar interface as ``requests``.
 
 Main Interface
 ^^^^^^^^^^^^^^
@@ -85,12 +85,11 @@ Main Interface
     @responses.activate
     def test_simple():
         # Register via 'Response' object
-        responses.add(
-            responses.Response(
-                method="PUT",
-                url="http://example.com",
-            )
+        rsp1 = responses.Response(
+            method="PUT",
+            url="http://example.com",
         )
+        responses.add(rsp1)
         # register via direct arguments
         responses.add(
             responses.GET,
@@ -109,8 +108,25 @@ Main Interface
         assert resp2.request.method == "PUT"
 
 
+If you attempt to fetch a url which doesn't hit a match, ``responses`` will raise
+a ``ConnectionError``:
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+    from requests.exceptions import ConnectionError
+
+
+    @responses.activate
+    def test_simple():
+        with pytest.raises(ConnectionError):
+            requests.get("http://twitter.com/api/1/foobar")
+
+
 Shortcuts
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^
 
 Shortcuts provide a shorten version of ``responses.add()`` where method argument is prefilled
 
@@ -131,46 +147,55 @@ Shortcuts provide a shorten version of ``responses.add()`` where method argument
     @responses.activate
     def test_simple():
         responses.get(
-            "http://twitter.com/api/1/foobar", json={"error": "not found"}, status=404
+            "http://twitter.com/api/1/foobar",
+            json={"type": "get"},
         )
 
+        responses.post(
+            "http://twitter.com/api/1/foobar",
+            json={"type": "post"},
+        )
+
+        responses.patch(
+            "http://twitter.com/api/1/foobar",
+            json={"type": "patch"},
+        )
+
+        resp_get = requests.get("http://twitter.com/api/1/foobar")
+        resp_post = requests.post("http://twitter.com/api/1/foobar")
+        resp_patch = requests.patch("http://twitter.com/api/1/foobar")
+
+        assert resp_get.json() == {"type": "get"}
+        assert resp_post.json() == {"type": "post"}
+        assert resp_patch.json() == {"type": "patch"}
+
+Responses as a context manager
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Instead of wrapping the whole function with decorator you can use a context manager.
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+
+    def test_my_api():
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.GET,
+                "http://twitter.com/api/1/foobar",
+                body="{}",
+                status=200,
+                content_type="application/json",
+            )
+            resp = requests.get("http://twitter.com/api/1/foobar")
+
+            assert resp.status_code == 200
+
+        # outside the context manager requests will hit the remote server
         resp = requests.get("http://twitter.com/api/1/foobar")
-
-        assert resp.json() == {"error": "not found"}
-
-        assert len(responses.calls) == 1
-        assert responses.calls[0].request.url == "http://twitter.com/api/1/foobar"
-        assert responses.calls[0].response.text == '{"error": "not found"}'
-
-If you attempt to fetch a url which doesn't hit a match, ``responses`` will raise
-a ``ConnectionError``:
-
-.. code-block:: python
-
-    import responses
-    import requests
-
-    from requests.exceptions import ConnectionError
-
-
-    @responses.activate
-    def test_simple():
-        with pytest.raises(ConnectionError):
-            requests.get("http://twitter.com/api/1/foobar")
-
-Lastly, you can pass an ``Exception`` as the body to trigger an error on the request:
-
-.. code-block:: python
-
-    import responses
-    import requests
-
-
-    @responses.activate
-    def test_simple():
-        responses.get("http://twitter.com/api/1/foobar", body=Exception("..."))
-        with pytest.raises(Exception):
-            requests.get("http://twitter.com/api/1/foobar")
+        resp.status_code == 404
 
 
 Response Parameters
@@ -192,8 +217,8 @@ match_querystring (``bool``)
     Enabled by default if the response URL contains a query string,
     disabled if it doesn't or the URL is a regular expression.
 
-body (``str`` or ``BufferedReader``)
-    The response body.
+body (``str`` or ``BufferedReader`` or ``Exception``)
+    The response body. Read more `Exception as Response body`_
 
 json
     A Python object representing the JSON response body. Automatically configures
@@ -230,6 +255,24 @@ match (``tuple``)
 
     Alternatively user can create custom matcher.
     Read more `Matching Requests`_
+
+
+Exception as Response body
+--------------------------
+
+You can pass an ``Exception`` as the body to trigger an error on the request:
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+
+    @responses.activate
+    def test_simple():
+        responses.get("http://twitter.com/api/1/foobar", body=Exception("..."))
+        with pytest.raises(Exception):
+            requests.get("http://twitter.com/api/1/foobar")
 
 
 Matching Requests
@@ -754,32 +797,6 @@ a callback function to give a slightly different result, you can use ``functools
         content_type="application/json",
     )
 
-
-Responses as a context manager
-------------------------------
-
-.. code-block:: python
-
-    import responses
-    import requests
-
-
-    def test_my_api():
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.GET,
-                "http://twitter.com/api/1/foobar",
-                body="{}",
-                status=200,
-                content_type="application/json",
-            )
-            resp = requests.get("http://twitter.com/api/1/foobar")
-
-            assert resp.status_code == 200
-
-        # outside the context manager requests will hit the remote server
-        resp = requests.get("http://twitter.com/api/1/foobar")
-        resp.status_code == 404
 
 Integration with unit test frameworks
 -------------------------------------

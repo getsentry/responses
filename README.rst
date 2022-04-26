@@ -67,7 +67,14 @@ Please ensure to update your code according to the guidance.
 Basics
 ------
 
-The core of ``responses`` comes from registering mock responses:
+The core of ``responses`` comes from registering mock responses and covering test function
+with ``responses.activate`` decorator. ``responses`` provides similar interface as ``requests``.
+
+Main Interface
+^^^^^^^^^^^^^^
+
+* responses.add(``Response`` or ``Response args``) - allows either to register ``Response`` object or directly
+  provide arguments of ``Response`` object. See `Response Parameters`_
 
 .. code-block:: python
 
@@ -77,6 +84,13 @@ The core of ``responses`` comes from registering mock responses:
 
     @responses.activate
     def test_simple():
+        # Register via 'Response' object
+        rsp1 = responses.Response(
+            method="PUT",
+            url="http://example.com",
+        )
+        responses.add(rsp1)
+        # register via direct arguments
         responses.add(
             responses.GET,
             "http://twitter.com/api/1/foobar",
@@ -85,12 +99,14 @@ The core of ``responses`` comes from registering mock responses:
         )
 
         resp = requests.get("http://twitter.com/api/1/foobar")
+        resp2 = requests.put("http://example.com")
 
         assert resp.json() == {"error": "not found"}
+        assert resp.status_code == 404
 
-        assert len(responses.calls) == 1
-        assert responses.calls[0].request.url == "http://twitter.com/api/1/foobar"
-        assert responses.calls[0].response.text == '{"error": "not found"}'
+        assert resp2.status_code == 200
+        assert resp2.request.method == "PUT"
+
 
 If you attempt to fetch a url which doesn't hit a match, ``responses`` will raise
 a ``ConnectionError``:
@@ -108,7 +124,19 @@ a ``ConnectionError``:
         with pytest.raises(ConnectionError):
             requests.get("http://twitter.com/api/1/foobar")
 
-Lastly, you can pass an ``Exception`` as the body to trigger an error on the request:
+
+Shortcuts
+^^^^^^^^^
+
+Shortcuts provide a shorten version of ``responses.add()`` where method argument is prefilled
+
+* responses.delete(``Response args``) - register DELETE response
+* responses.get(``Response args``) - register GET response
+* responses.head(``Response args``) - register HEAD response
+* responses.options(``Response args``) - register OPTIONS response
+* responses.patch(``Response args``) - register PATCH response
+* responses.post(``Response args``) - register POST response
+* responses.put(``Response args``) - register PUT response
 
 .. code-block:: python
 
@@ -118,29 +146,60 @@ Lastly, you can pass an ``Exception`` as the body to trigger an error on the req
 
     @responses.activate
     def test_simple():
-        responses.add(
-            responses.GET, "http://twitter.com/api/1/foobar", body=Exception("...")
+        responses.get(
+            "http://twitter.com/api/1/foobar",
+            json={"type": "get"},
         )
-        with pytest.raises(Exception):
-            requests.get("http://twitter.com/api/1/foobar")
 
+        responses.post(
+            "http://twitter.com/api/1/foobar",
+            json={"type": "post"},
+        )
 
-Response Parameters
--------------------
+        responses.patch(
+            "http://twitter.com/api/1/foobar",
+            json={"type": "patch"},
+        )
 
-Responses are automatically registered via params on ``add``, but can also be
-passed directly:
+        resp_get = requests.get("http://twitter.com/api/1/foobar")
+        resp_post = requests.post("http://twitter.com/api/1/foobar")
+        resp_patch = requests.patch("http://twitter.com/api/1/foobar")
+
+        assert resp_get.json() == {"type": "get"}
+        assert resp_post.json() == {"type": "post"}
+        assert resp_patch.json() == {"type": "patch"}
+
+Responses as a context manager
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Instead of wrapping the whole function with decorator you can use a context manager.
 
 .. code-block:: python
 
     import responses
+    import requests
 
-    responses.add(
-        responses.Response(
-            method="GET",
-            url="http://example.com",
-        )
-    )
+
+    def test_my_api():
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.GET,
+                "http://twitter.com/api/1/foobar",
+                body="{}",
+                status=200,
+                content_type="application/json",
+            )
+            resp = requests.get("http://twitter.com/api/1/foobar")
+
+            assert resp.status_code == 200
+
+        # outside the context manager requests will hit the remote server
+        resp = requests.get("http://twitter.com/api/1/foobar")
+        resp.status_code == 404
+
+
+Response Parameters
+-------------------
 
 The following attributes can be passed to a Response mock:
 
@@ -158,8 +217,8 @@ match_querystring (``bool``)
     Enabled by default if the response URL contains a query string,
     disabled if it doesn't or the URL is a regular expression.
 
-body (``str`` or ``BufferedReader``)
-    The response body.
+body (``str`` or ``BufferedReader`` or ``Exception``)
+    The response body. Read more `Exception as Response body`_
 
 json
     A Python object representing the JSON response body. Automatically configures
@@ -198,6 +257,24 @@ match (``tuple``)
     Read more `Matching Requests`_
 
 
+Exception as Response body
+--------------------------
+
+You can pass an ``Exception`` as the body to trigger an error on the request:
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+
+    @responses.activate
+    def test_simple():
+        responses.get("http://twitter.com/api/1/foobar", body=Exception("..."))
+        with pytest.raises(Exception):
+            requests.get("http://twitter.com/api/1/foobar")
+
+
 Matching Requests
 -----------------
 
@@ -221,8 +298,7 @@ URL-encoded data
 
     @responses.activate
     def test_calc_api():
-        responses.add(
-            responses.POST,
+        responses.post(
             url="http://calc.com/sum",
             body="4",
             match=[matchers.urlencoded_params_matcher({"left": "1", "right": "3"})],
@@ -244,8 +320,7 @@ Matching JSON encoded data can be done with ``matchers.json_params_matcher()``.
 
     @responses.activate
     def test_calc_api():
-        responses.add(
-            method=responses.POST,
+        responses.post(
             url="http://example.com/",
             body="one",
             match=[
@@ -284,8 +359,7 @@ deprecated argument.
     def test_calc_api():
         url = "http://example.com/test"
         params = {"hello": "world", "I am": "a big test"}
-        responses.add(
-            method=responses.GET,
+        responses.get(
             url=url,
             body="test",
             match=[matchers.query_param_matcher(params)],
@@ -317,8 +391,7 @@ query parameters in your request
 
     @responses.activate
     def my_func():
-        responses.add(
-            responses.GET,
+        responses.get(
             "https://httpbin.org/get",
             match=[matchers.query_string_matcher("didi=pro&test=1")],
         )
@@ -376,8 +449,7 @@ to the request:
     def my_func():
         req_data = {"some": "other", "data": "fields"}
         req_files = {"file_name": b"Old World!"}
-        responses.add(
-            responses.POST,
+        responses.post(
             url="http://httpbin.org/post",
             match=[multipart_matcher(req_files, data=req_data)],
         )
@@ -403,8 +475,7 @@ The matcher takes fragment string (everything after ``#`` sign) as input for com
     @responses.activate
     def run():
         url = "http://example.com?ab=xy&zed=qwe#test=1&foo=bar"
-        responses.add(
-            responses.GET,
+        responses.get(
             url,
             match=[fragment_identifier_matcher("test=1&foo=bar")],
             body=b"test",
@@ -433,15 +504,13 @@ headers.
 
     @responses.activate
     def test_content_type():
-        responses.add(
-            responses.GET,
+        responses.get(
             url="http://example.com/",
             body="hello world",
             match=[matchers.header_matcher({"Accept": "text/plain"})],
         )
 
-        responses.add(
-            responses.GET,
+        responses.get(
             url="http://example.com/",
             json={"content": "hello world"},
             match=[matchers.header_matcher({"Accept": "application/json"})],
@@ -471,8 +540,7 @@ include any additional headers.
 
     @responses.activate
     def test_content_type():
-        responses.add(
-            responses.GET,
+        responses.get(
             url="http://example.com/",
             body="hello world",
             match=[matchers.header_matcher({"Accept": "text/plain"}, strict_match=True)],
@@ -538,26 +606,22 @@ you can see, that status code will depend on the invocation order.
 
     @responses.activate(registry=OrderedRegistry)
     def test_invocation_index():
-        responses.add(
-            responses.GET,
+        responses.get(
             "http://twitter.com/api/1/foobar",
             json={"msg": "not found"},
             status=404,
         )
-        responses.add(
-            responses.GET,
+        responses.get(
             "http://twitter.com/api/1/foobar",
             json={"msg": "OK"},
             status=200,
         )
-        responses.add(
-            responses.GET,
+        responses.get(
             "http://twitter.com/api/1/foobar",
             json={"msg": "OK"},
             status=200,
         )
-        responses.add(
-            responses.GET,
+        responses.get(
             "http://twitter.com/api/1/foobar",
             json={"msg": "not found"},
             status=404,
@@ -734,32 +798,6 @@ a callback function to give a slightly different result, you can use ``functools
     )
 
 
-Responses as a context manager
-------------------------------
-
-.. code-block:: python
-
-    import responses
-    import requests
-
-
-    def test_my_api():
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.GET,
-                "http://twitter.com/api/1/foobar",
-                body="{}",
-                status=200,
-                content_type="application/json",
-            )
-            resp = requests.get("http://twitter.com/api/1/foobar")
-
-            assert resp.status_code == 200
-
-        # outside the context manager requests will hit the remote server
-        resp = requests.get("http://twitter.com/api/1/foobar")
-        resp.status_code == 404
-
 Integration with unit test frameworks
 -------------------------------------
 
@@ -775,8 +813,7 @@ Responses as a ``pytest`` fixture
 
 
     def test_api(mocked_responses):
-        mocked_responses.add(
-            responses.GET,
+        mocked_responses.get(
             "http://twitter.com/api/1/foobar",
             body="{}",
             status=200,
@@ -796,13 +833,12 @@ Similar interface could be applied in ``pytest`` framework.
 
     class TestMyApi(unittest.TestCase):
         def setUp(self):
-            responses.add(responses.GET, "https://example.com", body="within setup")
+            responses.get("https://example.com", body="within setup")
             # here go other self.responses.add(...)
 
         @responses.activate
         def test_my_func(self):
-            responses.add(
-                responses.GET,
+            responses.get(
                 "https://httpbin.org/get",
                 match=[matchers.query_param_matcher({"test": "1", "didi": "pro"})],
                 body="within test",
@@ -891,13 +927,11 @@ to check how many times each request was matched.
     @responses.activate
     def test_call_count_with_matcher():
 
-        rsp = responses.add(
-            responses.GET,
+        rsp = responses.get(
             "http://www.example.com",
             match=(matchers.query_param_matcher({}),),
         )
-        rsp2 = responses.add(
-            responses.GET,
+        rsp2 = responses.get(
             "http://www.example.com",
             match=(matchers.query_param_matcher({"hello": "world"}),),
             status=777,
@@ -926,7 +960,7 @@ Assert that the request was called exactly n times.
 
     @responses.activate
     def test_assert_call_count():
-        responses.add(responses.GET, "http://example.com")
+        responses.get("http://example.com")
 
         requests.get("http://example.com")
         assert responses.assert_call_count("http://example.com", 1) is True
@@ -942,7 +976,7 @@ Assert that the request was called exactly n times.
 
     @responses.activate
     def test_assert_call_count_always_match_qs():
-        responses.add(responses.GET, "http://www.example.com")
+        responses.get("http://www.example.com")
         requests.get("http://www.example.com")
         requests.get("http://www.example.com?hello=world")
 
@@ -964,9 +998,8 @@ You can also add multiple responses for the same url:
 
     @responses.activate
     def test_my_api():
-        responses.add(responses.GET, "http://twitter.com/api/1/foobar", status=500)
-        responses.add(
-            responses.GET,
+        responses.get("http://twitter.com/api/1/foobar", status=500)
+        responses.get(
             "http://twitter.com/api/1/foobar",
             body="{}",
             status=200,
@@ -1174,7 +1207,7 @@ replaced.
     @responses.activate
     def test_replace():
 
-        responses.add(responses.GET, "http://example.org", json={"data": 1})
+        responses.get("http://example.org", json={"data": 1})
         responses.replace(responses.GET, "http://example.org", json={"data": 2})
 
         resp = requests.get("http://example.org")
@@ -1203,8 +1236,7 @@ single thread to access it.
     async def test_async_calls():
         @responses.activate
         async def run():
-            responses.add(
-                responses.GET,
+            responses.get(
                 "http://twitter.com/api/1/foobar",
                 json={"error": "not found"},
                 status=404,

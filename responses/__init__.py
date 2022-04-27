@@ -73,6 +73,8 @@ _Body = Union[str, BaseException, "Response", BufferedReader, bytes, None]
 _F = Callable[..., Any]
 _HeaderSet = Optional[Union[Mapping[str, str], List[Tuple[str, str]]]]
 _MatcherIterable = Iterable[Callable[..., Tuple[bool, str]]]
+_HTTPMethodOrResponse = Optional[Union[str, "BaseResponse"]]
+_URLPatternType = Union["Pattern[str]", str]
 
 Call = namedtuple("Call", ["request", "response"])
 _real_send = HTTPAdapter.send
@@ -231,8 +233,8 @@ class CallList(Sequence, Sized):  # type: ignore[type-arg]
 
 
 def _ensure_url_default_path(
-    url: "Union[Pattern[str], str]",
-) -> "Union[Pattern[str], str]":
+    url: _URLPatternType,
+) -> _URLPatternType:
     """Add empty URL path '/' if doesn't exist.
 
     Examples
@@ -349,13 +351,13 @@ class BaseResponse(object):
     def __init__(
         self,
         method: str,
-        url: "Union[Pattern[str], str]",
+        url: _URLPatternType,
         match_querystring: Union[bool, object] = None,
         match: "_MatcherIterable" = (),
     ) -> None:
         self.method: str = method
         # ensure the url has a default path set if the url is a string
-        self.url: "Union[Pattern[str], str]" = _ensure_url_default_path(url)
+        self.url: _URLPatternType = _ensure_url_default_path(url)
 
         if self._should_match_querystring(match_querystring):
             match = tuple(match) + (
@@ -404,7 +406,7 @@ class BaseResponse(object):
 
         return bool(urlsplit(self.url).query)
 
-    def _url_matches(self, url: "Union[Pattern[str], str]", other: str) -> bool:
+    def _url_matches(self, url: _URLPatternType, other: str) -> bool:
         if isinstance(url, str):
             if _has_unicode(url):
                 url = _clean_unicode(url)
@@ -457,7 +459,7 @@ class Response(BaseResponse):
     def __init__(
         self,
         method: str,
-        url: "Union[Pattern[str], str]",
+        url: _URLPatternType,
         body: _Body = "",
         json: Optional[Any] = None,
         status: int = 200,
@@ -539,7 +541,7 @@ class CallbackResponse(BaseResponse):
     def __init__(
         self,
         method: str,
-        url: "Union[Pattern[str], str]",
+        url: _URLPatternType,
         callback: Callable[[Any], Any],
         stream: Optional[bool] = None,
         content_type: Optional[str] = "text/plain",
@@ -644,9 +646,7 @@ class RequestsMock(object):
         self._registry: FirstMatchRegistry = registry()  # call only after reset
         self.assert_all_requests_are_fired: bool = assert_all_requests_are_fired
         self.response_callback: Optional[Callable[[Any], Response]] = response_callback
-        self.passthru_prefixes: Tuple["Union[Pattern[str], str]", ...] = tuple(
-            passthru_prefixes
-        )
+        self.passthru_prefixes: Tuple[_URLPatternType, ...] = tuple(passthru_prefixes)
         self.target: str = target
         self._patcher: Optional["_mock_patcher"] = None
         self._thread_lock = _ThreadingLock()
@@ -671,8 +671,8 @@ class RequestsMock(object):
 
     def add(
         self,
-        method: Optional[Union[str, BaseResponse]] = None,
-        url: "Optional[Union[Pattern[str], str]]" = None,
+        method: _HTTPMethodOrResponse = None,
+        url: "Optional[_URLPatternType]" = None,
         body: _Body = "",
         adding_headers: _HeaderSet = None,
         *args: Any,
@@ -745,7 +745,7 @@ class RequestsMock(object):
     def put(self, *args: Any, **kwargs: Any) -> BaseResponse:
         return self.add(PUT, *args, **kwargs)
 
-    def add_passthru(self, prefix: "Union[Pattern[str], str]") -> None:
+    def add_passthru(self, prefix: _URLPatternType) -> None:
         """
         Register a URL prefix or regex to passthru any non-matching mock requests to.
 
@@ -766,8 +766,8 @@ class RequestsMock(object):
 
     def remove(
         self,
-        method_or_response: Optional[Union[str, BaseResponse]] = None,
-        url: "Optional[Union[Pattern[str], str]]" = None,
+        method_or_response: _HTTPMethodOrResponse = None,
+        url: "Optional[_URLPatternType]" = None,
     ) -> List[BaseResponse]:
         """
         Removes a response previously added using ``add()``, identified
@@ -789,8 +789,8 @@ class RequestsMock(object):
 
     def replace(
         self,
-        method_or_response: Optional[Union[str, BaseResponse]] = None,
-        url: "Optional[Union[Pattern[str], str]]" = None,
+        method_or_response: _HTTPMethodOrResponse = None,
+        url: "Optional[_URLPatternType]" = None,
         body: _Body = "",
         *args: Any,
         **kwargs: Any,
@@ -815,8 +815,8 @@ class RequestsMock(object):
 
     def upsert(
         self,
-        method_or_response: Optional[Union[str, BaseResponse]] = None,
-        url: "Optional[Union[Pattern[str], str]]" = None,
+        method_or_response: _HTTPMethodOrResponse = None,
+        url: "Optional[_URLPatternType]" = None,
         body: _Body = "",
         *args: Any,
         **kwargs: Any,
@@ -838,7 +838,7 @@ class RequestsMock(object):
     def add_callback(
         self,
         method: str,
-        url: "Union[Pattern[str], str]",
+        url: _URLPatternType,
         callback: Callable[
             ["PreparedRequest"], Union[Exception, Tuple[int, Mapping[str, str], _Body]]
         ],

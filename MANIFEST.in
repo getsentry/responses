@@ -1,5 +1,5 @@
 include README.rst CHANGES LICENSE
 recursive-include responses *.py
 include tox.ini
-include py.typed
+recursive-include responses py.typed
 global-exclude *~

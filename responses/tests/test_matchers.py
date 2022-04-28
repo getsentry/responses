@@ -417,7 +417,7 @@ def test_multipart_matcher_fail():
                 requests.post(
                     "http://httpbin.org/post",
                     data=req_data,
-                    files={"file_name": b"New World!"},
+                    files={"file_name": b"New World!"},  # type: ignore[arg-type]
                 )
 
             msg = str(excinfo.value)

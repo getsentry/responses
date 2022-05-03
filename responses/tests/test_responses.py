@@ -717,7 +717,9 @@ def test_callback_matchers():
             match=[matchers.multipart_matcher(req_files, data=req_data)],
             callback=request_callback,
         )
-        resp = requests.post("http://httpbin.org/post", data=req_data, files=req_files)
+        resp = requests.post(
+            "http://httpbin.org/post", data=req_data, files=req_files  # type: ignore[arg-type]
+        )
         assert resp.text == "foo"
         assert resp.headers["content-type"] == "application/json"
 
@@ -745,7 +747,7 @@ def test_callback_matchers_fail():
             requests.post(
                 "http://httpbin.org/post",
                 data={"some": "other", "data": "wrong"},
-                files=req_files,
+                files=req_files,  # type: ignore[arg-type]
             )
 
         assert "multipart/form-data doesn't match." in str(exc.value)

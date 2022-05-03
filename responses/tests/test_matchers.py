@@ -51,24 +51,6 @@ def test_request_matches_post_params():
             body="two",
             match=[urlencoded_params_matcher({"page": "second", "type": "urlencoded"})],
         )
-        responses.add(
-            method=responses.POST,
-            url="http://example.com/",
-            body="three",
-            match=[
-                urlencoded_params_matcher(
-                    {"page": "", "type": "urlencoded"}, allow_blank=True
-                )
-            ],
-        )
-
-        resp = requests.request(
-            "POST",
-            "http://example.com/",
-            headers={"Content-Type": "x-www-form-urlencoded"},
-            data={"page": "", "type": "urlencoded"},
-        )
-        assert_response(resp, "three")
 
         resp = requests.request(
             "POST",
@@ -91,6 +73,32 @@ def test_request_matches_post_params():
         assert_reset()
 
     run(deprecated=False)
+    assert_reset()
+
+
+def test_urlencoded_params_matcher_blank():
+    @responses.activate
+    def run():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="three",
+            match=[
+                matchers.urlencoded_params_matcher(
+                    {"page": "", "type": "urlencoded"}, allow_blank=True
+                )
+            ],
+        )
+
+        resp = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={"Content-Type": "x-www-form-urlencoded"},
+            data={"page": "", "type": "urlencoded"},
+        )
+        assert_response(resp, "three")
+
+    run()
     assert_reset()
 
 
@@ -409,7 +417,7 @@ def test_multipart_matcher_fail():
                 requests.post(
                     "http://httpbin.org/post",
                     data=req_data,
-                    files={"file_name": b"New World!"},
+                    files={"file_name": b"New World!"},  # type: ignore[arg-type]
                 )
 
             msg = str(excinfo.value)

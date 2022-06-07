@@ -354,8 +354,8 @@ class BaseResponse(object):
         url: _URLPatternType,
         match_querystring: Union[bool, object] = None,
         match: "_MatcherIterable" = (),
-        *args: Any,
-        **kwargs: Any,
+        *,
+        passthrough: bool = False,
     ) -> None:
         self.method: str = method
         # ensure the url has a default path set if the url is a string
@@ -368,8 +368,7 @@ class BaseResponse(object):
 
         self.match: "_MatcherIterable" = match
         self.call_count: int = 0
-        if "passthrough" in kwargs:
-            self.passthrough = kwargs["passthrough"]
+        self.passthrough = passthrough
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, BaseResponse):
@@ -600,7 +599,14 @@ class CallbackResponse(BaseResponse):
 
 
 class PassthroughResponse(BaseResponse):
-    passthrough: bool = True
+    def __init__(
+        self,
+        method: str,
+        url: _URLPatternType,
+        match_querystring: Union[bool, object] = None,
+        match: "_MatcherIterable" = (),
+    ):
+        super().__init__(method, url, match_querystring, match, passthrough=True)
 
 
 class OriginalResponseShim(object):

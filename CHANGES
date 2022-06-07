@@ -1,3 +1,8 @@
+0.22.0
+------
+
+* Add support for the `passthrough` argument to the response shortcut methods
+
 0.21.0
 ------
 

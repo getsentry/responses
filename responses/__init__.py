@@ -354,7 +354,8 @@ class BaseResponse(object):
         url: _URLPatternType,
         match_querystring: Union[bool, object] = None,
         match: "_MatcherIterable" = (),
-        passthrough: bool = False,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         self.method: str = method
         # ensure the url has a default path set if the url is a string
@@ -367,7 +368,8 @@ class BaseResponse(object):
 
         self.match: "_MatcherIterable" = match
         self.call_count: int = 0
-        self.passthrough = passthrough
+        if "passthrough" in kwargs:
+            self.passthrough = kwargs["passthrough"]
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, BaseResponse):

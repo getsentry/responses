@@ -1,7 +1,7 @@
 0.22.0
 ------
 
-* Add support for the `passthrough` argument to the response shortcut methods
+* Add `passthrough` argument to `BaseResponse` object. See #557
 
 0.21.0
 ------

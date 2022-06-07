@@ -599,14 +599,8 @@ class CallbackResponse(BaseResponse):
 
 
 class PassthroughResponse(BaseResponse):
-    def __init__(
-        self,
-        method: str,
-        url: _URLPatternType,
-        match_querystring: Union[bool, object] = None,
-        match: "_MatcherIterable" = (),
-    ):
-        super().__init__(method, url, match_querystring, match, passthrough=True)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, passthrough=True, **kwargs)
 
 
 class OriginalResponseShim(object):

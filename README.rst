@@ -1172,8 +1172,8 @@ need to allow an entire domain or path subtree to send requests:
     responses.add_passthru(re.compile("https://percy.io/\\w+"))
 
 
-Lastly, you can use the ``passthrough`` argument to the ``BaseResponse`` constructor
-to enable a response to behave as a pass through.
+Lastly, you can use the ``passthrough`` argument of the ``Response`` object
+to force a response to behave as a pass through.
 
 .. code-block:: python
 

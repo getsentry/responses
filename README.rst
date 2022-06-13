@@ -1172,14 +1172,18 @@ need to allow an entire domain or path subtree to send requests:
     responses.add_passthru(re.compile("https://percy.io/\\w+"))
 
 
-Lastly, you can use the ``response.passthrough`` attribute on ``BaseResponse`` or
-use ``PassthroughResponse`` to enable a response to behave as a pass through.
+Lastly, you can use the ``passthrough`` argument of the ``Response`` object
+to force a response to behave as a pass through.
 
 .. code-block:: python
 
     # Enable passthrough for a single response
-    response = Response(responses.GET, "http://example.com", body="not used")
-    response.passthrough = True
+    response = Response(
+        responses.GET,
+        "http://example.com",
+        body="not used",
+        passthrough=True,
+    )
     responses.add(response)
 
     # Use PassthroughResponse

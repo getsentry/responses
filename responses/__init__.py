@@ -599,7 +599,7 @@ class CallbackResponse(BaseResponse):
 
 
 class PassthroughResponse(BaseResponse):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, passthrough=True, **kwargs)
 
 

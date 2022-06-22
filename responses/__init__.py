@@ -63,7 +63,8 @@ from urllib.parse import urlunsplit
 
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
-    from mypy.typeshed.stdlib.unittest.mock import _patcher as _mock_patcher
+    from unittest.mock import _patch as _mock_patcher
+
     from requests import PreparedRequest
     from requests import models
     from urllib3 import Retry as _Retry
@@ -652,7 +653,7 @@ class RequestsMock(object):
         self.response_callback: Optional[Callable[[Any], Response]] = response_callback
         self.passthru_prefixes: Tuple[_URLPatternType, ...] = tuple(passthru_prefixes)
         self.target: str = target
-        self._patcher: Optional["_mock_patcher"] = None
+        self._patcher: Optional["_mock_patcher[Any]"] = None
         self._thread_lock = _ThreadingLock()
 
     def get_registry(self) -> FirstMatchRegistry:

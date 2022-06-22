@@ -2,6 +2,7 @@
 ------
 
 * Add `passthrough` argument to `BaseResponse` object. See #557
+* Fix type for the `mock`'s patcher object. See #556
 
 0.21.0
 ------

@@ -37,6 +37,11 @@ jobs:
       run: |
         mypy --config-file=./mypy.ini -p responses
 
+    - name: Run mypy (namespace packages)
+      run: |
+        # see https://github.com/getsentry/responses/issues/556
+        mypy --config-file=./mypy.ini --namespace-packages -p responses
+
   tests:
     runs-on: ubuntu-latest
     strategy:

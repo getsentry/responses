@@ -76,6 +76,62 @@ def test_request_matches_post_params():
     assert_reset()
 
 
+def test_json_params_matcher_not_strict():
+    @responses.activate(assert_all_requests_are_fired=True)
+    def run():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="one",
+            match=[
+                matchers.json_params_matcher(
+                    {"page": {"type": "json"}}, strict_match=False
+                )
+            ],
+        )
+
+        resp = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={"Content-Type": "application/json"},
+            json={"page": {"type": "json"}, "not_strict": "must pass"},
+        )
+        assert_response(resp, "one")
+
+    run()
+    assert_reset()
+
+
+def test_json_params_matcher_not_strict_diff_values():
+    @responses.activate
+    def run():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="one",
+            match=[
+                matchers.json_params_matcher(
+                    {"page": {"type": "json", "diff": "value"}}, strict_match=False
+                )
+            ],
+        )
+
+        with pytest.raises(ConnectionError) as exc:
+            requests.request(
+                "POST",
+                "http://example.com/",
+                headers={"Content-Type": "application/json"},
+                json={"page": {"type": "json"}, "not_strict": "must pass"},
+            )
+        assert (
+            "- POST http://example.com/ request.body doesn't match: "
+            "{page: {type: json}} doesn't match {page: {diff: value, type: json}}"
+        ) in str(exc.value)
+
+    run()
+    assert_reset()
+
+
 def test_urlencoded_params_matcher_blank():
     @responses.activate
     def run():

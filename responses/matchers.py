@@ -83,12 +83,26 @@ def urlencoded_params_matcher(
     return match
 
 
-def json_params_matcher(params: Optional[Dict[str, Any]]) -> Callable[..., Any]:
-    """
-    Matches JSON encoded data
+def json_params_matcher(
+    params: Optional[Dict[str, Any]], *, strict_match: bool = True
+) -> Callable[..., Any]:
+    """Matches JSON encoded data of request body.
 
-    :param params: (dict) JSON data provided to 'json' arg of request
-    :return: (func) matcher
+    Parameters
+    ----------
+    params : dict
+        JSON data provided to 'json' arg of request or a part of it if used in
+        conjunction with ``strict_match=False``.
+    strict_match : bool, default=True
+        If set to ``True``, validates that all keys of JSON object match.
+        If set to ``False``, original request may contain additional keys.
+
+
+    Returns
+    -------
+    Callable
+        Matcher function.
+
     """
 
     def match(request: PreparedRequest) -> Tuple[bool, str]:
@@ -99,6 +113,10 @@ def json_params_matcher(params: Optional[Dict[str, Any]]) -> Callable[..., Any]:
             if isinstance(request_body, bytes):
                 request_body = request_body.decode("utf-8")
             json_body = json_module.loads(request_body) if request_body else {}
+
+            if not strict_match:
+                # filter down to just the params specified in the matcher
+                json_body = {k: v for k, v in json_body.items() if k in params_dict}
 
             valid = params is None if request_body is None else params_dict == json_body
 

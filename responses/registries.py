@@ -74,7 +74,7 @@ class FirstMatchRegistry(object):
             index = self.registered.index(response)
         except ValueError:
             raise ValueError(
-                "BaseResponse is not registered for URL {}".format(response.url)
+                "Response is not registered for URL {}".format(response.url)
             )
         self.registered[index] = response
         return response

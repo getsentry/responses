@@ -14,15 +14,15 @@ if TYPE_CHECKING:  # pragma: no cover
 
     from requests import PreparedRequest
 
-    from responses import Response
+    from responses import BaseResponse
 
 
 class FirstMatchRegistry(object):
     def __init__(self) -> None:
-        self._responses: List["Response"] = []
+        self._responses: List["BaseResponse"] = []
 
     @property
-    def registered(self) -> List["Response"]:
+    def registered(self) -> List["BaseResponse"]:
         return self._responses
 
     def reset(self) -> None:
@@ -30,7 +30,7 @@ class FirstMatchRegistry(object):
 
     def find(
         self, request: "PreparedRequest"
-    ) -> Tuple[Optional["Response"], List[str]]:
+    ) -> Tuple[Optional["BaseResponse"], List[str]]:
         found = None
         found_match = None
         match_failed_reasons = []
@@ -52,7 +52,7 @@ class FirstMatchRegistry(object):
                 match_failed_reasons.append(reason)
         return found_match, match_failed_reasons
 
-    def add(self, response: "Response") -> "Response":
+    def add(self, response: "BaseResponse") -> "BaseResponse":
         if any(response is resp for resp in self.registered):
             # if user adds multiple responses that reference the same instance.
             # do a comparison by memory allocation address.
@@ -62,19 +62,19 @@ class FirstMatchRegistry(object):
         self.registered.append(response)
         return response
 
-    def remove(self, response: "Response") -> List["Response"]:
+    def remove(self, response: "BaseResponse") -> List["BaseResponse"]:
         removed_responses = []
         while response in self.registered:
             self.registered.remove(response)
             removed_responses.append(response)
         return removed_responses
 
-    def replace(self, response: "Response") -> "Response":
+    def replace(self, response: "BaseResponse") -> "BaseResponse":
         try:
             index = self.registered.index(response)
         except ValueError:
             raise ValueError(
-                "Response is not registered for URL {}".format(response.url)
+                "BaseResponse is not registered for URL {}".format(response.url)
             )
         self.registered[index] = response
         return response
@@ -101,7 +101,7 @@ class FirstMatchRegistry(object):
 class OrderedRegistry(FirstMatchRegistry):
     def find(
         self, request: "PreparedRequest"
-    ) -> Tuple[Optional["Response"], List[str]]:
+    ) -> Tuple[Optional["BaseResponse"], List[str]]:
 
         if not self.registered:
             return None, ["No more registered responses"]
@@ -112,7 +112,7 @@ class OrderedRegistry(FirstMatchRegistry):
             self.reset()
             self.add(response)
             reason = (
-                "Next 'Response' in the order doesn't match "
+                "Next 'BaseResponse' in the order doesn't match "
                 f"due to the following reason: {reason}."
             )
             return None, [reason]

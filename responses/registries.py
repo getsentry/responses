@@ -82,19 +82,26 @@ class FirstMatchRegistry(object):
     def _dump(self, destination: "io.IOBase") -> None:
         data: Dict[str, Any] = {"responses": []}
         for rsp in self.registered:
-            data["responses"].append(
-                {
-                    "response": {
-                        "method": rsp.method,
-                        "url": rsp.url,
-                        "body": rsp.body,
-                        "status": rsp.status,
-                        "headers": rsp.headers,
-                        "content_type": rsp.content_type,
-                        "auto_calculate_content_length": rsp.auto_calculate_content_length,
+            try:
+                content_length = rsp.auto_calculate_content_length  # type: ignore[attr-defined]
+                data["responses"].append(
+                    {
+                        "response": {
+                            "method": rsp.method,
+                            "url": rsp.url,
+                            "body": rsp.body,  # type: ignore[attr-defined]
+                            "status": rsp.status,  # type: ignore[attr-defined]
+                            "headers": rsp.headers,
+                            "content_type": rsp.content_type,
+                            "auto_calculate_content_length": content_length,
+                        }
                     }
-                }
-            )
+                )
+            except AttributeError as exc:
+                raise AttributeError(
+                    "Cannot dump response object."
+                    "Probably you use custom Response object that misses required aatributes"
+                ) from exc
         _toml.dump(data, destination)
 
 

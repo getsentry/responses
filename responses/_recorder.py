@@ -1,37 +1,22 @@
 from functools import wraps
 from itertools import groupby
-from unittest import mock as std_mock
 from urllib.parse import parse_qsl
 from urllib.parse import urlsplit
 
+from responses import RequestsMock
 from responses import Response
 from responses import _real_send
 from responses.registries import OrderedRegistry
 
 
-class Recorder:
+class Recorder(RequestsMock):
     def __init__(
         self, target="requests.adapters.HTTPAdapter.send", registry=OrderedRegistry
     ):
-        self.target = target
-        self._patcher = None
-        self._registry = registry()
+        super().__init__(target=target, registry=registry)
 
     def reset(self):
-        self.get_registry().reset()
-
-    def __enter__(self):
-        self.start()
-        return self
-
-    def __exit__(self, type, value, traceback):
-        success = type is None
-        self.stop()
-        self.reset()
-        return success
-
-    def get_registry(self):
-        return self._registry
+        self._registry = OrderedRegistry()
 
     def record(self, *, file_path=None):
         def deco_record(function):
@@ -71,27 +56,8 @@ class Recorder:
         self._registry.add(responses_response)
         return requests_response
 
-    def start(self):
-        if self._patcher:
-            # we must not override value of the _patcher if already applied
-            # this prevents issues when one decorated function is called from
-            # another decorated function
-            return
-
-        def unbound_on_send(adapter, request, *a, **kwargs):
-            return self._on_request(adapter, request, *a, **kwargs)
-
-        self._patcher = std_mock.patch(target=self.target, new=unbound_on_send)
-        self._patcher.start()
-
-    def stop(self):
-        if self._patcher:
-            # prevent stopping unstarted patchers
-            self._patcher.stop()
-
-            # once patcher is stopped, clean it. This is required to create a new
-            # fresh patcher on self.start()
-            self._patcher = None
+    def stop(self, **kwargs):
+        super().stop(allow_assert=False)
 
 
 recorder = Recorder()

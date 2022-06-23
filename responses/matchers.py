@@ -11,7 +11,7 @@ from urllib.parse import parse_qsl
 from urllib.parse import urlparse
 
 from requests import PreparedRequest
-from requests.packages.urllib3.util.url import parse_url  # type: ignore[import]
+from requests.packages.urllib3.util.url import parse_url
 
 
 def _create_key_val_str(input_dict: Union[Dict[Any, Any], Any]) -> str:

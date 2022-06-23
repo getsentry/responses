@@ -2,6 +2,7 @@
 ------
 
 * [BETA] Added possibility to record responses to YAML files via `@_recorder.record(file_path="out.yml")` decorator.
+* Add `passthrough` argument to `BaseResponse` object. See #557
 
 0.21.0
 ------

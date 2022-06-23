@@ -1,11 +1,17 @@
 import copy
 from typing import TYPE_CHECKING
+from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
 
+import toml as _toml
+
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
+    import io
+
     from requests import PreparedRequest
 
     from responses import Response
@@ -73,10 +79,8 @@ class FirstMatchRegistry(object):
         self.registered[index] = response
         return response
 
-    def _dump(self, destination):
-        import yaml
-
-        data = {"responses": []}
+    def _dump(self, destination: "io.IOBase") -> None:
+        data: Dict[str, Any] = {"responses": []}
         for rsp in self.registered:
             data["responses"].append(
                 {
@@ -91,7 +95,7 @@ class FirstMatchRegistry(object):
                     }
                 }
             )
-        yaml.dump(data, destination)
+        _toml.dump(data, destination)
 
 
 class OrderedRegistry(FirstMatchRegistry):

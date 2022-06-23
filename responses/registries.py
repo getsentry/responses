@@ -119,7 +119,7 @@ class OrderedRegistry(FirstMatchRegistry):
             self.reset()
             self.add(response)
             reason = (
-                "Next 'BaseResponse' in the order doesn't match "
+                "Next 'Response' in the order doesn't match "
                 f"due to the following reason: {reason}."
             )
             return None, [reason]

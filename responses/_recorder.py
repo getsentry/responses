@@ -62,6 +62,7 @@ class Recorder(RequestsMock):
             method=str(request.method),
             url=str(requests_response.request.url),
             status=requests_response.status_code,
+            body=requests_response.text,
         )
         self._registry.add(responses_response)
         return requests_response

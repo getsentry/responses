@@ -181,9 +181,6 @@ def get_wrapped(
         Wrapped function
 
     """
-    if registry is not None:
-        responses._set_registry(registry)
-
     assert_mock = std_mock.patch.object(
         target=responses,
         attribute="assert_all_requests_are_fired",
@@ -195,6 +192,9 @@ def get_wrapped(
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[misc]
 
+            if registry is not None:
+                responses._set_registry(registry)
+
             with assert_mock, responses:
                 return await func(*args, **kwargs)
 
@@ -202,6 +202,9 @@ def get_wrapped(
 
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[misc]
+
+            if registry is not None:
+                responses._set_registry(registry)
 
             with assert_mock, responses:
                 # set 'assert_all_requests_are_fired' temporarily for a single run.

@@ -1589,6 +1589,31 @@ def test_passthrough_flag(httpserver):
     assert_reset()
 
 
+def test_passthrough_kwarg(httpserver):
+    httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
+
+    def configure_response(passthrough):
+        responses.get(httpserver.url, body="MOCK", passthrough=passthrough)
+
+    @responses.activate
+    def run_passthrough():
+        configure_response(passthrough=True)
+        resp = requests.get(httpserver.url)
+        assert_response(resp, "OK")
+
+    @responses.activate
+    def run_mocked():
+        configure_response(passthrough=False)
+        resp = requests.get(httpserver.url)
+        assert_response(resp, "MOCK")
+
+    run_mocked()
+    assert_reset()
+
+    run_passthrough()
+    assert_reset()
+
+
 def test_passthrough_response(httpserver):
     httpserver.serve_content("OK", headers={"Content-Type": "text/plain"})
 

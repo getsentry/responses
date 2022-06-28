@@ -43,6 +43,44 @@ def test_set_registry():
     assert_reset()
 
 
+def test_set_registry_reversed():
+    """See https://github.com/getsentry/responses/issues/563"""
+
+    class CustomRegistry(registries.FirstMatchRegistry):
+        pass
+
+    @responses.activate
+    def run():
+        # test that registry does not leak to another test
+        assert type(responses.mock.get_registry()) == registries.FirstMatchRegistry
+
+    @responses.activate(registry=CustomRegistry)
+    def run_with_registry():
+        assert type(responses.mock.get_registry()) == CustomRegistry
+
+    run()
+    run_with_registry()
+    assert_reset()
+
+
+async def test_registry_async():
+    class CustomRegistry(registries.FirstMatchRegistry):
+        pass
+
+    @responses.activate
+    async def run():
+        # test that registry does not leak to another test
+        assert type(responses.mock.get_registry()) == registries.FirstMatchRegistry
+
+    @responses.activate(registry=CustomRegistry)
+    async def run_with_registry():
+        assert type(responses.mock.get_registry()) == CustomRegistry
+
+    await run()
+    await run_with_registry()
+    assert_reset()
+
+
 def test_set_registry_context_manager():
     def run():
         class CustomRegistry(registries.FirstMatchRegistry):

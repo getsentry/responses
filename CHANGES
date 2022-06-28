@@ -1,8 +1,9 @@
 0.22.0
 ------
 
-* Add `passthrough` argument to `BaseResponse` object. See #557
 * Fix type for the `mock`'s patcher object. See #556
+* Add `passthrough` argument to `BaseResponse` object. See #557
+* Fix `registries` leak. See #563
 
 0.21.0
 ------

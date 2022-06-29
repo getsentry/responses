@@ -85,7 +85,9 @@ def test_json_params_matcher_not_strict():
             body="one",
             match=[
                 matchers.json_params_matcher(
-                    {"page": {"type": "json"}}, strict_match=False
+                    # {"page": {"type": "json", "another": "nested"}}, strict_match=False
+                    {"page": {"type": "json"}},
+                    strict_match=False,
                 )
             ],
         )

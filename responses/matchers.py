@@ -83,6 +83,15 @@ def urlencoded_params_matcher(
     return match
 
 
+def _filter_dict_recursively(dict1, dict2):
+    filtered_dict = {}
+    for k, val in dict1.items():
+        if k in dict2:
+            filtered_dict[k] = val
+
+    return filtered_dict
+
+
 def json_params_matcher(
     params: Optional[Dict[str, Any]], *, strict_match: bool = True
 ) -> Callable[..., Any]:
@@ -116,7 +125,8 @@ def json_params_matcher(
 
             if not strict_match:
                 # filter down to just the params specified in the matcher
-                json_body = {k: v for k, v in json_body.items() if k in params_dict}
+                json_body = _filter_dict_recursively(json_body, params_dict)
+                # json_body = {k: v for k, v in json_body.items() if k in params_dict}
 
             valid = params is None if request_body is None else params_dict == json_body
 

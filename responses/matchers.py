@@ -128,7 +128,6 @@ def json_params_matcher(
             if not strict_match:
                 # filter down to just the params specified in the matcher
                 json_body = _filter_dict_recursively(json_body, params_dict)
-                # json_body = {k: v for k, v in json_body.items() if k in params_dict}
 
             valid = params is None if request_body is None else params_dict == json_body
 

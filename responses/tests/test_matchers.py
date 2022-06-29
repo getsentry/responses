@@ -85,7 +85,6 @@ def test_json_params_matcher_not_strict():
             body="one",
             match=[
                 matchers.json_params_matcher(
-                    # {"page": {"type": "json", "another": "nested"}}, strict_match=False
                     {"page": {"type": "json"}},
                     strict_match=False,
                 )
@@ -96,7 +95,10 @@ def test_json_params_matcher_not_strict():
             "POST",
             "http://example.com/",
             headers={"Content-Type": "application/json"},
-            json={"page": {"type": "json"}, "not_strict": "must pass"},
+            json={
+                "page": {"type": "json", "another": "nested"},
+                "not_strict": "must pass",
+            },
         )
         assert_response(resp, "one")
 

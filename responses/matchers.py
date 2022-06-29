@@ -87,6 +87,8 @@ def _filter_dict_recursively(dict1, dict2):
     filtered_dict = {}
     for k, val in dict1.items():
         if k in dict2:
+            if isinstance(val, dict):
+                val = _filter_dict_recursively(val, dict2[k])
             filtered_dict[k] = val
 
     return filtered_dict

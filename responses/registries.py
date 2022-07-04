@@ -100,7 +100,7 @@ class FirstMatchRegistry(object):
             except AttributeError as exc:
                 raise AttributeError(
                     "Cannot dump response object."
-                    "Probably you use custom Response object that misses required aatributes"
+                    "Probably you use custom Response object that is missing required attributes"
                 ) from exc
         _toml.dump(data, destination)
 

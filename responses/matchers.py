@@ -137,6 +137,11 @@ def json_params_matcher(
                 reason = "request.body doesn't match: {} doesn't match {}".format(
                     _create_key_val_str(json_body), _create_key_val_str(params_dict)
                 )
+                if not strict_match:
+                    reason += (
+                        "\nNote: You use non-strict parameters check, "
+                        "to change it use `strict_match=True`."
+                    )
 
         except JSONDecodeError:
             valid = False

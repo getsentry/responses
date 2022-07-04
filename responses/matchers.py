@@ -53,6 +53,19 @@ def _create_key_val_str(input_dict: Union[Dict[Any, Any], Any]) -> str:
     return key_val_str
 
 
+def _filter_dict_recursively(
+    dict1: Dict[Any, Any], dict2: Dict[Any, Any]
+) -> Dict[Any, Any]:
+    filtered_dict = {}
+    for k, val in dict1.items():
+        if k in dict2:
+            if isinstance(val, dict):
+                val = _filter_dict_recursively(val, dict2[k])
+            filtered_dict[k] = val
+
+    return filtered_dict
+
+
 def urlencoded_params_matcher(
     params: Optional[Dict[str, str]], *, allow_blank: bool = False
 ) -> Callable[..., Any]:
@@ -81,17 +94,6 @@ def urlencoded_params_matcher(
         return valid, reason
 
     return match
-
-
-def _filter_dict_recursively(dict1, dict2):
-    filtered_dict = {}
-    for k, val in dict1.items():
-        if k in dict2:
-            if isinstance(val, dict):
-                val = _filter_dict_recursively(val, dict2[k])
-            filtered_dict[k] = val
-
-    return filtered_dict
 
 
 def json_params_matcher(

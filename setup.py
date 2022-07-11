@@ -31,7 +31,6 @@ tests_require = [
     "pytest-asyncio",
     "pytest-localserver",
     "flake8",
-    "types-mock",
     "types-requests",
     "mypy",
 ]

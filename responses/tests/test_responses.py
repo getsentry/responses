@@ -1063,10 +1063,10 @@ def test_response_filebody():
     def run():
         current_file = os.path.abspath(__file__)
         with responses.RequestsMock() as m:
-            with open(current_file, "r") as out:
+            with open(current_file, "r", encoding="utf-8") as out:
                 m.add(responses.GET, "http://example.com", body=out.read(), stream=True)
                 resp = requests.get("http://example.com", stream=True)
-            with open(current_file, "r") as out:
+            with open(current_file, "r", encoding="utf-8") as out:
                 assert resp.text == out.read()
 
     run()

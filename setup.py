@@ -27,7 +27,7 @@ tests_require = [
     "coverage >= 6.0.0",
     "pytest-cov",
     "pytest-asyncio",
-    "pytest-localserver",
+    "pytest-httpserver",
     "flake8",
     "types-requests",
     "mypy",

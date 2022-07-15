@@ -61,6 +61,12 @@ setup(
     author="David Cramer",
     description="A utility library for mocking out the `requests` Python library.",
     url="https://github.com/getsentry/responses",
+    project_urls={
+        "Bug Tracker": "https://github.com/getsentry/responses/issues",
+        "Changes": "https://github.com/getsentry/responses/blob/master/CHANGES",
+        "Documentation": "https://github.com/getsentry/responses/blob/master/README.rst",
+        "Source Code": "https://github.com/getsentry/responses",
+    },
     license="Apache 2.0",
     long_description=open("README.rst").read(),
     long_description_content_type="text/x-rst",

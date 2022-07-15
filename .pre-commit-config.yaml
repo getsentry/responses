@@ -20,10 +20,6 @@ repos:
       - id: isort
         name: isort (python)
         args: ['--force-single-line-imports', '--profile', 'black']
-      - id: isort
-        name: isort (pyi)
-        types: [ pyi ]
-        args: ['--force-single-line-imports', '--profile', 'black']
   - repo: https://github.com/pycqa/flake8
     rev: 4.0.1
     hooks:

@@ -97,7 +97,7 @@ class FirstMatchRegistry(object):
                         }
                     }
                 )
-            except AttributeError as exc:
+            except AttributeError as exc:  # pragma: no cover
                 raise AttributeError(
                     "Cannot dump response object."
                     "Probably you use custom Response object that is missing required attributes"

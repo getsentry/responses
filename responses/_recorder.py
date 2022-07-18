@@ -1,7 +1,7 @@
 from functools import wraps
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
     from typing import Callable
     from typing import Type

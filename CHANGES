@@ -6,6 +6,7 @@
 * Add `passthrough` argument to `BaseResponse` object. See #557
 * Fix `registries` leak. See #563
 * Add support for the `loose` version of `json_params_matcher` via named argument `strict_match`. See #551
+* Added project links to pypi listing.
 
 0.21.0
 ------

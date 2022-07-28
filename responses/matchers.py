@@ -139,7 +139,7 @@ def json_params_matcher(
             valid = params is None if request_body is None else json_params == json_body
 
             if not valid:
-                if isinstance(json_body, dict) or isinstance(json_params, dict):
+                if isinstance(json_body, dict) and isinstance(json_params, dict):
                     reason = "request.body doesn't match: {} doesn't match {}".format(
                         _create_key_val_str(json_body), _create_key_val_str(json_params)
                     )

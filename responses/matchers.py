@@ -122,7 +122,7 @@ def json_params_matcher(
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         request_body = request.body
-        json_params = (params or {}) if not isinstance(params, list) else (params or [])
+        json_params = (params or {}) if not isinstance(params, list) else params
         try:
             if isinstance(request_body, bytes):
                 request_body = request_body.decode("utf-8")

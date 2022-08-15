@@ -97,16 +97,17 @@ def urlencoded_params_matcher(
 
 
 def json_params_matcher(
-    params: Optional[Dict[str, Any]], *, strict_match: bool = True
+    params: Optional[Union[Dict[str, Any], List[Any]]], *, strict_match: bool = True
 ) -> Callable[..., Any]:
     """Matches JSON encoded data of request body.
 
     Parameters
     ----------
-    params : dict
-        JSON data provided to 'json' arg of request or a part of it if used in
+    params : dict or list
+        JSON object provided to 'json' arg of request or a part of it if used in
         conjunction with ``strict_match=False``.
     strict_match : bool, default=True
+        Applied only when JSON object is a dictionary.
         If set to ``True``, validates that all keys of JSON object match.
         If set to ``False``, original request may contain additional keys.
 
@@ -121,22 +122,30 @@ def json_params_matcher(
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         request_body = request.body
-        params_dict = params or {}
+        json_params = (params or {}) if not isinstance(params, list) else params
         try:
             if isinstance(request_body, bytes):
                 request_body = request_body.decode("utf-8")
             json_body = json_module.loads(request_body) if request_body else {}
 
-            if not strict_match:
+            if (
+                not strict_match
+                and isinstance(json_body, dict)
+                and isinstance(json_params, dict)
+            ):
                 # filter down to just the params specified in the matcher
-                json_body = _filter_dict_recursively(json_body, params_dict)
+                json_body = _filter_dict_recursively(json_body, json_params)
 
-            valid = params is None if request_body is None else params_dict == json_body
+            valid = params is None if request_body is None else json_params == json_body
 
             if not valid:
-                reason = "request.body doesn't match: {} doesn't match {}".format(
-                    _create_key_val_str(json_body), _create_key_val_str(params_dict)
-                )
+                if isinstance(json_body, dict) and isinstance(json_params, dict):
+                    reason = "request.body doesn't match: {} doesn't match {}".format(
+                        _create_key_val_str(json_body), _create_key_val_str(json_params)
+                    )
+                else:
+                    reason = f"request.body doesn't match: {json_body} doesn't match {json_params}"
+
                 if not strict_match:
                     reason += (
                         "\nNote: You use non-strict parameters check, "

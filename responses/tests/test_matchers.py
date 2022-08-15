@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 import pytest
 import requests
 from requests.exceptions import ConnectionError
@@ -134,6 +136,25 @@ def test_json_params_matcher_not_strict_diff_values():
 
     run()
     assert_reset()
+
+
+def test_json_params_matcher_json_list():
+    json_a = [{"a": "b"}]
+    json_b = '[{"a": "b", "c": "d"}]'
+    mock_request = Mock(body=json_b)
+    result = matchers.json_params_matcher(json_a)(mock_request)
+    assert result == (
+        False,
+        "request.body doesn't match: [{'a': 'b', 'c': 'd'}] doesn't match [{'a': 'b'}]",
+    )
+
+
+def test_json_params_matcher_json_list_empty():
+    json_a = []
+    json_b = "[]"
+    mock_request = Mock(body=json_b)
+    result = matchers.json_params_matcher(json_a)(mock_request)
+    assert result == (True, "")
 
 
 def test_urlencoded_params_matcher_blank():

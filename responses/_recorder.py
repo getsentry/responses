@@ -2,21 +2,54 @@ from functools import wraps
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
+    import io
+    import os
+
     from typing import Any
     from typing import Callable
+    from typing import Dict
+    from typing import List
     from typing import Type
     from typing import Union
-    import os
     from responses import FirstMatchRegistry
     from responses import HTTPAdapter
     from responses import PreparedRequest
     from responses import models
     from responses import _F
+    from responses import BaseResponse
+
+import toml as _toml
 
 from responses import RequestsMock
 from responses import Response
 from responses import _real_send
 from responses.registries import OrderedRegistry
+
+
+def _dump(registered: "List[BaseResponse]", destination: "io.IOBase") -> None:
+    data: Dict[str, Any] = {"responses": []}
+    for rsp in registered:
+        try:
+            content_length = rsp.auto_calculate_content_length  # type: ignore[attr-defined]
+            data["responses"].append(
+                {
+                    "response": {
+                        "method": rsp.method,
+                        "url": rsp.url,
+                        "body": rsp.body,  # type: ignore[attr-defined]
+                        "status": rsp.status,  # type: ignore[attr-defined]
+                        "headers": rsp.headers,
+                        "content_type": rsp.content_type,
+                        "auto_calculate_content_length": content_length,
+                    }
+                }
+            )
+        except AttributeError as exc:  # pragma: no cover
+            raise AttributeError(
+                "Cannot dump response object."
+                "Probably you use custom Response object that is missing required attributes"
+            ) from exc
+    _toml.dump(data, destination)
 
 
 class Recorder(RequestsMock):
@@ -39,7 +72,7 @@ class Recorder(RequestsMock):
                 with self:
                     ret = function(*args, **kwargs)
                     with open(file_path, "w") as file:
-                        self.get_registry()._dump(file)
+                        _dump(self.get_registry().registered, file)
 
                     return ret
 

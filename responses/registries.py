@@ -1,17 +1,11 @@
 import copy
 from typing import TYPE_CHECKING
-from typing import Any
-from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
 
-import toml as _toml
-
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
-    import io
-
     from requests import PreparedRequest
 
     from responses import BaseResponse
@@ -78,31 +72,6 @@ class FirstMatchRegistry(object):
             )
         self.registered[index] = response
         return response
-
-    def _dump(self, destination: "io.IOBase") -> None:
-        data: Dict[str, Any] = {"responses": []}
-        for rsp in self.registered:
-            try:
-                content_length = rsp.auto_calculate_content_length  # type: ignore[attr-defined]
-                data["responses"].append(
-                    {
-                        "response": {
-                            "method": rsp.method,
-                            "url": rsp.url,
-                            "body": rsp.body,  # type: ignore[attr-defined]
-                            "status": rsp.status,  # type: ignore[attr-defined]
-                            "headers": rsp.headers,
-                            "content_type": rsp.content_type,
-                            "auto_calculate_content_length": content_length,
-                        }
-                    }
-                )
-            except AttributeError as exc:  # pragma: no cover
-                raise AttributeError(
-                    "Cannot dump response object."
-                    "Probably you use custom Response object that is missing required attributes"
-                ) from exc
-        _toml.dump(data, destination)
 
 
 class OrderedRegistry(FirstMatchRegistry):

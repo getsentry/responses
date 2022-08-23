@@ -1028,7 +1028,7 @@ class RequestsMock(object):
                 retries = retries.increment(
                     method=response.request.method,  # type: ignore[misc]
                     url=response.url,  # type: ignore[misc]
-                    response=response,  # type: ignore[misc]
+                    response=response.raw,  # type: ignore[misc]
                 )
                 return self._on_request(adapter, request, retries=retries, **kwargs)
             except MaxRetryError:

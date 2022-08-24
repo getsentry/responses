@@ -27,6 +27,7 @@ from warnings import warn
 from requests.adapters import HTTPAdapter
 from requests.adapters import MaxRetryError
 from requests.exceptions import ConnectionError
+from requests.exceptions import RetryError
 
 from responses.matchers import json_params_matcher as _json_params_matcher
 from responses.matchers import query_string_matcher as _query_string_matcher
@@ -1031,9 +1032,17 @@ class RequestsMock(object):
                     response=response,  # type: ignore[misc]
                 )
                 return self._on_request(adapter, request, retries=retries, **kwargs)
-            except MaxRetryError:
+            except MaxRetryError as e:
                 if retries.raise_on_status:
-                    raise
+                    """Since we call 'retries.increment()' by ourselves, we always set "error"
+                    argument equal to None, thus, MaxRetryError exception will be raised with
+                    ResponseError as a 'reason'. That is why following 'if' condition is commented
+                    out. As reference see 'requests' implementation via:
+                    https://github.com/psf/requests/blob/
+                    177dd90f18a8f4dc79a7d2049f0a3f4fcc5932a0/requests/adapters.py#L549"""
+                    # if isinstance(e.reason, ResponseError):
+                    raise RetryError(e, request=request)
+
                 return response
         return response
 

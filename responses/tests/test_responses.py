@@ -13,10 +13,10 @@ from unittest.mock import patch
 
 import pytest
 import requests
-from requests.adapters import MaxRetryError
 from requests.exceptions import ChunkedEncodingError
 from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
+from requests.exceptions import RetryError
 from urllib3.util.retry import Retry
 
 import responses
@@ -2443,7 +2443,7 @@ class TestMaxRetry:
             session.mount("https://", adapter)
 
             if raise_on_status:
-                with pytest.raises(MaxRetryError):
+                with pytest.raises(RetryError):
                     session.get(url)
             else:
                 resp = session.get(url)

@@ -1036,8 +1036,8 @@ class RequestsMock(object):
                 if retries.raise_on_status:
                     """Since we call 'retries.increment()' by ourselves, we always set "error"
                     argument equal to None, thus, MaxRetryError exception will be raised with
-                    ResponseError as a 'reason'. 
-                    
+                    ResponseError as a 'reason'.
+
                     Here we're emulating the `if isinstance(e.reason, ResponseError):`
                     branch found at:
                     https://github.com/psf/requests/blob/

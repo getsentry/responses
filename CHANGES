@@ -7,6 +7,7 @@
 * Add support for the `loose` version of `json_params_matcher` via named argument `strict_match`. See #551
 * Add lists support as JSON objects in `json_params_matcher`. See #559
 * Added project links to pypi listing.
+* Fix `MaxRetryError` exception. Replace exception by `RetryError` according to `requests` implementation. See #572.
 
 0.21.0
 ------

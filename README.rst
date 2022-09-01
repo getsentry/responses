@@ -74,8 +74,8 @@ Record Responses to files
 You can perform real requests to the server and ``responses`` will automatically record the output to the
 file. Recorded data is stored in `toml <https://toml.io>`_ format.
 
-Apply ``@responses._recorder.record(file_path="out.toml")`` decorator to any test function to record
-responses to ``out.toml`` file.
+Apply ``@responses._recorder.record(file_path="out.toml")`` decorator to any function where you perform
+requests to record responses to ``out.toml`` file.
 
 Following code
 

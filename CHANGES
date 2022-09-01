@@ -3,6 +3,7 @@
 
 * [BETA] Added possibility to record responses to TOML files via `@_recorder.record(file_path="out.toml")` decorator.
 * Fix type for the `mock`'s patcher object. See #556
+* Fix type annotation for `CallList`
 * Add `passthrough` argument to `BaseResponse` object. See #557
 * Fix `registries` leak. See #563
 * Add support for the `loose` version of `json_params_matcher` via named argument `strict_match`. See #551

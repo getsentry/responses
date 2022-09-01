@@ -2386,6 +2386,21 @@ def test_redirect():
 
 
 class TestMaxRetry:
+    def set_session(self, total=4, raise_on_status=True):
+        session = requests.Session()
+
+        adapter = requests.adapters.HTTPAdapter(
+            max_retries=Retry(
+                total=total,
+                backoff_factor=0.1,
+                status_forcelist=[500],
+                method_whitelist=["GET", "POST", "PATCH"],
+                raise_on_status=raise_on_status,
+            )
+        )
+        session.mount("https://", adapter)
+        return session
+
     def test_max_retries(self):
         """This example is present in README.rst"""
 
@@ -2397,17 +2412,7 @@ class TestMaxRetry:
             rsp3 = responses.get(url, body="Error", status=500)
             rsp4 = responses.get(url, body="OK", status=200)
 
-            session = requests.Session()
-
-            adapter = requests.adapters.HTTPAdapter(
-                max_retries=Retry(
-                    total=4,
-                    backoff_factor=0.1,
-                    status_forcelist=[500],
-                    method_whitelist=["GET", "POST", "PATCH"],
-                )
-            )
-            session.mount("https://", adapter)
+            session = self.set_session()
 
             resp = session.get(url)
 
@@ -2429,18 +2434,7 @@ class TestMaxRetry:
             rsp2 = responses.get(url, body="Error", status=500)
             rsp3 = responses.get(url, body="Error", status=500)
 
-            session = requests.Session()
-
-            adapter = requests.adapters.HTTPAdapter(
-                max_retries=Retry(
-                    total=2,
-                    backoff_factor=0.1,
-                    status_forcelist=[500],
-                    method_whitelist=["GET", "POST", "PATCH"],
-                    raise_on_status=raise_on_status,
-                )
-            )
-            session.mount("https://", adapter)
+            session = self.set_session(total=2, raise_on_status=raise_on_status)
 
             if raise_on_status:
                 with pytest.raises(RetryError):
@@ -2472,18 +2466,7 @@ class TestMaxRetry:
             responses.add(error_rsp)
             responses.add(ok_rsp)
 
-            session = requests.Session()
-
-            adapter = requests.adapters.HTTPAdapter(
-                max_retries=Retry(
-                    total=4,
-                    backoff_factor=0.1,
-                    status_forcelist=[500],
-                    method_whitelist=["GET", "POST", "PATCH"],
-                )
-            )
-            session.mount("https://", adapter)
-
+            session = self.set_session()
             resp = session.get(url)
             assert resp.status_code == 200
 

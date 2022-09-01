@@ -2450,6 +2450,23 @@ class TestMaxRetry:
         run()
         assert_reset()
 
+    def test_max_retries_exceed_msg(self):
+        @responses.activate(registry=registries.OrderedRegistry)
+        def run():
+            url = "https://example.com"
+            responses.get(url, body="Error", status=500)
+            responses.get(url, body="Error", status=500)
+
+            session = self.set_session(total=1)
+
+            with pytest.raises(RetryError) as err:
+                session.get(url)
+
+            assert "too many 500 error responses" in str(err.value)
+
+        run()
+        assert_reset()
+
     def test_adapter_retry_untouched(self):
         """Validate that every new request uses brand-new Retry object"""
 

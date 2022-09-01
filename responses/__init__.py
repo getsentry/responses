@@ -415,6 +415,25 @@ class BaseResponse(object):
         return bool(urlsplit(self.url).query)
 
     def _url_matches(self, url: _URLPatternType, other: str) -> bool:
+        """Compares two URLs.
+
+        Compares only scheme, netloc and path. If 'url' is a re.Pattern, then checks that
+        'other' matches the pattern.
+
+        Parameters
+        ----------
+        url : Union["Pattern[str]", str]
+            Reference URL or Pattern to compare.
+
+        other : str
+            URl that should be compared.
+
+        Returns
+        -------
+        bool
+            True, if URLs are identical or 'other' matches the pattern.
+
+        """
         if isinstance(url, str):
             if _has_unicode(url):
                 url = _clean_unicode(url)

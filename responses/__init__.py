@@ -2,8 +2,6 @@ import inspect
 import json as json_module
 import logging
 from collections import namedtuple
-from collections.abc import Sequence
-from collections.abc import Sized
 from functools import wraps
 from http import client
 from itertools import groupby
@@ -18,6 +16,8 @@ from typing import Iterator
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import Sequence
+from typing import Sized
 from typing import Tuple
 from typing import Type
 from typing import Union
@@ -217,7 +217,7 @@ def get_wrapped(
     return wrapper
 
 
-class CallList(Sequence, Sized):  # type: ignore[type-arg]
+class CallList(Sequence[Any], Sized):
     def __init__(self) -> None:
         self._calls: List[Call] = []
 
@@ -227,7 +227,7 @@ class CallList(Sequence, Sized):  # type: ignore[type-arg]
     def __len__(self) -> int:
         return len(self._calls)
 
-    def __getitem__(self, idx: int) -> Call:  # type: ignore[override]
+    def __getitem__(self, idx: Union[int, slice]) -> Union[Call, List[Call]]:
         return self._calls[idx]
 
     def add(self, request: "PreparedRequest", response: _Body) -> None:

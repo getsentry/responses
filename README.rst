@@ -62,7 +62,80 @@ Please ensure to update your code according to the guidance.
      - Use ``responses.mock.assert_all_requests_are_fired``,
        ``responses.mock.passthru_prefixes``, ``responses.mock.target`` instead.
 
+BETA Features
+-------------
+Below you can find a list of BETA features. Although we will try to keep the API backwards compatible
+with released version, however, there may be some incompatible changes. Please share your feedback via
+`GitHub Issues <https://github.com/getsentry/responses/issues>`_.
 
+Record Responses to files
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can perform real requests to the server and ``responses`` will automatically record the output to the
+file. Recorded data is stored in `toml <https://toml.io>`_ format.
+
+Apply ``@responses._recorder.record(file_path="out.toml")`` decorator to any test function to record
+responses to ``out.toml`` file.
+
+Following code
+
+.. code-block:: python
+
+    import requests
+    from responses import _recorder
+
+
+    def another():
+        rsp = requests.get("https://httpstat.us/500")
+        rsp = requests.get("https://httpstat.us/202")
+
+
+    @_recorder.record(file_path="out.toml")
+    def test_recorder():
+        rsp = requests.get("https://httpstat.us/404")
+        rsp = requests.get("https://httpbin.org/status/wrong")
+        another()
+
+will produce next output:
+
+.. code-block:: toml
+
+    [[responses]]
+
+    [responses.response]
+    method = "GET"
+    url = "https://httpstat.us/404"
+    body = "404 Not Found"
+    status = 404
+    content_type = "text/plain"
+    auto_calculate_content_length = false
+    [[responses]]
+
+    [responses.response]
+    method = "GET"
+    url = "https://httpbin.org/status/wrong"
+    body = "Invalid status code"
+    status = 400
+    content_type = "text/plain"
+    auto_calculate_content_length = false
+    [[responses]]
+
+    [responses.response]
+    method = "GET"
+    url = "https://httpstat.us/500"
+    body = "500 Internal Server Error"
+    status = 500
+    content_type = "text/plain"
+    auto_calculate_content_length = false
+    [[responses]]
+
+    [responses.response]
+    method = "GET"
+    url = "https://httpstat.us/202"
+    body = "202 Accepted"
+    status = 202
+    content_type = "text/plain"
+    auto_calculate_content_length = false
 
 Basics
 ------

@@ -1,6 +1,7 @@
 0.22.0
 ------
 
+* Update `requests` dependency to the version of 2.22.0 or higher
 * [BETA] Added possibility to record responses to TOML files via `@_recorder.record(file_path="out.toml")` decorator.
 * Fix type for the `mock`'s patcher object. See #556
 * Fix type annotation for `CallList`

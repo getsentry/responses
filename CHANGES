@@ -2,6 +2,8 @@
 ------
 
 * [BETA] Added possibility to record responses to TOML files via `@_recorder.record(file_path="out.toml")` decorator.
+* [BETA] Added possibility to replay responses (populate registry) from TOML files
+  via `responses._add_from_file(file_path="out.toml")` method.
 * Fix type for the `mock`'s patcher object. See #556
 * Add `passthrough` argument to `BaseResponse` object. See #557
 * Fix `registries` leak. See #563

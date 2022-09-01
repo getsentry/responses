@@ -3,7 +3,56 @@ from pathlib import Path
 import requests
 import toml
 
+import responses
 from responses import _recorder
+
+
+def get_data(host, port):
+    data = {
+        "responses": [
+            {
+                "response": {
+                    "method": "GET",
+                    "url": f"http://{host}:{port}/404",
+                    "body": "404 Not Found",
+                    "status": 404,
+                    "content_type": "text/plain",
+                    "auto_calculate_content_length": False,
+                }
+            },
+            {
+                "response": {
+                    "method": "GET",
+                    "url": f"http://{host}:{port}/status/wrong",
+                    "body": "Invalid status code",
+                    "status": 400,
+                    "content_type": "text/plain",
+                    "auto_calculate_content_length": False,
+                }
+            },
+            {
+                "response": {
+                    "method": "GET",
+                    "url": f"http://{host}:{port}/500",
+                    "body": "500 Internal Server Error",
+                    "status": 500,
+                    "content_type": "text/plain",
+                    "auto_calculate_content_length": False,
+                }
+            },
+            {
+                "response": {
+                    "method": "PUT",
+                    "url": f"http://{host}:{port}/202",
+                    "body": "OK",
+                    "status": 202,
+                    "content_type": "text/plain",
+                    "auto_calculate_content_length": False,
+                }
+            },
+        ]
+    }
+    return data
 
 
 class TestRecord:
@@ -35,7 +84,7 @@ class TestRecord:
 
         def another():
             requests.get(url500)
-            requests.get(url202)
+            requests.put(url202)
 
         @_recorder.record(file_path=self.out_file)
         def run():
@@ -48,47 +97,39 @@ class TestRecord:
         with open(self.out_file) as file:
             data = toml.load(file)
 
-        assert data == {
-            "responses": [
-                {
-                    "response": {
-                        "method": "GET",
-                        "url": f"http://{httpserver.host}:{httpserver.port}/404",
-                        "body": "404 Not Found",
-                        "status": 404,
-                        "content_type": "text/plain",
-                        "auto_calculate_content_length": False,
-                    }
-                },
-                {
-                    "response": {
-                        "method": "GET",
-                        "url": f"http://{httpserver.host}:{httpserver.port}/status/wrong",
-                        "body": "Invalid status code",
-                        "status": 400,
-                        "content_type": "text/plain",
-                        "auto_calculate_content_length": False,
-                    }
-                },
-                {
-                    "response": {
-                        "method": "GET",
-                        "url": f"http://{httpserver.host}:{httpserver.port}/500",
-                        "body": "500 Internal Server Error",
-                        "status": 500,
-                        "content_type": "text/plain",
-                        "auto_calculate_content_length": False,
-                    }
-                },
-                {
-                    "response": {
-                        "method": "GET",
-                        "url": f"http://{httpserver.host}:{httpserver.port}/202",
-                        "body": "OK",
-                        "status": 202,
-                        "content_type": "text/plain",
-                        "auto_calculate_content_length": False,
-                    }
-                },
-            ]
-        }
+        assert data == get_data(httpserver.host, httpserver.port)
+
+
+class TestReplay:
+    def teardown(self):
+        self.out_file = Path("out.toml")
+        if self.out_file.exists():
+            self.out_file.unlink()
+
+        assert not self.out_file.exists()
+
+    def test_add_from_file(self):
+        with open("out.toml", "w") as file:
+            toml.dump(get_data("example.com", "8080"), file)
+
+        @responses.activate
+        def run():
+            responses._add_from_file(file_path="out.toml")
+            assert responses.registered()[0].url == "http://example.com:8080/404"
+            assert (
+                responses.registered()[1].url == "http://example.com:8080/status/wrong"
+            )
+            assert responses.registered()[2].url == "http://example.com:8080/500"
+            assert responses.registered()[3].url == "http://example.com:8080/202"
+
+            assert responses.registered()[1].method == "GET"
+            assert responses.registered()[3].method == "PUT"
+
+            assert responses.registered()[1].status == 400
+            assert responses.registered()[2].status == 500
+
+            assert responses.registered()[2].body == "500 Internal Server Error"
+
+            assert responses.registered()[2].content_type == "text/plain"
+
+        run()

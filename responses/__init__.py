@@ -680,9 +680,25 @@ class RequestsMock(object):
         self._thread_lock = _ThreadingLock()
 
     def get_registry(self) -> FirstMatchRegistry:
+        """Returns current registry instance with responses.
+
+        Returns
+        -------
+        FirstMatchRegistry
+            Current registry instance with responses.
+
+        """
         return self._registry
 
     def _set_registry(self, new_registry: Type[FirstMatchRegistry]) -> None:
+        """Replaces current registry with `new_registry`.
+
+        Parameters
+        ----------
+        new_registry : Type[FirstMatchRegistry]
+            Class reference of the registry that should be set, eg OrderedRegistry
+
+        """
         if self.registered():
             err_msg = (
                 "Cannot replace Registry, current registry has responses.\n"
@@ -693,6 +709,7 @@ class RequestsMock(object):
         self._registry = new_registry()
 
     def reset(self) -> None:
+        """Resets registry (including type), calls, passthru_prefixes to default values."""
         self._registry = FirstMatchRegistry()
         self._calls.reset()
         self.passthru_prefixes = ()

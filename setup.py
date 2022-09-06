@@ -17,7 +17,7 @@ from setuptools.command.test import test as TestCommand
 setup_requires = []
 
 install_requires = [
-    "requests>=2.0,<3.0",
+    "requests>=2.22.0,<3.0",
     "urllib3>=1.25.10",
     "toml",
     "types-toml",

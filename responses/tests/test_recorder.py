@@ -102,11 +102,11 @@ class TestRecord:
 
 class TestReplay:
     def teardown(self):
-        self.out_file = Path("out.toml")
-        if self.out_file.exists():
-            self.out_file.unlink()
+        out_file = Path("out.toml")
+        if out_file.exists():
+            out_file.unlink()
 
-        assert not self.out_file.exists()
+        assert not out_file.exists()
 
     def test_add_from_file(self):
         with open("out.toml", "w") as file:

@@ -114,22 +114,29 @@ class TestReplay:
 
         @responses.activate
         def run():
+            responses.patch("http://httpbin.org")
             responses._add_from_file(file_path="out.toml")
-            assert responses.registered()[0].url == "http://example.com:8080/404"
+            responses.post("http://httpbin.org/form")
+
+            assert responses.registered()[0].url == "http://httpbin.org/"
+            assert responses.registered()[1].url == "http://example.com:8080/404"
             assert (
-                responses.registered()[1].url == "http://example.com:8080/status/wrong"
+                responses.registered()[2].url == "http://example.com:8080/status/wrong"
             )
-            assert responses.registered()[2].url == "http://example.com:8080/500"
-            assert responses.registered()[3].url == "http://example.com:8080/202"
+            assert responses.registered()[3].url == "http://example.com:8080/500"
+            assert responses.registered()[4].url == "http://example.com:8080/202"
+            assert responses.registered()[5].url == "http://httpbin.org/form"
 
-            assert responses.registered()[1].method == "GET"
-            assert responses.registered()[3].method == "PUT"
+            assert responses.registered()[0].method == "PATCH"
+            assert responses.registered()[2].method == "GET"
+            assert responses.registered()[4].method == "PUT"
+            assert responses.registered()[5].method == "POST"
 
-            assert responses.registered()[1].status == 400
-            assert responses.registered()[2].status == 500
+            assert responses.registered()[2].status == 400
+            assert responses.registered()[3].status == 500
 
-            assert responses.registered()[2].body == "500 Internal Server Error"
+            assert responses.registered()[3].body == "500 Internal Server Error"
 
-            assert responses.registered()[2].content_type == "text/plain"
+            assert responses.registered()[3].content_type == "text/plain"
 
         run()

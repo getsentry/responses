@@ -65,7 +65,7 @@ Please ensure to update your code according to the guidance.
 BETA Features
 -------------
 Below you can find a list of BETA features. Although we will try to keep the API backwards compatible
-with released version, however, there may be some incompatible changes. Please share your feedback via
+with released version, we reserve the right to change these APIs before they are considered stable. Please share your feedback via
 `GitHub Issues <https://github.com/getsentry/responses/issues>`_.
 
 Record Responses to files

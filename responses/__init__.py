@@ -24,6 +24,7 @@ from typing import Union
 from typing import overload
 from warnings import warn
 
+import toml as _toml
 from requests.adapters import HTTPAdapter
 from requests.adapters import MaxRetryError
 from requests.exceptions import ConnectionError
@@ -64,6 +65,7 @@ from urllib.parse import urlunsplit
 
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
+    import os
     from unittest.mock import _patch as _mock_patcher
 
     from requests import PreparedRequest
@@ -769,6 +771,21 @@ class RequestsMock(object):
         response = Response(method=method, url=url, body=body, **kwargs)
         return self._registry.add(response)
 
+    def _add_from_file(self, file_path: "Union[str, bytes, os.PathLike[Any]]") -> None:
+        with open(file_path) as file:
+            data = _toml.load(file)
+
+        for rsp in data["responses"]:
+            rsp = rsp["response"]
+            self.add(
+                method=rsp["method"],
+                url=rsp["url"],
+                body=rsp["body"],
+                status=rsp["status"],
+                content_type=rsp["content_type"],
+                auto_calculate_content_length=rsp["auto_calculate_content_length"],
+            )
+
     def delete(self, *args: Any, **kwargs: Any) -> BaseResponse:
         return self.add(DELETE, *args, **kwargs)
 
@@ -1146,6 +1163,7 @@ __all__ = [
     # Exposed by the RequestsMock class:
     "activate",
     "add",
+    "_add_from_file",
     "add_callback",
     "add_passthru",
     "_deprecated_assert_all_requests_are_fired",
@@ -1180,6 +1198,7 @@ __all__ = [
 # expose only methods and/or read-only methods
 activate = _default_mock.activate
 add = _default_mock.add
+_add_from_file = _default_mock._add_from_file
 add_callback = _default_mock.add_callback
 add_passthru = _default_mock.add_passthru
 _deprecated_assert_all_requests_are_fired = _default_mock.assert_all_requests_are_fired

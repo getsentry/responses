@@ -12,7 +12,7 @@
 * Add support for the `loose` version of `json_params_matcher` via named argument `strict_match`. See #551
 * Add lists support as JSON objects in `json_params_matcher`. See #559
 * Added project links to pypi listing.
-* `delete`, `get`, `head`, `options`, `patch`, `post`, `put` shortcuts are redone using `functools.partialmethod`.
+* `delete`, `get`, `head`, `options`, `patch`, `post`, `put` shortcuts are now implemented using `functools.partialmethod`.
 * Fix `MaxRetryError` exception. Replace exception by `RetryError` according to `requests` implementation. See #572.
 * Adjust error message when `Retry` is exhausted. See #580.
 

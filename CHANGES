@@ -1,7 +1,10 @@
 0.22.0
 ------
 
+* Update `requests` dependency to the version of 2.22.0 or higher. See #584.
 * [BETA] Added possibility to record responses to TOML files via `@_recorder.record(file_path="out.toml")` decorator.
+* [BETA] Added possibility to replay responses (populate registry) from TOML files
+  via `responses._add_from_file(file_path="out.toml")` method.
 * Fix type for the `mock`'s patcher object. See #556
 * Fix type annotation for `CallList`
 * Add `passthrough` argument to `BaseResponse` object. See #557
@@ -11,6 +14,7 @@
 * Added project links to pypi listing.
 * `delete`, `get`, `head`, `options`, `patch`, `post`, `put` shortcuts are redone using `functools.partialmethod`.
 * Fix `MaxRetryError` exception. Replace exception by `RetryError` according to `requests` implementation. See #572.
+* Adjust error message when `Retry` is exhausted. See #580.
 
 0.21.0
 ------

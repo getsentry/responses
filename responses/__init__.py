@@ -25,6 +25,7 @@ from typing import Union
 from typing import overload
 from warnings import warn
 
+import toml as _toml
 from requests.adapters import HTTPAdapter
 from requests.adapters import MaxRetryError
 from requests.exceptions import ConnectionError
@@ -65,6 +66,7 @@ from urllib.parse import urlunsplit
 
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
+    import os
     from unittest.mock import _patch as _mock_patcher
 
     from requests import PreparedRequest
@@ -681,9 +683,25 @@ class RequestsMock(object):
         self._thread_lock = _ThreadingLock()
 
     def get_registry(self) -> FirstMatchRegistry:
+        """Returns current registry instance with responses.
+
+        Returns
+        -------
+        FirstMatchRegistry
+            Current registry instance with responses.
+
+        """
         return self._registry
 
     def _set_registry(self, new_registry: Type[FirstMatchRegistry]) -> None:
+        """Replaces current registry with `new_registry`.
+
+        Parameters
+        ----------
+        new_registry : Type[FirstMatchRegistry]
+            Class reference of the registry that should be set, eg OrderedRegistry
+
+        """
         if self.registered():
             err_msg = (
                 "Cannot replace Registry, current registry has responses.\n"
@@ -694,6 +712,7 @@ class RequestsMock(object):
         self._registry = new_registry()
 
     def reset(self) -> None:
+        """Resets registry (including type), calls, passthru_prefixes to default values."""
         self._registry = FirstMatchRegistry()
         self._calls.reset()
         self.passthru_prefixes = ()
@@ -760,6 +779,21 @@ class RequestsMock(object):
     patch = partialmethod(add, PATCH)
     post = partialmethod(add, POST)
     put = partialmethod(add, PUT)
+
+    def _add_from_file(self, file_path: "Union[str, bytes, os.PathLike[Any]]") -> None:
+        with open(file_path) as file:
+            data = _toml.load(file)
+
+        for rsp in data["responses"]:
+            rsp = rsp["response"]
+            self.add(
+                method=rsp["method"],
+                url=rsp["url"],
+                body=rsp["body"],
+                status=rsp["status"],
+                content_type=rsp["content_type"],
+                auto_calculate_content_length=rsp["auto_calculate_content_length"],
+            )
 
     def add_passthru(self, prefix: _URLPatternType) -> None:
         """
@@ -1036,7 +1070,7 @@ class RequestsMock(object):
                 retries = retries.increment(
                     method=response.request.method,  # type: ignore[misc]
                     url=response.url,  # type: ignore[misc]
-                    response=response,  # type: ignore[misc]
+                    response=response.raw,  # type: ignore[misc]
                 )
                 return self._on_request(adapter, request, retries=retries, **kwargs)
             except MaxRetryError as e:
@@ -1117,6 +1151,7 @@ __all__ = [
     # Exposed by the RequestsMock class:
     "activate",
     "add",
+    "_add_from_file",
     "add_callback",
     "add_passthru",
     "_deprecated_assert_all_requests_are_fired",
@@ -1151,6 +1186,7 @@ __all__ = [
 # expose only methods and/or read-only methods
 activate = _default_mock.activate
 add = _default_mock.add
+_add_from_file = _default_mock._add_from_file
 add_callback = _default_mock.add_callback
 add_passthru = _default_mock.add_passthru
 _deprecated_assert_all_requests_are_fired = _default_mock.assert_all_requests_are_fired

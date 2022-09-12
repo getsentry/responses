@@ -75,9 +75,32 @@ class FirstMatchRegistry(object):
 
 
 class OrderedRegistry(FirstMatchRegistry):
+    """Registry where `Response` objects are dependent on the insertion order and invocation index.
+
+    OrderedRegistry applies the rule of first in - first out. Responses should be invoked in
+    the same order in which they were added to the registry. Otherwise, an error is returned.
+    """
+
     def find(
         self, request: "PreparedRequest"
     ) -> Tuple[Optional["BaseResponse"], List[str]]:
+        """Find the next registered `Response` and check if it matches the request.
+
+        Search is performed by taking the first element of the registered responses list
+        and removing this object (popping from the list).
+
+        Parameters
+        ----------
+        request : PreparedRequest
+            Request that was caught by the custom adapter.
+
+        Returns
+        -------
+        Tuple[Optional["BaseResponse"], List[str]]
+            Matched `Response` object and empty list in case of match.
+            Otherwise, None and a list with reasons for not finding a match.
+
+        """
 
         if not self.registered:
             return None, ["No more registered responses"]

@@ -144,6 +144,7 @@ You can populate your active registry from a ``toml`` file with recorded respons
 (See `Record Responses to files`_ to understand how to obtain a file).
 To do that you need to execute ``responses._add_from_file(file_path="out.toml")`` within
 activated decorator or a context manager.
+
 Following code example will register a ``patch`` response, then all responses present in
 ``out.toml`` file and a ``post`` response at the end.
 

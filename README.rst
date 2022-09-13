@@ -137,6 +137,30 @@ will produce next output:
     content_type = "text/plain"
     auto_calculate_content_length = false
 
+Replay responses (populate registry) from files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can populate your active registry from a ``toml`` file with recorded responses.
+(See `Record Responses to files`_ to understand how to obtain a file).
+To do that you need to execute ``responses._add_from_file(file_path="out.toml")`` within
+activated decorator or a context manager.
+Following code example will register a ``patch`` response, then all responses present in
+``out.toml`` file and a ``post`` response at the end.
+
+.. code-block:: python
+
+    import responses
+
+
+    @responses.activate
+    def run():
+        responses.patch("http://httpbin.org")
+        responses._add_from_file(file_path="out.toml")
+        responses.post("http://httpbin.org/form")
+
+
+    run()
+
 Basics
 ------
 

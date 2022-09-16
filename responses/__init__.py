@@ -2,6 +2,7 @@ import inspect
 import json as json_module
 import logging
 from collections import namedtuple
+from functools import partialmethod
 from functools import wraps
 from http import client
 from itertools import groupby
@@ -760,6 +761,14 @@ class RequestsMock(object):
         response = Response(method=method, url=url, body=body, **kwargs)
         return self._registry.add(response)
 
+    delete = partialmethod(add, DELETE)
+    get = partialmethod(add, GET)
+    head = partialmethod(add, HEAD)
+    options = partialmethod(add, OPTIONS)
+    patch = partialmethod(add, PATCH)
+    post = partialmethod(add, POST)
+    put = partialmethod(add, PUT)
+
     def _add_from_file(self, file_path: "Union[str, bytes, os.PathLike[Any]]") -> None:
         with open(file_path) as file:
             data = _toml.load(file)
@@ -774,27 +783,6 @@ class RequestsMock(object):
                 content_type=rsp["content_type"],
                 auto_calculate_content_length=rsp["auto_calculate_content_length"],
             )
-
-    def delete(self, *args: Any, **kwargs: Any) -> BaseResponse:
-        return self.add(DELETE, *args, **kwargs)
-
-    def get(self, *args: Any, **kwargs: Any) -> BaseResponse:
-        return self.add(GET, *args, **kwargs)
-
-    def head(self, *args: Any, **kwargs: Any) -> BaseResponse:
-        return self.add(HEAD, *args, **kwargs)
-
-    def options(self, *args: Any, **kwargs: Any) -> BaseResponse:
-        return self.add(OPTIONS, *args, **kwargs)
-
-    def patch(self, *args: Any, **kwargs: Any) -> BaseResponse:
-        return self.add(PATCH, *args, **kwargs)
-
-    def post(self, *args: Any, **kwargs: Any) -> BaseResponse:
-        return self.add(POST, *args, **kwargs)
-
-    def put(self, *args: Any, **kwargs: Any) -> BaseResponse:
-        return self.add(PUT, *args, **kwargs)
 
     def add_passthru(self, prefix: _URLPatternType) -> None:
         """

@@ -1,3 +1,8 @@
+0.23.0
+------
+
+* Fix type annotations of `CallList`.
+
 0.22.0
 ------
 

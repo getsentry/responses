@@ -230,6 +230,14 @@ class CallList(Sequence[Any], Sized):
     def __len__(self) -> int:
         return len(self._calls)
 
+    @overload
+    def __getitem__(self, idx: int) -> Call:
+        ...
+
+    @overload
+    def __getitem__(self, idx: slice) -> List[Call]:
+        ...
+
     def __getitem__(self, idx: Union[int, slice]) -> Union[Call, List[Call]]:
         return self._calls[idx]
 

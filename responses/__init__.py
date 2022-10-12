@@ -25,7 +25,7 @@ from typing import Union
 from typing import overload
 from warnings import warn
 
-import toml as _toml
+import tomli as _toml
 from requests.adapters import HTTPAdapter
 from requests.adapters import MaxRetryError
 from requests.exceptions import ConnectionError
@@ -770,7 +770,7 @@ class RequestsMock(object):
     put = partialmethod(add, PUT)
 
     def _add_from_file(self, file_path: "Union[str, bytes, os.PathLike[Any]]") -> None:
-        with open(file_path) as file:
+        with open(file_path, "rb") as file:
             data = _toml.load(file)
 
         for rsp in data["responses"]:

@@ -19,8 +19,8 @@ setup_requires = []
 install_requires = [
     "requests>=2.22.0,<3.0",
     "urllib3>=1.25.10",
-    "toml",
-    "types-toml",
+    "tomli",
+    "tomli-w",
     "typing_extensions; python_version < '3.8'",
 ]
 

@@ -2,10 +2,10 @@ from functools import wraps
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-    import io
     import os
 
     from typing import Any
+    from typing import BinaryIO
     from typing import Callable
     from typing import Dict
     from typing import List
@@ -18,7 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from responses import _F
     from responses import BaseResponse
 
-import toml as _toml
+import tomli_w as _toml
 
 from responses import RequestsMock
 from responses import Response
@@ -26,7 +26,15 @@ from responses import _real_send
 from responses.registries import OrderedRegistry
 
 
-def _dump(registered: "List[BaseResponse]", destination: "io.IOBase") -> None:
+def _remove_nones(d: "Any") -> "Any":
+    if isinstance(d, dict):
+        return {k: _remove_nones(v) for k, v in d.items() if v is not None}
+    if isinstance(d, list):
+        return [_remove_nones(i) for i in d]
+    return d
+
+
+def _dump(registered: "List[BaseResponse]", destination: "BinaryIO") -> None:
     data: Dict[str, Any] = {"responses": []}
     for rsp in registered:
         try:
@@ -49,7 +57,7 @@ def _dump(registered: "List[BaseResponse]", destination: "io.IOBase") -> None:
                 "Cannot dump response object."
                 "Probably you use custom Response object that is missing required attributes"
             ) from exc
-    _toml.dump(data, destination)
+    _toml.dump(_remove_nones(data), destination)
 
 
 class Recorder(RequestsMock):
@@ -71,7 +79,7 @@ class Recorder(RequestsMock):
             def wrapper(*args: "Any", **kwargs: "Any") -> "Any":  # type: ignore[misc]
                 with self:
                     ret = function(*args, **kwargs)
-                    with open(file_path, "w") as file:
+                    with open(file_path, "wb") as file:
                         _dump(self.get_registry().registered, file)
 
                     return ret

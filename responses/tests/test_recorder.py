@@ -1,7 +1,8 @@
 from pathlib import Path
 
 import requests
-import toml
+import tomli as _toml
+import tomli_w
 
 import responses
 from responses import _recorder
@@ -94,8 +95,8 @@ class TestRecord:
 
         run()
 
-        with open(self.out_file) as file:
-            data = toml.load(file)
+        with open(self.out_file, "rb") as file:
+            data = _toml.load(file)
 
         assert data == get_data(httpserver.host, httpserver.port)
 
@@ -109,8 +110,8 @@ class TestReplay:
         assert not out_file.exists()
 
     def test_add_from_file(self):
-        with open("out.toml", "w") as file:
-            toml.dump(get_data("example.com", "8080"), file)
+        with open("out.toml", "wb") as file:
+            tomli_w.dump(get_data("example.com", "8080"), file)
 
         @responses.activate
         def run():

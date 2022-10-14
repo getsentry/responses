@@ -2,6 +2,7 @@
 ------
 
 * Fix type annotations of `CallList`.
+* Replaced toml with tomli and tomli-w.
 
 0.22.0
 ------

@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "dependencies": [
+    {
+      "source": "https://github.com/nedbat/coveragepy",
+      "dependencies": []
+    },
+    {
+      "source": "https://github.com/PyCQA/flake8",
+      "dependencies": []
+    },
+    {
+      "source": "https://github.com/python/mypy",
+      "dependencies": [
+        {
+          "source": "https://github.com/python/mypy_extensions"
+        },
+        {
+          "source": "https://github.com/python/typed_ast"
+        },
+        {
+          "source": "https://github.com/python/typing"
+        }
+      ]
+    },
+    {
+      "source": "https://github.com/pytest-dev/pytest",
+      "dependencies": []
+    },
+    {
+      "source": "https://github.com/brettcannon/pytest-asyncio",
+      "dependencies": [
+        {
+          "source": "https://github.com/pytest-dev/pytest"
+        }
+      ]
+    },
+    {
+      "source": "https://github.com/pytest-dev/pytest-cov",
+      "dependencies": [
+        {
+          "source": "https://github.com/nedbat/coveragepy"
+        },
+        {
+          "source": "https://github.com/pytest-dev/pytest"
+        }
+      ]
+    },
+    {
+      "source": "https://github.com/csernazs/pytest-httpserver",
+      "dependencies": [
+        {
+          "source": "https://github.com/pallets/werkzeug"
+        }
+      ]
+    },
+    {
+      "source": "https://github.com/psf/requests",
+      "dependencies": [
+        {
+          "source": "https://github.com/certifi/python-certifi"
+        },
+        {
+          "source": "https://github.com/Ousret/charset_normalizer"
+        },
+        {
+          "source": "https://github.com/kjd/idna"
+        },
+        {
+          "source": "https://github.com/Anorov/PySocks"
+        },
+        {
+          "source": "https://github.com/pytest-dev/pytest"
+        },
+        {
+          "source": "https://github.com/pytest-dev/pytest-cov"
+        },
+        {
+          "source": "https://github.com/kevin1024/pytest-httpbin"
+        },
+        {
+          "source": "https://github.com/pytest-dev/pytest-mock"
+        },
+        {
+          "source": "https://github.com/curzona/pytest-xdist"
+        },
+        {
+          "source": "https://github.com/urllib3/urllib3"
+        }
+      ]
+    },
+    {
+      "source": "https://github.com/python/typeshed",
+      "dependencies": []
+    },
+    {
+      "source": "https://github.com/python/typing",
+      "dependencies": []
+    },
+    {
+      "source": "https://github.com/urllib3/urllib3",
+      "dependencies": []
+    }
+  ]
+}

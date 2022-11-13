@@ -15,11 +15,11 @@ jobs:
       fail-fast: false
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 1
 
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: 3.8
 
@@ -51,11 +51,11 @@ jobs:
         requests-version: ['"requests>=2.0,<3.0"']
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 1
 
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -72,4 +72,4 @@ jobs:
 
     - name: Code Coverage Report
       if: success()
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3

@@ -19,7 +19,7 @@ setup_requires = []
 install_requires = [
     "requests>=2.22.0,<3.0",
     "urllib3>=1.25.10",
-    "tomli",
+    "tomli; python_version < '3.11'",
     "tomli-w",
     "typing_extensions; python_version < '3.8'",
 ]
@@ -91,6 +91,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Topic :: Software Development",
     ],
 )

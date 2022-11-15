@@ -1,7 +1,13 @@
 from pathlib import Path
 
 import requests
-import tomli as _toml
+
+try:
+    import tomli as _toml
+except ImportError:
+    # python 3.11
+    import tomllib as _toml
+
 import tomli_w
 
 import responses

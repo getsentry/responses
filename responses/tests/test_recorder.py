@@ -1,17 +1,11 @@
 from pathlib import Path
 
 import requests
-
-try:
-    import tomli as _toml
-except ImportError:
-    # python 3.11
-    import tomllib as _toml
-
 import tomli_w
 
 import responses
 from responses import _recorder
+from responses import _toml
 
 
 def get_data(host, port):

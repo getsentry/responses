@@ -18,7 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from responses import _F
     from responses import BaseResponse
 
-import tomli_w as _toml
+import tomli_w as _toml_w
 
 from responses import RequestsMock
 from responses import Response
@@ -57,7 +57,7 @@ def _dump(registered: "List[BaseResponse]", destination: "BinaryIO") -> None:
                 "Cannot dump response object."
                 "Probably you use custom Response object that is missing required attributes"
             ) from exc
-    _toml.dump(_remove_nones(data), destination)
+    _toml_w.dump(_remove_nones(data), destination)
 
 
 class Recorder(RequestsMock):

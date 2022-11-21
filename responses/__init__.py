@@ -25,7 +25,12 @@ from typing import Union
 from typing import overload
 from warnings import warn
 
-import tomli as _toml
+try:
+    import tomli as _toml
+except ImportError:
+    # python 3.11
+    import tomllib as _toml  # type: ignore[no-redef]
+
 from requests.adapters import HTTPAdapter
 from requests.adapters import MaxRetryError
 from requests.exceptions import ConnectionError

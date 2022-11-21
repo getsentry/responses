@@ -1,6 +1,7 @@
 0.23.0
 ------
 
+* Add Python 3.11 support
 * Fix type annotations of `CallList`.
 * Replaced toml with tomli and tomli-w.
 

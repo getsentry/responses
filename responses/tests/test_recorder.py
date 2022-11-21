@@ -1,11 +1,11 @@
 from pathlib import Path
 
 import requests
-import tomli as _toml
 import tomli_w
 
 import responses
 from responses import _recorder
+from responses import _toml
 
 
 def get_data(host, port):

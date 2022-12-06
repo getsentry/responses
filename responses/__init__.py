@@ -36,6 +36,7 @@ from requests.adapters import MaxRetryError
 from requests.exceptions import ConnectionError
 from requests.exceptions import RetryError
 
+from responses.exceptions import ResponseException
 from responses.matchers import json_params_matcher as _json_params_matcher
 from responses.matchers import query_string_matcher as _query_string_matcher
 from responses.matchers import urlencoded_params_matcher as _urlencoded_params_matcher
@@ -569,7 +570,11 @@ class Response(BaseResponse):
 
     def get_response(self, request: "PreparedRequest") -> HTTPResponse:
         if self.body and isinstance(self.body, Exception):
-            raise self.body
+            raise ResponseException(
+                self.body.args[0],
+                response=self.body.response,
+                request=request,
+            )
 
         headers = self.get_headers()
         status = self.status

@@ -24,6 +24,7 @@ from responses import BaseResponse
 from responses import CallbackResponse
 from responses import PassthroughResponse
 from responses import Response
+from responses import exceptions
 from responses import matchers
 from responses import registries
 
@@ -524,10 +525,11 @@ def test_throw_connection_error_explicit():
         exception = HTTPError("HTTP Error")
         responses.add(responses.GET, url, exception)
 
-        with pytest.raises(HTTPError) as HE:
+        with pytest.raises(exceptions.ResponseException) as exc_info:
             requests.get(url)
 
-        assert str(HE.value) == "HTTP Error"
+        assert str(exc_info.value) == "HTTP Error"
+        assert isinstance(exc_info.value.request, requests.PreparedRequest)
 
     run()
     assert_reset()
@@ -2374,12 +2376,13 @@ def test_redirect():
         # update body of the 3rd response with Exception, this will be raised during execution
         rsp3.body = my_error
 
-        with pytest.raises(requests.ConnectionError) as exc_info:
+        with pytest.raises(exceptions.ResponseException) as exc_info:
             requests.get("http://example.com/1")
 
         assert exc_info.value.args[0] == "custom error"
         assert rsp1.url in exc_info.value.response.history[0].url
         assert rsp2.url in exc_info.value.response.history[1].url
+        assert isinstance(exc_info.value.request, requests.PreparedRequest)
 
     run()
     assert_reset()

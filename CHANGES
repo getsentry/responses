@@ -4,7 +4,7 @@
 * Add Python 3.11 support
 * Fix type annotations of `CallList`. See #593
 * Replaced toml with tomli and tomli-w.
-* `request` object is attached to a custom exception attached as response body. See #588
+* `request` object is attached to any custom exception provided as `Response` `body` argument. See #588
 
 0.22.0
 ------

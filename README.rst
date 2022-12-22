@@ -758,6 +758,7 @@ Example that shows how to set custom registry
     print("Before tests:", responses.mock.get_registry())
     """ Before tests: <responses.registries.FirstMatchRegistry object> """
 
+
     # using function decorator
     @responses.activate(registry=CustomRegistry)
     def run():
@@ -1024,7 +1025,6 @@ to check how many times each request was matched.
 
     @responses.activate
     def test_call_count_with_matcher():
-
         rsp = responses.get(
             "http://www.example.com",
             match=(matchers.query_param_matcher({}),),
@@ -1308,7 +1308,6 @@ replaced.
 
     @responses.activate
     def test_replace():
-
         responses.get("http://example.org", json={"data": 1})
         responses.replace(responses.GET, "http://example.org", json={"data": 2})
 

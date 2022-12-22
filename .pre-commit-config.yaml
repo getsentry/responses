@@ -29,4 +29,4 @@ repos:
     rev: v1.12.1
     hooks:
       - id: blacken-docs
-        additional_dependencies: [ black ]
+        additional_dependencies: [ black == 23.1a1 ]

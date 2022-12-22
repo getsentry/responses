@@ -2494,3 +2494,20 @@ class TestMaxRetry:
 
         run()
         assert_reset()
+
+
+def test_request_object_attached_to_exception():
+    """Validate that we attach `request` object to custom exception supplied as body"""
+
+    @responses.activate
+    def run():
+        url = "https://httpbin.org/delay/2"
+        responses.get(url, body=requests.ReadTimeout())
+
+        try:
+            requests.get(url, timeout=1)
+        except requests.ReadTimeout as exc:
+            assert type(exc.request) == requests.models.PreparedRequest
+
+    run()
+    assert_reset()

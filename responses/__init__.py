@@ -569,6 +569,7 @@ class Response(BaseResponse):
 
     def get_response(self, request: "PreparedRequest") -> HTTPResponse:
         if self.body and isinstance(self.body, Exception):
+            setattr(self.body, "request", request)
             raise self.body
 
         headers = self.get_headers()

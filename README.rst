@@ -504,6 +504,7 @@ Request Keyword Arguments Matcher
 
 To validate request arguments use the ``matchers.request_kwargs_matcher`` function to match
 against the request kwargs.
+
 Only following arguments are supported: ``timeout``, ``verify``, ``proxies``, ``stream``, ``cert``.
 
 Note, only arguments provided to ``matchers.request_kwargs_matcher`` will be validated.

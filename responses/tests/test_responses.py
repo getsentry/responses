@@ -1133,6 +1133,28 @@ def test_assert_all_requests_are_fired():
     assert_reset()
 
 
+def test_assert_all_requests_fired_multiple():
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_some_function():
+        # Not all mocks are called so we'll get an AssertionError
+        responses.add(responses.GET, "http://other_url", json={})
+        responses.add(responses.GET, "http://some_api", json={})
+        requests.get("http://some_api")
+
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_some_second_function():
+        # This should pass as mocks should be reset.
+        responses.add(responses.GET, "http://some_api", json={})
+        requests.get("http://some_api")
+
+    with pytest.raises(AssertionError):
+        test_some_function()
+    assert_reset()
+
+    test_some_second_function()
+    assert_reset()
+
+
 def test_allow_redirects_samehost():
     redirecting_url = "http://example.com"
     final_url_path = "/1"

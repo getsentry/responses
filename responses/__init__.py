@@ -924,8 +924,10 @@ class RequestsMock(object):
 
     def __exit__(self, type: Any, value: Any, traceback: Any) -> bool:
         success = type is None
-        self.stop(allow_assert=success)
-        self.reset()
+        try:
+            self.stop(allow_assert=success)
+        finally:
+            self.reset()
         return success
 
     @overload

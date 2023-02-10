@@ -18,7 +18,9 @@ if TYPE_CHECKING:  # pragma: no cover
     from responses import _F
     from responses import BaseResponse
 
-import tomli_w as _toml_w
+    from io import TextIOWrapper
+
+import yaml
 
 from responses import RequestsMock
 from responses import Response
@@ -34,7 +36,11 @@ def _remove_nones(d: "Any") -> "Any":
     return d
 
 
-def _dump(registered: "List[BaseResponse]", destination: "BinaryIO") -> None:
+def _dump(
+    registered: "List[BaseResponse]",
+    destination: "Union[BinaryIO, TextIOWrapper]",
+    dumper: "Callable[[Union[Dict[Any, Any], List[Any]], Union[BinaryIO, TextIOWrapper]], Any]",
+) -> None:
     data: Dict[str, Any] = {"responses": []}
     for rsp in registered:
         try:
@@ -57,12 +63,13 @@ def _dump(registered: "List[BaseResponse]", destination: "BinaryIO") -> None:
                 "Cannot dump response object."
                 "Probably you use custom Response object that is missing required attributes"
             ) from exc
-    _toml_w.dump(_remove_nones(data), destination)
+    dumper(_remove_nones(data), destination)
 
 
 class Recorder(RequestsMock):
     def __init__(
         self,
+        *,
         target: str = "requests.adapters.HTTPAdapter.send",
         registry: "Type[FirstMatchRegistry]" = OrderedRegistry,
     ) -> None:
@@ -79,14 +86,24 @@ class Recorder(RequestsMock):
             def wrapper(*args: "Any", **kwargs: "Any") -> "Any":  # type: ignore[misc]
                 with self:
                     ret = function(*args, **kwargs)
-                    with open(file_path, "wb") as file:
-                        _dump(self.get_registry().registered, file)
+                    self.dump_to_file(
+                        file_path=file_path, registered=self.get_registry().registered
+                    )
 
                     return ret
 
             return wrapper
 
         return deco_record
+
+    def dump_to_file(
+        self,
+        *,
+        file_path: "Union[str, bytes, os.PathLike[Any]]",
+        registered: "List[BaseResponse]",
+    ) -> None:
+        with open(file_path, "w") as file:
+            _dump(registered, file, yaml.dump)
 
     def _on_request(
         self,

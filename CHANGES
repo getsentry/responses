@@ -3,9 +3,10 @@
 
 * Add Python 3.11 support
 * Fix type annotations of `CallList`. See #593
-* Replaced toml with tomli and tomli-w.
 * `request` object is attached to any custom exception provided as `Response` `body` argument. See #588
 * Fixed mocked responses leaking between tests when `assert_all_requests_are_fired` and a request was not fired.
+* [BETA] Default recorder format was changed to YAML.  Added `responses.RequestsMock._parse_response_file` and
+  `responses._recorder.Recorder.dump_to_file` methods that allow users to override default parser to eg toml, json
 
 0.22.0
 ------

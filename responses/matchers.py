@@ -207,13 +207,13 @@ def query_param_matcher(
 
     """
 
-    params_dict = params or {}
-
-    for k, v in params_dict.items():
-        if isinstance(v, (int, float)):
-            params_dict[k] = str(v)
-
     def match(request: PreparedRequest) -> Tuple[bool, str]:
+        params_dict = params or {}
+
+        for k, v in params_dict.items():
+            if isinstance(v, (int, float)):
+                params_dict[k] = str(v)
+
         reason = ""
         request_params = request.params  # type: ignore[attr-defined]
         request_params_dict = request_params or {}

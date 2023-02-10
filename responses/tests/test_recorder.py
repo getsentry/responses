@@ -84,7 +84,7 @@ class TestRecord:
         url400 = httpserver.url_for("/status/wrong")
 
         def another():
-            requests.get(url500)
+            requests.get(url500, params={"query": "smth"})
             requests.put(url202)
 
         @_recorder.record(file_path=self.out_file)

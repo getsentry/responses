@@ -79,7 +79,7 @@ class Recorder(RequestsMock):
         self._registry = OrderedRegistry()
 
     def record(
-        self, *, file_path: "Union[str, bytes, os.PathLike[Any]]" = "response.toml"
+        self, *, file_path: "Union[str, bytes, os.PathLike[Any]]" = "response.yaml"
     ) -> "Union[Callable[[_F], _F], _F]":
         def deco_record(function: "_F") -> "Callable[..., Any]":
             @wraps(function)

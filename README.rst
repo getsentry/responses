@@ -72,10 +72,10 @@ Record Responses to files
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can perform real requests to the server and ``responses`` will automatically record the output to the
-file. Recorded data is stored in `toml <https://toml.io>`_ format.
+file. Recorded data is stored in `YAML <https://yaml.org>`_ format.
 
-Apply ``@responses._recorder.record(file_path="out.toml")`` decorator to any function where you perform
-requests to record responses to ``out.toml`` file.
+Apply ``@responses._recorder.record(file_path="out.yaml")`` decorator to any function where you perform
+requests to record responses to ``out.yaml`` file.
 
 Following code
 
@@ -90,7 +90,7 @@ Following code
         rsp = requests.get("https://httpstat.us/202")
 
 
-    @_recorder.record(file_path="out.toml")
+    @_recorder.record(file_path="out.yaml")
     def test_recorder():
         rsp = requests.get("https://httpstat.us/404")
         rsp = requests.get("https://httpbin.org/status/wrong")
@@ -98,55 +98,49 @@ Following code
 
 will produce next output:
 
-.. code-block:: toml
+.. code-block:: yaml
 
-    [[responses]]
+    responses:
+    - response:
+        auto_calculate_content_length: false
+        body: 404 Not Found
+        content_type: text/plain
+        method: GET
+        status: 404
+        url: https://httpstat.us/404
+    - response:
+        auto_calculate_content_length: false
+        body: Invalid status code
+        content_type: text/plain
+        method: GET
+        status: 400
+        url: https://httpbin.org/status/wrong
+    - response:
+        auto_calculate_content_length: false
+        body: 500 Internal Server Error
+        content_type: text/plain
+        method: GET
+        status: 500
+        url: https://httpstat.us/500
+    - response:
+        auto_calculate_content_length: false
+        body: 202 Accepted
+        content_type: text/plain
+        method: GET
+        status: 202
+        url: https://httpstat.us/202
 
-    [responses.response]
-    method = "GET"
-    url = "https://httpstat.us/404"
-    body = "404 Not Found"
-    status = 404
-    content_type = "text/plain"
-    auto_calculate_content_length = false
-    [[responses]]
-
-    [responses.response]
-    method = "GET"
-    url = "https://httpbin.org/status/wrong"
-    body = "Invalid status code"
-    status = 400
-    content_type = "text/plain"
-    auto_calculate_content_length = false
-    [[responses]]
-
-    [responses.response]
-    method = "GET"
-    url = "https://httpstat.us/500"
-    body = "500 Internal Server Error"
-    status = 500
-    content_type = "text/plain"
-    auto_calculate_content_length = false
-    [[responses]]
-
-    [responses.response]
-    method = "GET"
-    url = "https://httpstat.us/202"
-    body = "202 Accepted"
-    status = 202
-    content_type = "text/plain"
-    auto_calculate_content_length = false
 
 Replay responses (populate registry) from files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can populate your active registry from a ``toml`` file with recorded responses.
+You can populate your active registry from a ``yaml`` file with recorded responses.
 (See `Record Responses to files`_ to understand how to obtain a file).
-To do that you need to execute ``responses._add_from_file(file_path="out.toml")`` within
+To do that you need to execute ``responses._add_from_file(file_path="out.yaml")`` within
 an activated decorator or a context manager.
 
 The following code example registers a ``patch`` response, then all responses present in
-``out.toml`` file and a ``post`` response at the end.
+``out.yaml`` file and a ``post`` response at the end.
 
 .. code-block:: python
 
@@ -156,7 +150,7 @@ The following code example registers a ``patch`` response, then all responses pr
     @responses.activate
     def run():
         responses.patch("http://httpbin.org")
-        responses._add_from_file(file_path="out.toml")
+        responses._add_from_file(file_path="out.yaml")
         responses.post("http://httpbin.org/form")
 
 

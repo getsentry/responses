@@ -1,11 +1,19 @@
 from pathlib import Path
 
+import pytest
 import requests
 import tomli_w
+import yaml
 
 import responses
 from responses import _recorder
-from responses import _toml
+from responses._recorder import _dump
+
+try:
+    import tomli as _toml
+except ImportError:
+    # python 3.11
+    import tomllib as _toml  # type: ignore[no-redef]
 
 
 def get_data(host, port):
@@ -58,7 +66,7 @@ def get_data(host, port):
 
 class TestRecord:
     def setup(self):
-        self.out_file = Path("out.toml")
+        self.out_file = Path("response_record")
         if self.out_file.exists():
             self.out_file.unlink()  # pragma: no cover
 
@@ -66,6 +74,54 @@ class TestRecord:
 
     def test_recorder(self, httpserver):
 
+        url202, url400, url404, url500 = self.prepare_server(httpserver)
+
+        def another():
+            requests.get(url500)
+            requests.put(url202)
+
+        @_recorder.record(file_path=self.out_file)
+        def run():
+            requests.get(url404)
+            requests.get(url400)
+            another()
+
+        run()
+
+        with open(self.out_file, "r") as file:
+            data = yaml.safe_load(file)
+
+        assert data == get_data(httpserver.host, httpserver.port)
+
+    def test_recorder_toml(self, httpserver):
+        custom_recorder = _recorder.Recorder()
+
+        def dump_to_file(file_path, registered):
+            with open(file_path, "wb") as file:
+                _dump(registered, file, tomli_w.dump)
+
+        custom_recorder.dump_to_file = dump_to_file
+
+        url202, url400, url404, url500 = self.prepare_server(httpserver)
+
+        def another():
+            requests.get(url500)
+            requests.put(url202)
+
+        @custom_recorder.record(file_path=self.out_file)
+        def run():
+            requests.get(url404)
+            requests.get(url400)
+            another()
+
+        run()
+
+        with open(self.out_file, "rb") as file:
+            data = _toml.load(file)
+
+        assert data == get_data(httpserver.host, httpserver.port)
+
+    def prepare_server(self, httpserver):
         httpserver.expect_request("/500").respond_with_data(
             "500 Internal Server Error", status=500, content_type="text/plain"
         )
@@ -82,41 +138,41 @@ class TestRecord:
         url202 = httpserver.url_for("/202")
         url404 = httpserver.url_for("/404")
         url400 = httpserver.url_for("/status/wrong")
-
-        def another():
-            requests.get(url500)
-            requests.put(url202)
-
-        @_recorder.record(file_path=self.out_file)
-        def run():
-            requests.get(url404)
-            requests.get(url400)
-            another()
-
-        run()
-
-        with open(self.out_file, "rb") as file:
-            data = _toml.load(file)
-
-        assert data == get_data(httpserver.host, httpserver.port)
+        return url202, url400, url404, url500
 
 
 class TestReplay:
+    def setup(self):
+        self.out_file = Path("response_record")
+
     def teardown(self):
-        out_file = Path("out.toml")
-        if out_file.exists():
-            out_file.unlink()
+        if self.out_file.exists():
+            self.out_file.unlink()
 
-        assert not out_file.exists()
+        assert not self.out_file.exists()
 
-    def test_add_from_file(self):
-        with open("out.toml", "wb") as file:
-            tomli_w.dump(get_data("example.com", "8080"), file)
+    @pytest.mark.parametrize("parser", (yaml, tomli_w))
+    def test_add_from_file(self, parser):
+        if parser == yaml:
+            with open(self.out_file, "w") as file:
+                parser.dump(get_data("example.com", "8080"), file)
+        else:
+            with open(self.out_file, "wb") as file:
+                parser.dump(get_data("example.com", "8080"), file)
 
         @responses.activate
         def run():
             responses.patch("http://httpbin.org")
-            responses._add_from_file(file_path="out.toml")
+            if parser == tomli_w:
+
+                def _parse_response_file(file_path):
+                    with open(file_path, "rb") as file:
+                        data = _toml.load(file)
+                    return data
+
+                responses.mock._parse_response_file = _parse_response_file
+
+            responses._add_from_file(file_path=self.out_file)
             responses.post("http://httpbin.org/form")
 
             assert responses.registered()[0].url == "http://httpbin.org/"

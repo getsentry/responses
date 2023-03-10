@@ -26,13 +26,6 @@ from typing import overload
 from warnings import warn
 
 import yaml
-
-try:
-    import tomli as _toml
-except ImportError:
-    # python 3.11
-    import tomllib as _toml  # type: ignore[no-redef] # noqa: F401
-
 from requests.adapters import HTTPAdapter
 from requests.adapters import MaxRetryError
 from requests.exceptions import ConnectionError

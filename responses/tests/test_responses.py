@@ -1498,9 +1498,10 @@ def test_auto_calculate_content_length_doesnt_override_existing_value():
             headers={"Content-Length": "2"},
             auto_calculate_content_length=True,
         )
-        resp = requests.get(url)
-        assert_response(resp, "test")
-        assert resp.headers["Content-Length"] == "2"
+        with pytest.raises(ChunkedEncodingError) as excinfo:
+            requests.get(url)
+
+        assert "IncompleteRead(4 bytes read, -2 more expected)" in str(excinfo.value)
 
     run()
     assert_reset()
@@ -2416,7 +2417,7 @@ class TestMaxRetry:
                 total=total,
                 backoff_factor=0.1,
                 status_forcelist=[500],
-                method_whitelist=["GET", "POST", "PATCH"],
+                allowed_methods=["GET", "POST", "PATCH"],
                 raise_on_status=raise_on_status,
             )
         )

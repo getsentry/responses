@@ -1,3 +1,9 @@
+0.23.2
+------
+
+* Updated dependency to urllib3>=2 and requests>=2.30.0. See #635
+
+
 0.23.1
 ------
 

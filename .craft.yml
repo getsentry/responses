@@ -6,6 +6,8 @@ changelog: CHANGES
 targets:
   - name: pypi
   - name: github
+  - name: sentry-pypi
+    internalPypiRepo: getsentry/pypi
 requireNames:
   - /^responses-.+-py3-none-any.whl$/
   - /^responses-.+.tar.gz$/

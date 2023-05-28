@@ -242,7 +242,7 @@ class TestRecord:
 
 class TestReplay:
     def setup(self):
-        self.out_file = Path("response_record.yaml")
+        self.out_file = Path("response_record")
 
     def teardown(self):
         if self.out_file.exists():

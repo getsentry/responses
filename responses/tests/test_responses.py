@@ -1133,6 +1133,28 @@ def test_assert_all_requests_are_fired():
     assert_reset()
 
 
+def test_assert_all_requests_fired_multiple():
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_some_function():
+        # Not all mocks are called so we'll get an AssertionError
+        responses.add(responses.GET, "http://other_url", json={})
+        responses.add(responses.GET, "http://some_api", json={})
+        requests.get("http://some_api")
+
+    @responses.activate(assert_all_requests_are_fired=True)
+    def test_some_second_function():
+        # This should pass as mocks should be reset.
+        responses.add(responses.GET, "http://some_api", json={})
+        requests.get("http://some_api")
+
+    with pytest.raises(AssertionError):
+        test_some_function()
+    assert_reset()
+
+    test_some_second_function()
+    assert_reset()
+
+
 def test_allow_redirects_samehost():
     redirecting_url = "http://example.com"
     final_url_path = "/1"
@@ -1476,9 +1498,10 @@ def test_auto_calculate_content_length_doesnt_override_existing_value():
             headers={"Content-Length": "2"},
             auto_calculate_content_length=True,
         )
-        resp = requests.get(url)
-        assert_response(resp, "test")
-        assert resp.headers["Content-Length"] == "2"
+        with pytest.raises(ChunkedEncodingError) as excinfo:
+            requests.get(url)
+
+        assert "IncompleteRead(4 bytes read, -2 more expected)" in str(excinfo.value)
 
     run()
     assert_reset()
@@ -2394,7 +2417,7 @@ class TestMaxRetry:
                 total=total,
                 backoff_factor=0.1,
                 status_forcelist=[500],
-                method_whitelist=["GET", "POST", "PATCH"],
+                allowed_methods=["GET", "POST", "PATCH"],
                 raise_on_status=raise_on_status,
             )
         )
@@ -2494,3 +2517,20 @@ class TestMaxRetry:
 
         run()
         assert_reset()
+
+
+def test_request_object_attached_to_exception():
+    """Validate that we attach `request` object to custom exception supplied as body"""
+
+    @responses.activate
+    def run():
+        url = "https://httpbin.org/delay/2"
+        responses.get(url, body=requests.ReadTimeout())
+
+        try:
+            requests.get(url, timeout=1)
+        except requests.ReadTimeout as exc:
+            assert type(exc.request) == requests.models.PreparedRequest
+
+    run()
+    assert_reset()

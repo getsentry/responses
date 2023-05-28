@@ -17,10 +17,10 @@ from setuptools.command.test import test as TestCommand
 setup_requires = []
 
 install_requires = [
-    "requests>=2.22.0,<3.0",
-    "urllib3>=1.25.10",
-    "tomli; python_version < '3.11'",
-    "tomli-w",
+    "requests>=2.30.0,<3.0",
+    "urllib3>=2.0.0,<3.0",
+    "pyyaml",
+    "types-PyYAML",
     "typing_extensions; python_version < '3.8'",
 ]
 
@@ -33,6 +33,9 @@ tests_require = [
     "flake8",
     "types-requests",
     "mypy",
+    # for check of different parsers in recorder
+    "tomli; python_version < '3.11'",
+    "tomli-w",
 ]
 
 if "test" in sys.argv:
@@ -59,7 +62,7 @@ class PyTest(TestCommand):
 
 setup(
     name="responses",
-    version="0.22.0",
+    version="0.23.1",
     author="David Cramer",
     description="A utility library for mocking out the `requests` Python library.",
     url="https://github.com/getsentry/responses",

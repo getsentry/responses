@@ -2,6 +2,7 @@ import inspect
 from functools import wraps
 from typing import TYPE_CHECKING
 
+from responses.matchers import header_matcher
 from responses.matchers import query_param_matcher
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -140,7 +141,10 @@ class Recorder(RequestsMock):
             url=str(requests_response.request.url),
             status=requests_response.status_code,
             body=requests_response.text,
-            match=(query_param_matcher(request.params),),  # type: ignore[attr-defined]
+            match=(
+                query_param_matcher(request.params),  # type: ignore[attr-defined]
+                header_matcher(dict(request.headers)),
+            ),
         )
         self._registry.add(responses_response)
         return requests_response

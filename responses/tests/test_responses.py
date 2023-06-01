@@ -801,34 +801,70 @@ def test_base_response_get_response():
         resp.get_response(requests.PreparedRequest())
 
 
-def test_custom_adapter():
-    @responses.activate
-    def run():
-        url = "http://example.com"
-        responses.add(responses.GET, url, body=b"test")
+class TestAdapters:
+    class CustomAdapter(requests.adapters.HTTPAdapter):
+        """Classic custom adapter."""
 
-        calls = [0]
+        def send(self, *a, **k):
+            return super().send(*a, **k)
 
-        class DummyAdapter(requests.adapters.HTTPAdapter):
-            def send(self, *a, **k):
-                calls[0] += 1
-                return super().send(*a, **k)
+    class PositionalArgsAdapter(requests.adapters.HTTPAdapter):
+        """Custom adapter that sends only positional args.
+        See https://github.com/getsentry/responses/issues/642 for more into.
+        """
 
-        # Test that the adapter is actually used
-        session = requests.Session()
-        session.mount("http://", DummyAdapter())
+        def send(
+            self,
+            request,
+            stream=False,
+            timeout=None,
+            verify=True,
+            cert=None,
+            proxies=None,
+        ):
+            return super().send(request, stream, timeout, verify, cert, proxies)
 
-        session.get(url, allow_redirects=False)
-        assert calls[0] == 1
+    class PositionalArgsIncompleteAdapter(requests.adapters.HTTPAdapter):
+        """Custom adapter that sends only positional args.
+        Not all arguments are forwarded to the send method.
+                    See https://github.com/getsentry/responses/issues/642 for more into.
+        """
 
-        # Test that the response is still correctly emulated
-        session = requests.Session()
-        session.mount("http://", DummyAdapter())
+        def send(
+            self,
+            request,
+            stream=False,
+            timeout=None,
+            verify=True,
+            # following args are intentionally not forwarded
+            cert=None,
+            proxies=None,
+        ):
+            return super().send(request, stream, timeout, verify)
 
-        resp = session.get(url)
-        assert_response(resp, "test")
+    @pytest.mark.parametrize(
+        "adapter_class",
+        (CustomAdapter, PositionalArgsAdapter, PositionalArgsIncompleteAdapter),
+    )
+    def test_custom_adapter(self, adapter_class):
+        """Test basic adapter implementation and that responses can patch them properly."""
 
-    run()
+        @responses.activate
+        def run():
+            url = "http://example.com"
+            responses.add(responses.GET, url, body=b"test adapter")
+
+            # Test that the adapter is actually used
+            session = requests.Session()
+            adapter = adapter_class()
+            session.mount("http://", adapter)
+            with patch.object(adapter, "send", side_effect=adapter.send) as mock_send:
+                resp = session.get(url, allow_redirects=False)
+
+            assert mock_send.call_count == 1
+            assert_response(resp, "test adapter")
+
+        run()
 
 
 def test_responses_as_context_manager():

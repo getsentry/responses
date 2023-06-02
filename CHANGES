@@ -2,6 +2,7 @@
 ------
 
 * Updated dependency to urllib3>=2 and requests>=2.30.0. See #635
+* Fixed issue when custom adapters were sending only positional args. See #642
 
 
 0.23.1

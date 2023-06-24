@@ -196,7 +196,6 @@ def get_wrapped(
         # set asynchronous wrapper if requestor function is asynchronous
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[misc]
-
             if registry is not None:
                 responses._set_registry(registry)
 
@@ -207,7 +206,6 @@ def get_wrapped(
 
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:  # type: ignore[misc]
-
             if registry is not None:
                 responses._set_registry(registry)
 
@@ -900,7 +898,6 @@ class RequestsMock(object):
         content_type: Optional[str] = "text/plain",
         match: "_MatcherIterable" = (),
     ) -> None:
-
         self._registry.add(
             CallbackResponse(
                 url=url,
@@ -1085,7 +1082,8 @@ class RequestsMock(object):
                     Here we're emulating the `if isinstance(e.reason, ResponseError):`
                     branch found at:
                     https://github.com/psf/requests/blob/
-                    177dd90f18a8f4dc79a7d2049f0a3f4fcc5932a0/requests/adapters.py#L549"""
+                    177dd90f18a8f4dc79a7d2049f0a3f4fcc5932a0/requests/adapters.py#L549
+                    """
                     raise RetryError(e, request=request)
 
                 return response

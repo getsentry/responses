@@ -3,6 +3,8 @@
 
 * Updated dependency to urllib3>=2 and requests>=2.30.0. See #635
 * Fixed issue when custom adapters were sending only positional args. See #642
+* Expose `unbound_on_send` method in `RequestsMock` class. This method returns new function
+  that is called by `RequestsMock` instead of original `send` method defined by any adapter.
 
 
 0.23.1

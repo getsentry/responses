@@ -69,6 +69,9 @@ if TYPE_CHECKING:  # pragma: no cover
     import os
     from unittest.mock import _patch as _mock_patcher
 
+    from mypy_extensions import Arg
+    from mypy_extensions import KwArg
+    from mypy_extensions import VarArg
     from requests import PreparedRequest
     from requests import models
     from urllib3 import Retry as _Retry
@@ -218,33 +221,6 @@ def get_wrapped(
                 return func(*args, **kwargs)
 
     return wrapper
-
-
-def unbound_on_send(request_mock):
-    def send(
-        adapter: "HTTPAdapter",
-        request: "PreparedRequest",
-        *args: Any,
-        **kwargs: Any,
-    ) -> "models.Response":
-        if args:
-            # that probably means that the request was sent from the custom adapter
-            # It is fully legit to send positional args from adapter, although,
-            # `requests` implementation does it always with kwargs
-            # See for more info: https://github.com/getsentry/responses/issues/642
-            try:
-                kwargs["stream"] = args[0]
-                kwargs["timeout"] = args[1]
-                kwargs["verify"] = args[2]
-                kwargs["cert"] = args[3]
-                kwargs["proxies"] = args[4]
-            except IndexError:
-                # not all kwargs are required
-                pass
-
-        return request_mock._on_request(adapter, request, **kwargs)
-
-    return send
 
 
 class CallList(Sequence[Any], Sized):
@@ -1118,6 +1094,42 @@ class RequestsMock(object):
                 return response
         return response
 
+    def unbound_on_send(
+        self,
+    ) -> """Callable[  # noqa: F821
+        [
+            Arg(HTTPAdapter, "adapter"),
+            Arg(PreparedRequest, "request"),
+            VarArg(Any),
+            KwArg(Any),
+        ],
+        models.Response,
+    ]""":
+        def send(
+            adapter: "HTTPAdapter",
+            request: "PreparedRequest",
+            *args: Any,
+            **kwargs: Any,
+        ) -> "models.Response":
+            if args:
+                # that probably means that the request was sent from the custom adapter
+                # It is fully legit to send positional args from adapter, although,
+                # `requests` implementation does it always with kwargs
+                # See for more info: https://github.com/getsentry/responses/issues/642
+                try:
+                    kwargs["stream"] = args[0]
+                    kwargs["timeout"] = args[1]
+                    kwargs["verify"] = args[2]
+                    kwargs["cert"] = args[3]
+                    kwargs["proxies"] = args[4]
+                except IndexError:
+                    # not all kwargs are required
+                    pass
+
+            return self._on_request(adapter, request, **kwargs)
+
+        return send
+
     def start(self) -> None:
         if self._patcher:
             # we must not override value of the _patcher if already applied
@@ -1125,9 +1137,7 @@ class RequestsMock(object):
             # another decorated function
             return
 
-        self._patcher = std_mock.patch(
-            target=self.target, new=unbound_on_send(request_mock=self)
-        )
+        self._patcher = std_mock.patch(target=self.target, new=self.unbound_on_send())
         self._patcher.start()
 
     def stop(self, allow_assert: bool = True) -> None:

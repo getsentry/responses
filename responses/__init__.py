@@ -220,29 +220,31 @@ def get_wrapped(
     return wrapper
 
 
-def unbound_on_send(
-    adapter: "HTTPAdapter",
-    request: "PreparedRequest",
-    *args: Any,
-    request_mock=None,
-    **kwargs: Any,
-) -> "models.Response":
-    if args:
-        # that probably means that the request was sent from the custom adapter
-        # It is fully legit to send positional args from adapter, although,
-        # `requests` implementation does it always with kwargs
-        # See for more info: https://github.com/getsentry/responses/issues/642
-        try:
-            kwargs["stream"] = args[0]
-            kwargs["timeout"] = args[1]
-            kwargs["verify"] = args[2]
-            kwargs["cert"] = args[3]
-            kwargs["proxies"] = args[4]
-        except IndexError:
-            # not all kwargs are required
-            pass
+def unbound_on_send(request_mock):
+    def send(
+        adapter: "HTTPAdapter",
+        request: "PreparedRequest",
+        *args: Any,
+        **kwargs: Any,
+    ) -> "models.Response":
+        if args:
+            # that probably means that the request was sent from the custom adapter
+            # It is fully legit to send positional args from adapter, although,
+            # `requests` implementation does it always with kwargs
+            # See for more info: https://github.com/getsentry/responses/issues/642
+            try:
+                kwargs["stream"] = args[0]
+                kwargs["timeout"] = args[1]
+                kwargs["verify"] = args[2]
+                kwargs["cert"] = args[3]
+                kwargs["proxies"] = args[4]
+            except IndexError:
+                # not all kwargs are required
+                pass
 
-    return request_mock._on_request(adapter, request, **kwargs)
+        return request_mock._on_request(adapter, request, **kwargs)
+
+    return send
 
 
 class CallList(Sequence[Any], Sized):
@@ -1124,7 +1126,7 @@ class RequestsMock(object):
             return
 
         self._patcher = std_mock.patch(
-            target=self.target, new=partialmethod(unbound_on_send, request_mock=self)
+            target=self.target, new=unbound_on_send(request_mock=self)
         )
         self._patcher.start()
 

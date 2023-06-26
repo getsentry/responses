@@ -38,10 +38,8 @@ from responses.registries import FirstMatchRegistry
 
 try:
     from typing_extensions import Literal
-    from typing_extensions import Protocol
 except ImportError:  # pragma: no cover
     from typing import Literal  # type: ignore  # pragma: no cover
-    from typing import Protocol
 
 try:
     from requests.packages.urllib3.response import HTTPResponse
@@ -69,6 +67,7 @@ from urllib.parse import urlunsplit
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
     import os
+    from typing import Protocol
     from unittest.mock import _patch as _mock_patcher
 
     from requests import PreparedRequest

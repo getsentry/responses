@@ -17,6 +17,7 @@ from typing import Iterator
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import Protocol
 from typing import Sequence
 from typing import Sized
 from typing import Tuple
@@ -69,9 +70,6 @@ if TYPE_CHECKING:  # pragma: no cover
     import os
     from unittest.mock import _patch as _mock_patcher
 
-    from mypy_extensions import Arg
-    from mypy_extensions import KwArg
-    from mypy_extensions import VarArg
     from requests import PreparedRequest
     from requests import models
     from urllib3 import Retry as _Retry
@@ -83,6 +81,14 @@ _HeaderSet = Optional[Union[Mapping[str, str], List[Tuple[str, str]]]]
 _MatcherIterable = Iterable[Callable[..., Tuple[bool, str]]]
 _HTTPMethodOrResponse = Optional[Union[str, "BaseResponse"]]
 _URLPatternType = Union["Pattern[str]", str]
+
+
+class UnboundSendProtocol(Protocol):
+    def __call__(
+        self, adapter: HTTPAdapter, request: PreparedRequest, *args: Any, **kwargs: Any
+    ) -> models.Response:
+        ...
+
 
 Call = namedtuple("Call", ["request", "response"])
 _real_send = HTTPAdapter.send
@@ -1094,17 +1100,7 @@ class RequestsMock(object):
                 return response
         return response
 
-    def unbound_on_send(
-        self,
-    ) -> """Callable[  # noqa: F821
-        [
-            Arg(HTTPAdapter, "adapter"),
-            Arg(PreparedRequest, "request"),
-            VarArg(Any),
-            KwArg(Any),
-        ],
-        models.Response,
-    ]""":
+    def unbound_on_send(self) -> UnboundSendProtocol:
         def send(
             adapter: "HTTPAdapter",
             request: "PreparedRequest",

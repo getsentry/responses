@@ -73,7 +73,6 @@ class TestRecord:
         assert not self.out_file.exists()
 
     def test_recorder(self, httpserver):
-
         url202, url400, url404, url500 = self.prepare_server(httpserver)
 
         def another():

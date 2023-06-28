@@ -1624,196 +1624,213 @@ def test_multiple_methods():
     assert_reset()
 
 
-def test_passthrough_flag(httpserver):
-    httpserver.expect_request("/").respond_with_data("OK", content_type="text/plain")
-    url = httpserver.url_for("/")
-
-    response = Response(responses.GET, url, body="MOCK")
-
-    @responses.activate
-    def run_passthrough():
-        responses.add(response)
-        resp = requests.get(url)
-        assert_response(resp, "OK")
-
-    @responses.activate
-    def run_mocked():
-        responses.add(response)
-        resp = requests.get(url)
-        assert_response(resp, "MOCK")
-
-    run_mocked()
-    assert_reset()
-
-    response.passthrough = True
-    run_passthrough()
-    assert_reset()
-
-
-def test_passthrough_kwarg(httpserver):
-    httpserver.expect_request("/").respond_with_data("OK", content_type="text/plain")
-    url = httpserver.url_for("/")
-
-    def configure_response(passthrough):
-        responses.get(url, body="MOCK", passthrough=passthrough)
-
-    @responses.activate
-    def run_passthrough():
-        configure_response(passthrough=True)
-        resp = requests.get(url)
-        assert_response(resp, "OK")
-
-    @responses.activate
-    def run_mocked():
-        configure_response(passthrough=False)
-        resp = requests.get(url)
-        assert_response(resp, "MOCK")
-
-    run_mocked()
-    assert_reset()
-
-    run_passthrough()
-    assert_reset()
-
-
-def test_passthrough_response(httpserver):
-    httpserver.expect_request("/").respond_with_data("OK", content_type="text/plain")
-    url = httpserver.url_for("/")
-
-    @responses.activate
-    def run():
-        responses.add(PassthroughResponse(responses.GET, url))
-        responses.add(responses.GET, "{}/one".format(url), body="one")
-        responses.add(responses.GET, "http://example.com/two", body="two")
-
-        resp = requests.get("http://example.com/two")
-        assert_response(resp, "two")
-        resp = requests.get("{}/one".format(url))
-        assert_response(resp, "one")
-        resp = requests.get(url)
-        assert_response(resp, "OK")
-
-        assert len(responses.calls) == 3
-        responses.assert_call_count(url, 1)
-
-    run()
-    assert_reset()
-
-
-def test_passthrough_response_stream(httpserver):
-    httpserver.expect_request("/").respond_with_data("OK", content_type="text/plain")
-
-    @responses.activate
-    def run():
+class TestPassthru:
+    def test_passthrough_flag(self, httpserver):
+        httpserver.expect_request("/").respond_with_data(
+            "OK", content_type="text/plain"
+        )
         url = httpserver.url_for("/")
-        responses.add(PassthroughResponse(responses.GET, url))
-        content_1 = requests.get(url).content
-        with requests.get(url, stream=True) as resp:
-            content_2 = resp.raw.read()
-        assert content_1 == content_2
 
-    run()
-    assert_reset()
+        response = Response(responses.GET, url, body="MOCK")
 
-
-def test_passthru_prefixes(httpserver):
-    httpserver.expect_request("/").respond_with_data("OK", content_type="text/plain")
-    url = httpserver.url_for("/")
-
-    @responses.activate
-    def run_constructor_argument():
-        with responses.RequestsMock(passthru_prefixes=(url,)):
+        @responses.activate
+        def run_passthrough():
+            responses.add(response)
             resp = requests.get(url)
             assert_response(resp, "OK")
 
-    @responses.activate
-    def run_property_setter():
-        with responses.RequestsMock() as m:
-            m.passthru_prefixes = tuple([url])
+        @responses.activate
+        def run_mocked():
+            responses.add(response)
+            resp = requests.get(url)
+            assert_response(resp, "MOCK")
+
+        run_mocked()
+        assert_reset()
+
+        response.passthrough = True
+        run_passthrough()
+        assert_reset()
+
+    def test_passthrough_kwarg(self, httpserver):
+        httpserver.expect_request("/").respond_with_data(
+            "OK", content_type="text/plain"
+        )
+        url = httpserver.url_for("/")
+
+        def configure_response(passthrough):
+            responses.get(url, body="MOCK", passthrough=passthrough)
+
+        @responses.activate
+        def run_passthrough():
+            configure_response(passthrough=True)
             resp = requests.get(url)
             assert_response(resp, "OK")
 
-    run_constructor_argument()
-    assert_reset()
-    run_property_setter()
-    assert_reset()
+        @responses.activate
+        def run_mocked():
+            configure_response(passthrough=False)
+            resp = requests.get(url)
+            assert_response(resp, "MOCK")
 
+        run_mocked()
+        assert_reset()
 
-def test_passthru(httpserver):
-    httpserver.expect_request("/").respond_with_data("OK", content_type="text/plain")
-    url = httpserver.url_for("/")
+        run_passthrough()
+        assert_reset()
 
-    @responses.activate
-    def run():
-        responses.add_passthru(url)
-        responses.add(responses.GET, "{}/one".format(url), body="one")
-        responses.add(responses.GET, "http://example.com/two", body="two")
+    def test_passthrough_response(self, httpserver):
+        httpserver.expect_request("/").respond_with_data(
+            "OK", content_type="text/plain"
+        )
+        url = httpserver.url_for("/")
 
-        resp = requests.get("http://example.com/two")
-        assert_response(resp, "two")
-        resp = requests.get("{}/one".format(url))
-        assert_response(resp, "one")
-        resp = requests.get(url)
-        assert_response(resp, "OK")
+        @responses.activate
+        def run():
+            responses.add(PassthroughResponse(responses.GET, url))
+            responses.add(responses.GET, "{}/one".format(url), body="one")
+            responses.add(responses.GET, "http://example.com/two", body="two")
 
-    run()
-    assert_reset()
+            resp = requests.get("http://example.com/two")
+            assert_response(resp, "two")
+            resp = requests.get("{}/one".format(url))
+            assert_response(resp, "one")
+            resp = requests.get(url)
+            assert_response(resp, "OK")
 
+            assert len(responses.calls) == 3
+            responses.assert_call_count(url, 1)
 
-def test_passthru_regex(httpserver):
-    httpserver.expect_request(re.compile("^/\\w+")).respond_with_data(
-        "OK", content_type="text/plain"
-    )
-    url = httpserver.url_for("/")
+        run()
+        assert_reset()
 
-    @responses.activate
-    def run():
-        responses.add_passthru(re.compile(f"{url}/\\w+"))
-        responses.add(responses.GET, "{}/one".format(url), body="one")
-        responses.add(responses.GET, "http://example.com/two", body="two")
+    def test_passthrough_response_stream(self, httpserver):
+        httpserver.expect_request("/").respond_with_data(
+            "OK", content_type="text/plain"
+        )
 
-        resp = requests.get("http://example.com/two")
-        assert_response(resp, "two")
-        resp = requests.get(f"{url}/one")
-        assert_response(resp, "one")
-        resp = requests.get(f"{url}/two")
-        assert_response(resp, "OK")
-        resp = requests.get(f"{url}/three")
-        assert_response(resp, "OK")
+        @responses.activate
+        def run():
+            url = httpserver.url_for("/")
+            responses.add(PassthroughResponse(responses.GET, url))
+            content_1 = requests.get(url).content
+            with requests.get(url, stream=True) as resp:
+                content_2 = resp.raw.read()
+            assert content_1 == content_2
 
-    run()
-    assert_reset()
+        run()
+        assert_reset()
 
+    def test_passthru_prefixes(self, httpserver):
+        httpserver.expect_request("/").respond_with_data(
+            "OK", content_type="text/plain"
+        )
+        url = httpserver.url_for("/")
 
-def test_passthru_does_not_persist_across_tests(httpserver):
-    """
-    passthru should be erased on exit from context manager
-    see:
-    https://github.com/getsentry/responses/issues/322
-    """
-    httpserver.expect_request("/").respond_with_data("OK", content_type="text/plain")
+        @responses.activate
+        def run_constructor_argument():
+            with responses.RequestsMock(passthru_prefixes=(url,)):
+                resp = requests.get(url)
+                assert_response(resp, "OK")
 
-    @responses.activate
-    def with_a_passthru():
-        assert not responses.mock.passthru_prefixes
-        responses.add_passthru(re.compile(".*"))
+        @responses.activate
+        def run_property_setter():
+            with responses.RequestsMock() as m:
+                m.passthru_prefixes = tuple([url])
+                resp = requests.get(url)
+                assert_response(resp, "OK")
 
-        # wrap request that is passed through with another mock. That helps
-        # to avoid issues if real URL is unavailable, allow to run tests offline
-        with responses.RequestsMock(target="responses._real_send") as rsp:
-            rsp.add(responses.GET, "https://example66.ru", status=969)
-            response = requests.get("https://example66.ru")
+        run_constructor_argument()
+        assert_reset()
+        run_property_setter()
+        assert_reset()
 
+    def test_passthru(self, httpserver):
+        httpserver.expect_request("/").respond_with_data(
+            "OK", content_type="text/plain"
+        )
+        url = httpserver.url_for("/")
+
+        @responses.activate
+        def run():
+            responses.add_passthru(url)
+            responses.add(responses.GET, "{}/one".format(url), body="one")
+            responses.add(responses.GET, "http://example.com/two", body="two")
+
+            resp = requests.get("http://example.com/two")
+            assert_response(resp, "two")
+            resp = requests.get("{}/one".format(url))
+            assert_response(resp, "one")
+            resp = requests.get(url)
+            assert_response(resp, "OK")
+
+        run()
+        assert_reset()
+
+    def test_passthru_regex(self, httpserver):
+        httpserver.expect_request(re.compile("^/\\w+")).respond_with_data(
+            "OK", content_type="text/plain"
+        )
+        url = httpserver.url_for("/")
+
+        @responses.activate
+        def run():
+            responses.add_passthru(re.compile(f"{url}/\\w+"))
+            responses.add(responses.GET, "{}/one".format(url), body="one")
+            responses.add(responses.GET, "http://example.com/two", body="two")
+
+            resp = requests.get("http://example.com/two")
+            assert_response(resp, "two")
+            resp = requests.get(f"{url}/one")
+            assert_response(resp, "one")
+            resp = requests.get(f"{url}/two")
+            assert_response(resp, "OK")
+            resp = requests.get(f"{url}/three")
+            assert_response(resp, "OK")
+
+        run()
+        assert_reset()
+
+    def test_passthru_does_not_persist_across_tests(self, httpserver):
+        """
+        passthru should be erased on exit from context manager
+        see:
+        https://github.com/getsentry/responses/issues/322
+        """
+        httpserver.expect_request("/").respond_with_data(
+            "mocked server", status=969, content_type="text/plain"
+        )
+
+        @responses.activate
+        def with_a_passthru():
+            assert not responses.mock.passthru_prefixes
+            responses.add_passthru(re.compile(".*"))
+
+            url = httpserver.url_for("/")
+            response = requests.get(url)
             assert response.status_code == 969
+            assert response.text == "mocked server"
 
-    @responses.activate
-    def without_a_passthru():
-        assert not responses.mock.passthru_prefixes
-        with pytest.raises(requests.exceptions.ConnectionError):
-            requests.get("https://example.com")
+        @responses.activate
+        def without_a_passthru():
+            assert not responses.mock.passthru_prefixes
+            with pytest.raises(requests.exceptions.ConnectionError):
+                requests.get("https://example.com")
 
-    with_a_passthru()
-    without_a_passthru()
+        with_a_passthru()
+        without_a_passthru()
+
+    def test_passthru_unicode(self):
+        @responses.activate
+        def run():
+            with responses.RequestsMock() as m:
+                url = "http://موقع.وزارة-الاتصالات.مصر/"
+                clean_url = "http://xn--4gbrim.xn----ymcbaaajlc6dj7bxne2c.xn--wgbh1c/"
+                m.add_passthru(url)
+                assert m.passthru_prefixes[0] == clean_url
+
+        run()
+        assert_reset()
 
 
 def test_method_named_param():
@@ -1822,19 +1839,6 @@ def test_method_named_param():
         responses.add(method=responses.GET, url="http://example.com", body="OK")
         resp = requests.get("http://example.com")
         assert_response(resp, "OK")
-
-    run()
-    assert_reset()
-
-
-def test_passthru_unicode():
-    @responses.activate
-    def run():
-        with responses.RequestsMock() as m:
-            url = "http://موقع.وزارة-الاتصالات.مصر/"
-            clean_url = "http://xn--4gbrim.xn----ymcbaaajlc6dj7bxne2c.xn--wgbh1c/"
-            m.add_passthru(url)
-            assert m.passthru_prefixes[0] == clean_url
 
     run()
     assert_reset()

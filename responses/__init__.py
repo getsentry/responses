@@ -67,11 +67,23 @@ from urllib.parse import urlunsplit
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
     import os
+    from typing import Protocol
     from unittest.mock import _patch as _mock_patcher
 
     from requests import PreparedRequest
     from requests import models
     from urllib3 import Retry as _Retry
+
+    class UnboundSend(Protocol):
+        def __call__(
+            self,
+            adapter: HTTPAdapter,
+            request: PreparedRequest,
+            *args: Any,
+            **kwargs: Any,
+        ) -> models.Response:
+            ...
+
 
 # Block of type annotations
 _Body = Union[str, BaseException, "Response", BufferedReader, bytes, None]
@@ -80,6 +92,7 @@ _HeaderSet = Optional[Union[Mapping[str, str], List[Tuple[str, str]]]]
 _MatcherIterable = Iterable[Callable[..., Tuple[bool, str]]]
 _HTTPMethodOrResponse = Optional[Union[str, "BaseResponse"]]
 _URLPatternType = Union["Pattern[str]", str]
+
 
 Call = namedtuple("Call", ["request", "response"])
 _real_send = HTTPAdapter.send
@@ -1089,14 +1102,8 @@ class RequestsMock(object):
                 return response
         return response
 
-    def start(self) -> None:
-        if self._patcher:
-            # we must not override value of the _patcher if already applied
-            # this prevents issues when one decorated function is called from
-            # another decorated function
-            return
-
-        def unbound_on_send(
+    def unbound_on_send(self) -> "UnboundSend":
+        def send(
             adapter: "HTTPAdapter",
             request: "PreparedRequest",
             *args: Any,
@@ -1119,7 +1126,16 @@ class RequestsMock(object):
 
             return self._on_request(adapter, request, **kwargs)
 
-        self._patcher = std_mock.patch(target=self.target, new=unbound_on_send)
+        return send
+
+    def start(self) -> None:
+        if self._patcher:
+            # we must not override value of the _patcher if already applied
+            # this prevents issues when one decorated function is called from
+            # another decorated function
+            return
+
+        self._patcher = std_mock.patch(target=self.target, new=self.unbound_on_send())
         self._patcher.start()
 
     def stop(self, allow_assert: bool = True) -> None:

@@ -2274,6 +2274,18 @@ class TestShortcuts:
         run()
         assert_reset()
 
+    def test_delete_with_content(self):
+        @responses.activate
+        def run():
+            responses.delete(
+                "http://example.com/1", status=204, json={"message": "204 No Content"}
+            )
+            resp = requests.delete("http://example.com/1")
+            assert resp.status_code == 204
+
+        run()
+        assert_reset()
+
     def test_get(self):
         @responses.activate
         def run():

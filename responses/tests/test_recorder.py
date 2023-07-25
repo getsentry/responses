@@ -65,7 +65,7 @@ def get_data(host, port):
 
 
 class TestRecord:
-    def setup(self):
+    def setup_method(self):
         self.out_file = Path("response_record")
         if self.out_file.exists():
             self.out_file.unlink()  # pragma: no cover
@@ -141,10 +141,10 @@ class TestRecord:
 
 
 class TestReplay:
-    def setup(self):
+    def setup_method(self):
         self.out_file = Path("response_record")
 
-    def teardown(self):
+    def teardown_method(self):
         if self.out_file.exists():
             self.out_file.unlink()
 

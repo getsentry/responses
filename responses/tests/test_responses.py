@@ -2342,13 +2342,13 @@ class TestUnitTestPatchSetup:
 
     """
 
-    def setup(self):
+    def setup_method(self):
         self.r_mock = responses.RequestsMock(assert_all_requests_are_fired=True)
         self.r_mock.start()
         self.r_mock.get("https://example.com", status=505)
         self.r_mock.put("https://example.com", status=506)
 
-    def teardown(self):
+    def teardown_method(self):
         self.r_mock.stop()
         self.r_mock.reset()
 
@@ -2369,13 +2369,13 @@ class TestUnitTestPatchSetupRaises:
 
     """
 
-    def setup(self):
+    def setup_method(self):
         self.r_mock = responses.RequestsMock()
         self.r_mock.start()
         self.r_mock.get("https://example.com", status=505)
         self.r_mock.put("https://example.com", status=506)
 
-    def teardown(self):
+    def teardown_method(self):
         with pytest.raises(AssertionError) as exc:
             self.r_mock.stop()
         self.r_mock.reset()

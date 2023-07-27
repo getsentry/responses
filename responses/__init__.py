@@ -567,6 +567,17 @@ class Response(BaseResponse):
                 "stream argument is deprecated. Use stream parameter in request directly",
                 DeprecationWarning,
             )
+        # Check for responses that shouldn't include a body
+        if body:
+            if status in (204, 304) or 100 <= status < 200:
+                warn_msg = (
+                    f"Providing a body/json value with status == {status} may cause a "
+                    f"`requests.exceptions.ChunkedEncodingError: ('Connection broken: "
+                    f"IncompleteRead({len(body)} bytes read, -{len(body)} more "
+                    f"expected)', IncompleteRead({len(body)} bytes read, -{len(body)} "
+                    f"more expected))` error."
+                )
+                warn(warn_msg, category=UserWarning, stacklevel=3)
 
         self.stream: Optional[bool] = stream
         self.content_type: str = content_type  # type: ignore[assignment]

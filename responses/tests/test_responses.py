@@ -2574,3 +2574,39 @@ def test_request_object_attached_to_exception():
 
     run()
     assert_reset()
+
+
+def test_status_204_unexpected_body_warning():
+    @responses.activate
+    def run():
+        with pytest.warns(
+            UserWarning, match="Providing a body/json value with status == 204"
+        ):
+            responses.delete(
+                "http://example.com/1",
+                status=204,
+                json={"message": "204 No Content"},
+            )
+        with pytest.raises(requests.exceptions.ChunkedEncodingError):
+            resp = requests.delete("http://example.com/1")
+
+    run()
+    assert_reset()
+
+
+def test_status_101_unexpected_body_warning():
+    @responses.activate
+    def run():
+        with pytest.warns(
+            UserWarning, match="Providing a body/json value with status == 101"
+        ):
+            responses.get(
+                "http://example.com/1",
+                status=101,
+                json={"message": "101"},
+            )
+        with pytest.raises(requests.exceptions.ChunkedEncodingError):
+            resp = requests.get("http://example.com/1")
+
+    run()
+    assert_reset()

@@ -13,6 +13,7 @@ from unittest.mock import patch
 
 import pytest
 import requests
+import urllib3
 from requests.exceptions import ChunkedEncodingError
 from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
@@ -1534,10 +1535,17 @@ def test_auto_calculate_content_length_doesnt_override_existing_value():
             headers={"Content-Length": "2"},
             auto_calculate_content_length=True,
         )
-        with pytest.raises(ChunkedEncodingError) as excinfo:
-            requests.get(url)
 
-        assert "IncompleteRead(4 bytes read, -2 more expected)" in str(excinfo.value)
+        if urllib3.__version__ < "2":
+            resp = requests.get(url)
+            assert_response(resp, "test")
+            assert resp.headers["Content-Length"] == "2"
+        else:
+            with pytest.raises(ChunkedEncodingError) as excinfo:
+                requests.get(url)
+            assert "IncompleteRead(4 bytes read, -2 more expected)" in str(
+                excinfo.value
+            )
 
     run()
     assert_reset()

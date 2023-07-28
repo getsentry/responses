@@ -18,7 +18,7 @@ setup_requires = []
 
 install_requires = [
     "requests>=2.30.0,<3.0",
-    "urllib3>=2.0.0,<3.0",
+    "urllib3>=1.25.10,<3.0",
     "pyyaml",
     "types-PyYAML",
     "typing_extensions; python_version < '3.8'",

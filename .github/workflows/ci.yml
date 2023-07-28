@@ -33,6 +33,7 @@ jobs:
       matrix:
         python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
         requests-version: ['"requests>=2.0,<3.0"']
+        urllib3-version: ["urllib3<2", "urllib3>=2,<3.0"]
 
     steps:
     - uses: actions/checkout@v3
@@ -46,7 +47,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install ${{ matrix.requests-version }}
+        pip install ${{ matrix.requests-version }} ${{ matrix.urllib3-version }}
         make install-deps
 
     - name: Run Pytest

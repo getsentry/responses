@@ -816,3 +816,67 @@ def test_request_matches_headers_regex():
 
     run()
     assert_reset()
+
+
+def test_request_matches_headers_regex_strict_match():
+    @responses.activate
+    def run():
+        url = "http://example.com/"
+        responses.add(
+            method=responses.GET,
+            url=url,
+            body="success",
+            match=[
+                matchers.header_matcher(
+                    {
+                        "Accept": "text/plain",
+                        "Message-Signature": re.compile(r'signature="\S+",created=\d+'),
+                    },
+                    strict_match=True,
+                )
+            ],
+        )
+
+        # requests will add some extra headers of its own, so we have to use prepared requests
+        session = requests.Session()
+
+        # make sure we send *just* the header we're expectin
+        prepped = session.prepare_request(
+            requests.Request(
+                method="GET",
+                url=url,
+            )
+        )
+        prepped.headers.clear()
+        prepped.headers["Accept"] = "text/plain"
+        prepped.headers["Message-Signature"] = 'signature="abc",created=1243'
+
+        resp = session.send(prepped)
+        assert_response(resp, body="success", content_type="text/plain")
+
+        # include the "Accept-Charset" header, which will fail to match
+        prepped = session.prepare_request(
+            requests.Request(
+                method="GET",
+                url=url,
+            )
+        )
+        prepped.headers.clear()
+        prepped.headers["Accept"] = "text/plain"
+        prepped.headers["Accept-Charset"] = "utf-8"
+        prepped.headers["Message-Signature"] = 'signature="abc",created=1243'
+
+        with pytest.raises(ConnectionError) as excinfo:
+            session.send(prepped)
+
+        msg = str(excinfo.value)
+        assert (
+            "Headers do not match: {Accept: text/plain, Accept-Charset: utf-8, "
+            'Message-Signature: signature="abc",'
+            "created=1243} "
+            "doesn't match {Accept: text/plain, Message-Signature: "
+            "re.compile('signature=\"\\\\S+\",created=\\\\d+')}"
+        ) in msg
+
+    run()
+    assert_reset()

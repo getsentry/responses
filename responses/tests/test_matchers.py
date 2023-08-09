@@ -1,3 +1,4 @@
+import re
 from unittest.mock import Mock
 
 import pytest
@@ -782,3 +783,36 @@ def test_matchers_create_key_val_str():
         "a, {3: test, key1: val1, key2: 2}], test: val}"
     )
     assert conv_str == reference
+
+
+def test_request_matches_headers_regex():
+    @responses.activate
+    def run():
+        url = "http://example.com/"
+        responses.add(
+            method=responses.GET,
+            url=url,
+            json={"success": True},
+            match=[
+                matchers.header_matcher(
+                    {
+                        "Message-Signature": re.compile(r'signature="\S+",created=\d+'),
+                        "Authorization": "Bearer API_TOKEN",
+                    },
+                    strict_match=False,
+                )
+            ],
+        )
+
+        # the actual request can contain extra headers (requests always adds some itself anyway)
+        resp = requests.get(
+            url,
+            headers={
+                "Message-Signature": 'signature="abc",created=1243',
+                "Authorization": "Bearer API_TOKEN",
+            },
+        )
+        assert_response(resp, body='{"success": true}', content_type="application/json")
+
+    run()
+    assert_reset()

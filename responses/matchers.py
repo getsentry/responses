@@ -403,18 +403,22 @@ def header_matcher(
     :return: (func) matcher
     """
 
-    def __compare_with_regex(request_headers: Union[Dict[Any, Any], Any]) -> bool:
-        checked_request_headers = {k: 1 for k in request_headers.keys()}
+    def _compare_with_regex(request_headers: Union[Dict[Any, Any], Any]) -> bool:
+        if strict_match and len(request_headers) != len(headers):
+            return False
+
         for k, v in headers.items():
             if request_headers.get(k) is not None:
-                checked_request_headers[k] = 0
                 if isinstance(v, re.Pattern):
                     if re.match(v, request_headers[k]) is None:
                         return False
                 else:
                     if not v == request_headers[k]:
                         return False
-        return True if not strict_match else sum(checked_request_headers.values()) == 0
+            elif strict_match:
+                return False
+
+        return True
 
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         request_headers: Union[Dict[Any, Any], Any] = request.headers or {}
@@ -423,7 +427,7 @@ def header_matcher(
             # filter down to just the headers specified in the matcher
             request_headers = {k: v for k, v in request_headers.items() if k in headers}
 
-        valid = __compare_with_regex(request_headers)
+        valid = _compare_with_regex(request_headers)
 
         if not valid:
             return False, "Headers do not match: {} doesn't match {}".format(

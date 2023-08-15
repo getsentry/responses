@@ -786,7 +786,9 @@ def test_matchers_create_key_val_str():
 
 
 class TestHeaderWithRegex:
-    url = "http://example.com/"
+    @property
+    def url(self):
+        return "http://example.com/"
 
     def _register(self):
         responses.add(

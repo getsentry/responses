@@ -394,7 +394,7 @@ class BaseResponse(object):
             )
 
         self.match: "_MatcherIterable" = match
-        self.call_count: int = 0
+        self._calls: CallList = CallList()
         self.passthrough = passthrough
 
     def __eq__(self, other: Any) -> bool:
@@ -502,6 +502,14 @@ class BaseResponse(object):
             return False, reason
 
         return True, ""
+
+    @property
+    def call_count(self) -> int:
+        return len(self._calls)
+
+    @property
+    def calls(self) -> CallList:
+        return self._calls
 
 
 def _form_response(
@@ -1064,13 +1072,13 @@ class RequestsMock(object):
                     request, match.get_response(request)
                 )
             except BaseException as response:
-                match.call_count += 1
+                match.calls.add(request, response)
                 self._calls.add(request, response)
                 raise
 
         if resp_callback:
             response = resp_callback(response)  # type: ignore[misc]
-        match.call_count += 1
+        match.calls.add(request, response)
         self._calls.add(request, response)  # type: ignore[misc]
 
         retries = retries or adapter.max_retries

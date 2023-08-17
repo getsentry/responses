@@ -255,6 +255,9 @@ class CallList(Sequence[Any], Sized):
     def add(self, request: "PreparedRequest", response: _Body) -> None:
         self._calls.append(Call(request, response))
 
+    def add_call(self, call: Call) -> None:
+        self._calls.append(call)
+
     def reset(self) -> None:
         self._calls = []
 
@@ -1072,14 +1075,16 @@ class RequestsMock(object):
                     request, match.get_response(request)
                 )
             except BaseException as response:
-                match.calls.add(request, response)
+                next_index = len(self._calls)
                 self._calls.add(request, response)
+                match.calls.add_call(self._calls[next_index])
                 raise
 
         if resp_callback:
             response = resp_callback(response)  # type: ignore[misc]
-        match.calls.add(request, response)
+        next_index = len(self._calls)
         self._calls.add(request, response)  # type: ignore[misc]
+        match.calls.add_call(self._calls[next_index])
 
         retries = retries or adapter.max_retries
         # first validate that current request is eligible to be retried.

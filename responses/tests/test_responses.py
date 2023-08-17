@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import inspect
+import json
 import os
 import re
 import warnings
@@ -1983,6 +1984,88 @@ def test_call_count_without_matcher():
         requests.get("http://www.example.com?hello=world")
 
         assert rsp.call_count == 4
+
+    run()
+    assert_reset()
+
+
+def test_response_and_requests_mock_calls_are_equal():
+    @responses.activate
+    def run():
+        rsp = responses.add(responses.GET, "http://www.example.com")
+        rsp2 = responses.add(responses.GET, "http://www.example.com/1")
+
+        requests.get("http://www.example.com")
+        requests.get("http://www.example.com/1")
+
+        assert len(responses.calls) == 2
+        assert rsp.call_count == 1
+        assert rsp.calls[0] is responses.calls[0]
+        assert rsp2.call_count == 1
+        assert rsp2.calls[0] is responses.calls[1]
+
+    run()
+    assert_reset()
+
+
+def test_response_call_request():
+    @responses.activate
+    def run():
+        rsp = responses.add(responses.GET, "http://www.example.com")
+        rsp2 = responses.add(
+            responses.PUT, "http://www.foo.bar/42/", json={"id": 42, "name": "Bazz"}
+        )
+
+        requests.get("http://www.example.com")
+        requests.get("http://www.example.com?hello=world")
+        requests.put(
+            "http://www.foo.bar/42/",
+            json={"name": "Bazz"},
+        )
+
+        assert rsp.call_count == 2
+        request = rsp.calls[0].request
+        assert request.url == "http://www.example.com/"
+        assert request.method == "GET"
+        request = rsp.calls[1].request
+        assert request.url == "http://www.example.com/?hello=world"
+        assert request.method == "GET"
+        assert rsp2.call_count == 1
+        request = rsp2.calls[0].request
+        assert request.url == "http://www.foo.bar/42/"
+        assert request.method == "PUT"
+        request_payload = json.loads(request.body)
+        assert request_payload == {"name": "Bazz"}
+
+    run()
+    assert_reset()
+
+
+def test_response_call_response():
+    @responses.activate
+    def run():
+        rsp = responses.add(responses.GET, "http://www.example.com", body=b"test")
+        rsp2 = responses.add(
+            responses.POST,
+            "http://www.foo.bar/42/",
+            json={"id": 42, "name": "Bazz"},
+            status=201,
+        )
+
+        requests.get("http://www.example.com")
+        requests.post(
+            "http://www.foo.bar/42/",
+            json={"name": "Bazz"},
+        )
+
+        assert rsp.call_count == 1
+        response = rsp.calls[0].response
+        assert response.content == b"test"
+        assert response.status_code == 200
+        assert rsp2.call_count == 1
+        response = rsp2.calls[0].response
+        assert response.json() == {"id": 42, "name": "Bazz"}
+        assert response.status_code == 201
 
     run()
     assert_reset()

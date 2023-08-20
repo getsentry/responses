@@ -1,3 +1,4 @@
+import gzip
 import re
 from unittest.mock import Mock
 
@@ -153,6 +154,14 @@ def test_json_params_matcher_json_list():
 def test_json_params_matcher_json_list_empty():
     json_a = []
     json_b = "[]"
+    mock_request = Mock(body=json_b)
+    result = matchers.json_params_matcher(json_a)(mock_request)
+    assert result == (True, "")
+
+
+def test_json_params_matcher_body_is_gzipped():
+    json_a = {"foo": 42, "bar": None}
+    json_b = gzip.compress('{"foo": 42, "bar": null}'.encode("utf-8"))
     mock_request = Mock(body=json_b)
     result = matchers.json_params_matcher(json_a)(mock_request)
     assert result == (True, "")

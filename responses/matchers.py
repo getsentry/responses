@@ -1,4 +1,5 @@
 import json as json_module
+import re
 from json.decoder import JSONDecodeError
 from typing import Any
 from typing import Callable
@@ -402,6 +403,23 @@ def header_matcher(
     :return: (func) matcher
     """
 
+    def _compare_with_regex(request_headers: Union[Dict[Any, Any], Any]) -> bool:
+        if strict_match and len(request_headers) != len(headers):
+            return False
+
+        for k, v in headers.items():
+            if request_headers.get(k) is not None:
+                if isinstance(v, re.Pattern):
+                    if re.match(v, request_headers[k]) is None:
+                        return False
+                else:
+                    if not v == request_headers[k]:
+                        return False
+            elif strict_match:
+                return False
+
+        return True
+
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         request_headers: Union[Dict[Any, Any], Any] = request.headers or {}
 
@@ -409,7 +427,7 @@ def header_matcher(
             # filter down to just the headers specified in the matcher
             request_headers = {k: v for k, v in request_headers.items() if k in headers}
 
-        valid = sorted(headers.items()) == sorted(request_headers.items())
+        valid = _compare_with_regex(request_headers)
 
         if not valid:
             return False, "Headers do not match: {} doesn't match {}".format(

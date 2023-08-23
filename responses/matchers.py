@@ -126,11 +126,11 @@ def json_params_matcher(
         request_body = request.body
         json_params = (params or {}) if not isinstance(params, list) else params
         try:
-            if isinstance(request_body, bytes):
+            if isinstance(request.body, bytes):
                 try:
-                    request_body = request_body.decode("utf-8")
+                    request_body = request.body.decode("utf-8")
                 except UnicodeDecodeError:
-                    request_body = gzip.decompress(request_body).decode("utf-8")
+                    request_body = gzip.decompress(request.body).decode("utf-8")
             json_body = json_module.loads(request_body) if request_body else {}
 
             if (

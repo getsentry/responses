@@ -111,8 +111,6 @@ class FalseBool:
     def __bool__(self) -> bool:
         return False
 
-    __nonzero__ = __bool__
-
 
 def urlencoded_params_matcher(params: Optional[Dict[str, str]]) -> Callable[..., Any]:
     warn(
@@ -369,7 +367,7 @@ def _handle_body(
     return data
 
 
-class BaseResponse(object):
+class BaseResponse:
     passthrough: bool = False
     content_type: Optional[str] = None
     headers: Optional[Mapping[str, str]] = None
@@ -662,7 +660,7 @@ class PassthroughResponse(BaseResponse):
         super().__init__(*args, passthrough=True, **kwargs)
 
 
-class RequestsMock(object):
+class RequestsMock:
     DELETE: Literal["DELETE"] = "DELETE"
     GET: Literal["GET"] = "GET"
     HEAD: Literal["HEAD"] = "HEAD"
@@ -792,7 +790,7 @@ class RequestsMock(object):
     def _parse_response_file(
         self, file_path: "Union[str, bytes, os.PathLike[Any]]"
     ) -> "Dict[str, Any]":
-        with open(file_path, "r") as file:
+        with open(file_path) as file:
             data = yaml.safe_load(file)
         return data
 
@@ -1047,7 +1045,7 @@ class RequestsMock(object):
             if self.passthru_prefixes:
                 error_msg += "Passthru prefixes:\n"
                 for p in self.passthru_prefixes:
-                    error_msg += "- {}\n".format(p)
+                    error_msg += f"- {p}\n"
 
             response = ConnectionError(error_msg)
             response.request = request
@@ -1156,7 +1154,7 @@ class RequestsMock(object):
         not_called = [m for m in self.registered() if m.call_count == 0]
         if not_called:
             raise AssertionError(
-                "Not all requests have been executed {0!r}".format(
+                "Not all requests have been executed {!r}".format(
                     [(match.method, match.url) for match in not_called]
                 )
             )

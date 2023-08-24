@@ -1073,16 +1073,16 @@ class RequestsMock:
                     request, match.get_response(request)
                 )
             except BaseException as response:
-                next_index = len(self._calls)
-                self._calls.add(request, response)
-                match.calls.add_call(self._calls[next_index])
+                call = Call(request, response)
+                self._calls.add_call(call)
+                match.calls.add_call(call)
                 raise
 
         if resp_callback:
             response = resp_callback(response)  # type: ignore[misc]
-        next_index = len(self._calls)
-        self._calls.add(request, response)  # type: ignore[misc]
-        match.calls.add_call(self._calls[next_index])
+        call = Call(request, response)
+        self._calls.add_call(call)
+        match.calls.add_call(call)
 
         retries = retries or adapter.max_retries
         # first validate that current request is eligible to be retried.

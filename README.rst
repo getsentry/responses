@@ -1079,6 +1079,53 @@ Assert that the request was called exactly n times.
         responses.assert_call_count("http://www.example.com?hello=world", 1) is True
 
 
+Assert Request Calls data
+------------------
+
+``Request`` object has ``calls`` list which elements correspond to ``Call`` objects
+in the global list of ``Registry``.
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+
+    @responses.activate
+    def test_assert_calls_on_resp():
+        rsp = responses.add(responses.GET, "http://www.example.com")
+        rsp2 = responses.add(
+            responses.PUT, "http://foo.bar/42/", json={"id": 42, "name": "Bazz"}
+        )
+
+        requests.get("http://www.example.com")
+        requests.get("http://www.example.com?hello=world")
+        requests.put(
+            "http://foo.bar/42/",
+            json={"name": "Bazz"},
+        )
+
+        assert len(responses.calls) == 3  # total calls count
+        # Assert calls to the 1st resource ("http://www.example.com"):
+        assert rsp.call_count == 2
+        assert rsp.calls[0] is responses.calls[0]
+        assert rsp.calls[1] is responses.calls[1]
+        request = rsp.calls[0].request
+        assert request.url == "http://www.example.com/"
+        assert request.method == "GET"
+        request = rsp.calls[1].request
+        assert request.url == "http://www.example.com/?hello=world"
+        assert request.method == "GET"
+        # Assert calls to the 2nd resource (http://foo.bar):
+        assert rsp2.call_count == 1
+        assert rsp2.calls[0] is responses.calls[2]
+        request = rsp2.calls[0].request
+        assert request.url == "http://foo.bar/42/"
+        assert request.method == "PUT"
+        request_payload = json.loads(request.body)
+        assert request_payload == {"name": "Bazz"}
+
+
 Multiple Responses
 ------------------
 

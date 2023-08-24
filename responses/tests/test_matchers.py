@@ -1,3 +1,5 @@
+import gzip
+import re
 from unittest.mock import Mock
 
 import pytest
@@ -152,6 +154,14 @@ def test_json_params_matcher_json_list():
 def test_json_params_matcher_json_list_empty():
     json_a = []
     json_b = "[]"
+    mock_request = Mock(body=json_b)
+    result = matchers.json_params_matcher(json_a)(mock_request)
+    assert result == (True, "")
+
+
+def test_json_params_matcher_body_is_gzipped():
+    json_a = {"foo": 42, "bar": None}
+    json_b = gzip.compress('{"foo": 42, "bar": null}'.encode("utf-8"))
     mock_request = Mock(body=json_b)
     result = matchers.json_params_matcher(json_a)(mock_request)
     assert result == (True, "")
@@ -782,3 +792,168 @@ def test_matchers_create_key_val_str():
         "a, {3: test, key1: val1, key2: 2}], test: val}"
     )
     assert conv_str == reference
+
+
+class TestHeaderWithRegex:
+    @property
+    def url(self):
+        return "http://example.com/"
+
+    def _register(self):
+        responses.add(
+            method=responses.GET,
+            url=self.url,
+            body="success",
+            match=[
+                matchers.header_matcher(
+                    {
+                        "Accept": "text/plain",
+                        "Message-Signature": re.compile(r'signature="\S+",created=\d+'),
+                    },
+                    strict_match=True,
+                )
+            ],
+        )
+
+    def test_request_matches_headers_regex(self):
+        @responses.activate
+        def run():
+            # this one can not use common _register method because different headers
+            responses.add(
+                method=responses.GET,
+                url=self.url,
+                json={"success": True},
+                match=[
+                    matchers.header_matcher(
+                        {
+                            "Message-Signature": re.compile(
+                                r'signature="\S+",created=\d+'
+                            ),
+                            "Authorization": "Bearer API_TOKEN",
+                        },
+                        strict_match=False,
+                    )
+                ],
+            )
+            # the actual request can contain extra headers (requests always adds some itself anyway)
+            resp = requests.get(
+                self.url,
+                headers={
+                    "Message-Signature": 'signature="abc",created=1243',
+                    "Authorization": "Bearer API_TOKEN",
+                },
+            )
+            assert_response(
+                resp, body='{"success": true}', content_type="application/json"
+            )
+
+        run()
+        assert_reset()
+
+    def test_request_matches_headers_regex_strict_match_regex_failed(self):
+        @responses.activate
+        def run():
+            self._register()
+            session = requests.Session()
+            # requests will add some extra headers of its own, so we have to use prepared requests
+            prepped = session.prepare_request(
+                requests.Request(
+                    method="GET",
+                    url=self.url,
+                )
+            )
+            prepped.headers.clear()
+            prepped.headers["Accept"] = "text/plain"
+            prepped.headers["Message-Signature"] = 'signature="123",created=abc'
+            with pytest.raises(ConnectionError) as excinfo:
+                session.send(prepped)
+            msg = str(excinfo.value)
+            assert (
+                "Headers do not match: {Accept: text/plain, Message-Signature: "
+                'signature="123",created=abc} '
+                "doesn't match {Accept: text/plain, Message-Signature: "
+                "re.compile('signature=\"\\\\S+\",created=\\\\d+')}"
+            ) in msg
+
+        run()
+        assert_reset()
+
+    def test_request_matches_headers_regex_strict_match_mismatched_field(self):
+        @responses.activate
+        def run():
+            self._register()
+            # requests will add some extra headers of its own, so we have to use prepared requests
+            session = requests.Session()
+            prepped = session.prepare_request(
+                requests.Request(
+                    method="GET",
+                    url=self.url,
+                )
+            )
+            prepped.headers.clear()
+            prepped.headers["Accept"] = "text/plain"
+            prepped.headers["Accept-Charset"] = "utf-8"
+            # "Accept-Charset" header will fail to match to "Message-Signature"
+            with pytest.raises(ConnectionError) as excinfo:
+                session.send(prepped)
+            msg = str(excinfo.value)
+            assert (
+                "Headers do not match: {Accept: text/plain, Accept-Charset: utf-8} "
+                "doesn't match {Accept: text/plain, Message-Signature: "
+                "re.compile('signature=\"\\\\S+\",created=\\\\d+')}"
+            ) in msg
+
+        run()
+        assert_reset()
+
+    def test_request_matches_headers_regex_strict_match_mismatched_number(self):
+        @responses.activate
+        def run():
+            self._register()
+            # requests will add some extra headers of its own, so we have to use prepared requests
+            session = requests.Session()
+            # include the "Accept-Charset" header, which will fail to match
+            prepped = session.prepare_request(
+                requests.Request(
+                    method="GET",
+                    url=self.url,
+                )
+            )
+            prepped.headers.clear()
+            prepped.headers["Accept"] = "text/plain"
+            prepped.headers["Accept-Charset"] = "utf-8"
+            prepped.headers["Message-Signature"] = 'signature="abc",created=1243'
+            with pytest.raises(ConnectionError) as excinfo:
+                session.send(prepped)
+            msg = str(excinfo.value)
+            assert (
+                "Headers do not match: {Accept: text/plain, Accept-Charset: utf-8, "
+                'Message-Signature: signature="abc",'
+                "created=1243} "
+                "doesn't match {Accept: text/plain, Message-Signature: "
+                "re.compile('signature=\"\\\\S+\",created=\\\\d+')}"
+            ) in msg
+
+        run()
+        assert_reset()
+
+    def test_request_matches_headers_regex_strict_match_positive(self):
+        @responses.activate
+        def run():
+            self._register()
+            # requests will add some extra headers of its own, so we have to use prepared requests
+            session = requests.Session()
+            prepped = session.prepare_request(
+                requests.Request(
+                    method="GET",
+                    url=self.url,
+                )
+            )
+            prepped.headers.clear()
+            prepped.headers["Accept"] = "text/plain"
+            prepped.headers["Message-Signature"] = 'signature="abc",created=1243'
+            resp = session.send(prepped)
+            assert_response(resp, body="success", content_type="text/plain")
+
+        run()
+        assert_reset()

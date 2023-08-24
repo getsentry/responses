@@ -1,7 +1,14 @@
+0.24.0
+------
+
+* Added support for re.Pattern based header matching.
+* Added support for gzipped response bodies to `json_params_matcher`.
+* Moved types-pyyaml dependency to `tests_requires`
+
 0.23.3
 ------
 
- * Allow urllib3>=1.25.10
+* Allow urllib3>=1.25.10
 
 
 0.23.2

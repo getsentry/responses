@@ -87,7 +87,7 @@ class TestRecord:
 
         run()
 
-        with open(self.out_file, "r") as file:
+        with open(self.out_file) as file:
             data = yaml.safe_load(file)
 
         assert data == get_data(httpserver.host, httpserver.port)

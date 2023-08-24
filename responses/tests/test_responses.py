@@ -1,5 +1,3 @@
-# coding: utf-8
-
 import inspect
 import json
 import os
@@ -913,7 +911,7 @@ def fruit_basket(my_fruit):
 
 
 @pytest.mark.usefixtures("my_fruit", "fruit_basket")
-class TestFixtures(object):
+class TestFixtures:
     """
     Test that pytest fixtures work well with 'activate' decorator
     """
@@ -961,7 +959,7 @@ def test_activate_doesnt_change_signature_with_return_type():
 
 
 def test_activate_doesnt_change_signature_for_method():
-    class TestCase(object):
+    class TestCase:
         def test_function(self, a, b=None):
             return self, a, b
 
@@ -1101,10 +1099,10 @@ def test_response_filebody():
     def run():
         current_file = os.path.abspath(__file__)
         with responses.RequestsMock() as m:
-            with open(current_file, "r", encoding="utf-8") as out:
+            with open(current_file, encoding="utf-8") as out:
                 m.add(responses.GET, "http://example.com", body=out.read(), stream=True)
                 resp = requests.get("http://example.com", stream=True)
-            with open(current_file, "r", encoding="utf-8") as out:
+            with open(current_file, encoding="utf-8") as out:
                 assert resp.text == out.read()
 
     run()
@@ -1196,7 +1194,7 @@ def test_assert_all_requests_fired_multiple():
 def test_allow_redirects_samehost():
     redirecting_url = "http://example.com"
     final_url_path = "/1"
-    final_url = "{0}{1}".format(redirecting_url, final_url_path)
+    final_url = f"{redirecting_url}{final_url_path}"
     url_re = re.compile(r"^http://example.com(/)?(\d+)?$")
 
     def request_callback(request):
@@ -1210,7 +1208,7 @@ def test_allow_redirects_samehost():
                 n = 1
             else:
                 n = 0
-            redirect_headers = {"location": "/{0!s}".format(n)}
+            redirect_headers = {"location": f"/{n!s}"}
             return 301, redirect_headers, None
 
     def run():
@@ -1697,12 +1695,12 @@ class TestPassthru:
         @responses.activate
         def run():
             responses.add(PassthroughResponse(responses.GET, url))
-            responses.add(responses.GET, "{}/one".format(url), body="one")
+            responses.add(responses.GET, f"{url}/one", body="one")
             responses.add(responses.GET, "http://example.com/two", body="two")
 
             resp = requests.get("http://example.com/two")
             assert_response(resp, "two")
-            resp = requests.get("{}/one".format(url))
+            resp = requests.get(f"{url}/one")
             assert_response(resp, "one")
             resp = requests.get(url)
             assert_response(resp, "OK")
@@ -1763,12 +1761,12 @@ class TestPassthru:
         @responses.activate
         def run():
             responses.add_passthru(url)
-            responses.add(responses.GET, "{}/one".format(url), body="one")
+            responses.add(responses.GET, f"{url}/one", body="one")
             responses.add(responses.GET, "http://example.com/two", body="two")
 
             resp = requests.get("http://example.com/two")
             assert_response(resp, "two")
-            resp = requests.get("{}/one".format(url))
+            resp = requests.get(f"{url}/one")
             assert_response(resp, "one")
             resp = requests.get(url)
             assert_response(resp, "OK")
@@ -1785,7 +1783,7 @@ class TestPassthru:
         @responses.activate
         def run():
             responses.add_passthru(re.compile(f"{url}/\\w+"))
-            responses.add(responses.GET, "{}/one".format(url), body="one")
+            responses.add(responses.GET, f"{url}/one", body="one")
             responses.add(responses.GET, "http://example.com/two", body="two")
 
             resp = requests.get("http://example.com/two")
@@ -1877,7 +1875,7 @@ def test_request_param(url):
         params = {"hello": "world", "example": "params"}
         responses.add(
             method=responses.GET,
-            url="{0}?hello=world".format(url),
+            url=f"{url}?hello=world",
             body="test",
             match_querystring=False,
         )
@@ -1924,7 +1922,7 @@ def test_assert_call_count(url):
 
         with pytest.raises(AssertionError) as excinfo:
             responses.assert_call_count(url, 2)
-        assert "Expected URL '{0}' to be called 2 times. Called 0 times.".format(
+        assert "Expected URL '{}' to be called 2 times. Called 0 times.".format(
             url
         ) in str(excinfo.value)
 
@@ -1937,7 +1935,7 @@ def test_assert_call_count(url):
         requests.get(url)
         with pytest.raises(AssertionError) as excinfo:
             responses.assert_call_count(url, 3)
-        assert "Expected URL '{0}' to be called 3 times. Called 2 times.".format(
+        assert "Expected URL '{}' to be called 3 times. Called 2 times.".format(
             url
         ) in str(excinfo.value)
 

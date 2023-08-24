@@ -25,7 +25,12 @@ repos:
     hooks:
       - id: flake8
         args: [ '--max-line-length', '100', '--max-doc-length', '120' ]
-  - repo: https://github.com/asottile/blacken-docs
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.10.1
+    hooks:
+    -   id: pyupgrade
+        args: [--py37-plus]
+  - repo: https://github.com/adamchainz/blacken-docs
     rev: 1.14.0
     hooks:
       - id: blacken-docs

@@ -20,7 +20,6 @@ install_requires = [
     "requests>=2.30.0,<3.0",
     "urllib3>=1.25.10,<3.0",
     "pyyaml",
-    "types-PyYAML",
     "typing_extensions; python_version < '3.8'",
 ]
 
@@ -31,6 +30,7 @@ tests_require = [
     "pytest-asyncio",
     "pytest-httpserver",
     "flake8",
+    "types-PyYAML",
     "types-requests",
     "mypy",
     # for check of different parsers in recorder

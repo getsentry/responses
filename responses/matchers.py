@@ -48,7 +48,7 @@ def _create_key_val_str(input_dict: Union[Dict[Any, Any], Any]) -> str:
         elif isinstance(val, list):
             val = list_to_str(input_list=val)
 
-        items_list.append("{}: {}".format(key, val))
+        items_list.append(f"{key}: {val}")
 
     key_val_str = "{{{}}}".format(", ".join(items_list))
     return key_val_str

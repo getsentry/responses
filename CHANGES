@@ -3,6 +3,7 @@
 
 * Added support for re.Pattern based header matching.
 * Added support for gzipped response bodies to `json_params_matcher`.
+* Moved types-pyyaml dependency to `tests_requires`
 
 0.23.3
 ------

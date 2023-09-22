@@ -479,10 +479,17 @@ class BaseResponse:
 
     def get_headers(self) -> HTTPHeaderDict:
         headers = HTTPHeaderDict()  # Duplicate headers are legal
-        if self.content_type is not None:
+
+        # Add Content-Type if it exists and is not already in headers
+        if self.content_type and (
+            not self.headers or "Content-Type" not in self.headers
+        ):
             headers["Content-Type"] = self.content_type
+
+        # Extend headers if they exist
         if self.headers:
             headers.extend(self.headers)
+
         return headers
 
     def get_response(self, request: "PreparedRequest") -> HTTPResponse:

@@ -1846,21 +1846,21 @@ class TestPassthru:
                 assert_all_requests_are_fired=True
             )
             mock_to_catch_real_send.post(
-                re.compile(r"http://localhost:7700.*"), status=500
+                "http://send-this-request-through.com", status=500
             )
 
             with responses.RequestsMock(
                 assert_all_requests_are_fired=True,
                 real_adapter_send=mock_to_catch_real_send.unbound_on_send(),
             ) as r_mock:
-                r_mock.add_passthru(re.compile(r"http://localhost:7700.*"))
+                r_mock.add_passthru("http://send-this-request-through.com")
 
                 r_mock.add(responses.POST, "https://example.org", status=200)
 
                 response = requests.post("https://example.org")
                 assert response.status_code == 200
 
-                response = requests.post("http://localhost:7700/indexes/test/documents")
+                response = requests.post("http://send-this-request-through.com")
                 assert response.status_code == 500
 
         run()

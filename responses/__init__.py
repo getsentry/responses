@@ -84,14 +84,25 @@ if TYPE_CHECKING:  # pragma: no cover
         ) -> models.Response:
             ...
 
-
-# Block of type annotations
-_Body = Union[str, BaseException, "Response", BufferedReader, bytes, None]
-_F = Callable[..., Any]
-_HeaderSet = Optional[Union[Mapping[str, str], List[Tuple[str, str]]]]
-_MatcherIterable = Iterable[Callable[..., Tuple[bool, str]]]
-_HTTPMethodOrResponse = Optional[Union[str, "BaseResponse"]]
-_URLPatternType = Union["Pattern[str]", str]
+    # Block of type annotations
+    _Body = Union[str, BaseException, "Response", BufferedReader, bytes, None]
+    _F = Callable[..., Any]
+    _HeaderSet = Optional[Union[Mapping[str, str], List[Tuple[str, str]]]]
+    _MatcherIterable = Iterable[Callable[..., Tuple[bool, str]]]
+    _HTTPMethodOrResponse = Optional[Union[str, "BaseResponse"]]
+    _URLPatternType = Union["Pattern[str]", str]
+    _HTTPAdapterSend = Callable[
+        [
+            HTTPAdapter,
+            PreparedRequest,
+            bool,
+            float | tuple[float, float] | tuple[float, None] | None,
+            bool | str,
+            bytes | str | tuple[bytes | str, bytes | str] | None,
+            Mapping[str, str] | None,
+        ],
+        models.Response,
+    ]
 
 
 Call = namedtuple("Call", ["request", "response"])
@@ -250,7 +261,7 @@ class CallList(Sequence[Any], Sized):
     def __getitem__(self, idx: Union[int, slice]) -> Union[Call, List[Call]]:
         return self._calls[idx]
 
-    def add(self, request: "PreparedRequest", response: _Body) -> None:
+    def add(self, request: "PreparedRequest", response: "_Body") -> None:
         self._calls.append(Call(request, response))
 
     def reset(self) -> None:
@@ -258,8 +269,8 @@ class CallList(Sequence[Any], Sized):
 
 
 def _ensure_url_default_path(
-    url: _URLPatternType,
-) -> _URLPatternType:
+    url: "_URLPatternType",
+) -> "_URLPatternType":
     """Add empty URL path '/' if doesn't exist.
 
     Examples
@@ -376,7 +387,7 @@ class BaseResponse:
     def __init__(
         self,
         method: str,
-        url: _URLPatternType,
+        url: "_URLPatternType",
         match_querystring: Union[bool, object] = None,
         match: "_MatcherIterable" = (),
         *,
@@ -384,7 +395,7 @@ class BaseResponse:
     ) -> None:
         self.method: str = method
         # ensure the url has a default path set if the url is a string
-        self.url: _URLPatternType = _ensure_url_default_path(url)
+        self.url: "_URLPatternType" = _ensure_url_default_path(url)
 
         if self._should_match_querystring(match_querystring):
             match = tuple(match) + (
@@ -434,7 +445,7 @@ class BaseResponse:
 
         return bool(urlsplit(self.url).query)
 
-    def _url_matches(self, url: _URLPatternType, other: str) -> bool:
+    def _url_matches(self, url: "_URLPatternType", other: str) -> bool:
         """Compares two URLs.
 
         Compares only scheme, netloc and path. If 'url' is a re.Pattern, then checks that
@@ -532,8 +543,8 @@ class Response(BaseResponse):
     def __init__(
         self,
         method: str,
-        url: _URLPatternType,
-        body: _Body = "",
+        url: "_URLPatternType",
+        body: "_Body" = "",
         json: Optional[Any] = None,
         status: int = 200,
         headers: Optional[Mapping[str, str]] = None,
@@ -556,7 +567,7 @@ class Response(BaseResponse):
             else:
                 content_type = "text/plain"
 
-        self.body: _Body = body
+        self.body: "_Body" = body
         self.status: int = status
         self.headers: Optional[Mapping[str, str]] = headers
 
@@ -608,7 +619,7 @@ class CallbackResponse(BaseResponse):
     def __init__(
         self,
         method: str,
-        url: _URLPatternType,
+        url: "_URLPatternType",
         callback: Callable[[Any], Any],
         stream: Optional[bool] = None,
         content_type: Optional[str] = "text/plain",
@@ -678,6 +689,8 @@ class RequestsMock:
         passthru_prefixes: Tuple[str, ...] = (),
         target: str = "requests.adapters.HTTPAdapter.send",
         registry: Type[FirstMatchRegistry] = FirstMatchRegistry,
+        *,
+        real_adapter_send: "_HTTPAdapterSend" = _real_send,
     ) -> None:
         self._calls: CallList = CallList()
         self.reset()
@@ -688,6 +701,7 @@ class RequestsMock:
         self.target: str = target
         self._patcher: Optional["_mock_patcher[Any]"] = None
         self._thread_lock = _ThreadingLock()
+        self._real_send = real_adapter_send
 
     def get_registry(self) -> FirstMatchRegistry:
         """Returns current registry instance with responses.
@@ -726,10 +740,10 @@ class RequestsMock:
 
     def add(
         self,
-        method: _HTTPMethodOrResponse = None,
+        method: "_HTTPMethodOrResponse" = None,
         url: "Optional[_URLPatternType]" = None,
-        body: _Body = "",
-        adding_headers: _HeaderSet = None,
+        body: "_Body" = "",
+        adding_headers: "_HeaderSet" = None,
         *args: Any,
         **kwargs: Any,
     ) -> BaseResponse:
@@ -808,7 +822,7 @@ class RequestsMock:
                 auto_calculate_content_length=rsp["auto_calculate_content_length"],
             )
 
-    def add_passthru(self, prefix: _URLPatternType) -> None:
+    def add_passthru(self, prefix: "_URLPatternType") -> None:
         """
         Register a URL prefix or regex to passthru any non-matching mock requests to.
 
@@ -829,7 +843,7 @@ class RequestsMock:
 
     def remove(
         self,
-        method_or_response: _HTTPMethodOrResponse = None,
+        method_or_response: "_HTTPMethodOrResponse" = None,
         url: "Optional[_URLPatternType]" = None,
     ) -> List[BaseResponse]:
         """
@@ -852,9 +866,9 @@ class RequestsMock:
 
     def replace(
         self,
-        method_or_response: _HTTPMethodOrResponse = None,
+        method_or_response: "_HTTPMethodOrResponse" = None,
         url: "Optional[_URLPatternType]" = None,
-        body: _Body = "",
+        body: "_Body" = "",
         *args: Any,
         **kwargs: Any,
     ) -> BaseResponse:
@@ -878,9 +892,9 @@ class RequestsMock:
 
     def upsert(
         self,
-        method_or_response: _HTTPMethodOrResponse = None,
+        method_or_response: "_HTTPMethodOrResponse" = None,
         url: "Optional[_URLPatternType]" = None,
-        body: _Body = "",
+        body: "_Body" = "",
         *args: Any,
         **kwargs: Any,
     ) -> BaseResponse:
@@ -901,9 +915,10 @@ class RequestsMock:
     def add_callback(
         self,
         method: str,
-        url: _URLPatternType,
+        url: "_URLPatternType",
         callback: Callable[
-            ["PreparedRequest"], Union[Exception, Tuple[int, Mapping[str, str], _Body]]
+            ["PreparedRequest"],
+            Union[Exception, Tuple[int, Mapping[str, str], "_Body"]],
         ],
         match_querystring: Union[bool, FalseBool] = FalseBool(),
         content_type: Optional[str] = "text/plain",
@@ -940,7 +955,7 @@ class RequestsMock:
         return success
 
     @overload
-    def activate(self, func: _F = ...) -> _F:
+    def activate(self, func: "_F" = ...) -> "_F":
         """Overload for scenario when 'responses.activate' is used."""
 
     @overload
@@ -958,15 +973,15 @@ class RequestsMock:
 
     def activate(
         self,
-        func: Optional[_F] = None,
+        func: Optional["_F"] = None,
         *,
         registry: Optional[Type[Any]] = None,
         assert_all_requests_are_fired: bool = False,
-    ) -> Union[Callable[["_F"], "_F"], _F]:
+    ) -> Union[Callable[["_F"], "_F"], "_F"]:
         if func is not None:
             return get_wrapped(func, self)
 
-        def deco_activate(function: _F) -> Callable[..., Any]:
+        def deco_activate(function: "_F") -> Callable[..., Any]:
             return get_wrapped(
                 function,
                 self,
@@ -1008,7 +1023,7 @@ class RequestsMock:
         *,
         retries: Optional["_Retry"] = None,
         **kwargs: Any,
-    ) -> "models.Response":
+    ) -> "Union[models.Response, models.Response]":
         # add attributes params and req_kwargs to 'request' object for further match comparison
         # original request object does not have these attributes
         request.params = self._parse_request_params(request.path_url)  # type: ignore[attr-defined]
@@ -1028,7 +1043,7 @@ class RequestsMock:
                 ]
             ):
                 logger.info("request.allowed-passthru", extra={"url": request_url})
-                return _real_send(adapter, request, **kwargs)
+                return self._real_send(adapter, request, **kwargs)  # type: ignore
 
             error_msg = (
                 "Connection refused by Responses - the call doesn't "
@@ -1048,14 +1063,14 @@ class RequestsMock:
                     error_msg += f"- {p}\n"
 
             response = ConnectionError(error_msg)
-            response.request = request
+            response.request = request  # type: ignore[assignment]
 
             self._calls.add(request, response)
             raise response
 
         if match.passthrough:
             logger.info("request.passthrough-response", extra={"url": request_url})
-            response = _real_send(adapter, request, **kwargs)  # type: ignore[assignment]
+            response = self._real_send(adapter, request, **kwargs)  # type: ignore
         else:
             try:
                 response = adapter.build_response(  # type: ignore[no-untyped-call]

@@ -1048,7 +1048,7 @@ class RequestsMock:
                     error_msg += f"- {p}\n"
 
             response = ConnectionError(error_msg)
-            response.request = request
+            response.request = request  # type: ignore[assignment]
 
             self._calls.add(request, response)
             raise response

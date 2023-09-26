@@ -1083,47 +1083,69 @@ Assert Request Calls data
 ------------------
 
 ``Request`` object has ``calls`` list which elements correspond to ``Call`` objects
-in the global list of ``Registry``.
+in the global list of ``Registry``. This can be useful when the order of requests is not
+guaranteed, but you need to check their correctness, for example in multithreaded
+applications.
 
 .. code-block:: python
 
+    import concurrent.futures
     import responses
     import requests
 
 
     @responses.activate
     def test_assert_calls_on_resp():
-        rsp = responses.add(responses.GET, "http://www.example.com")
-        rsp2 = responses.put(
-            "http://foo.bar/42/", json={"id": 42, "name": "Bazz"}
+        uid_with_permissions = [
+            ("0123", {"client": True, "admin": False, "disabled": False}),
+            ("1234", {"client": False, "admin": True, "disabled": False}),
+            ("2345", {"client": False, "admin": False, "disabled": True}),
+        ]
+        rsp0123 = responses.patch(
+            "http://www.foo.bar/0123/",
+            json={"OK": True, "uid": "0123"},
+            status=200,
+        )
+        rsp1234 = responses.patch(
+            "http://www.foo.bar/1234/",
+            json={"OK": False, "uid": "1234"},
+            status=400,
+        )
+        rsp2345 = responses.patch(
+            "http://www.foo.bar/2345/",
+            json={"OK": True, "uid": "2345"},
+            status=200,
         )
 
-        requests.get("http://www.example.com")
-        requests.get("http://www.example.com?hello=world")
-        requests.put(
-            "http://foo.bar/42/",
-            json={"name": "Bazz"},
-        )
+        def update_permissions(uid, permissions):
+            url = f"http://www.foo.bar/{uid}/"
+            response = requests.patch(url, json=permissions)
+            return response
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            future_to_uid = {
+                executor.submit(update_permissions, uid, permissions): uid
+                for (uid, permissions) in uid_with_permissions
+            }
+            for future in concurrent.futures.as_completed(future_to_uid):
+                uid = future_to_uid[future]
+                response = future.result()
+                print("%s updated with %d status code" % (uid, response.status_code))
 
         assert len(responses.calls) == 3  # total calls count
-        # Assert calls to the 1st resource ("http://www.example.com"):
-        assert rsp.call_count == 2
-        assert rsp.calls[0] is responses.calls[0]
-        assert rsp.calls[1] is responses.calls[1]
-        request = rsp.calls[0].request
-        assert request.url == "http://www.example.com/"
-        assert request.method == "GET"
-        request = rsp.calls[1].request
-        assert request.url == "http://www.example.com/?hello=world"
-        assert request.method == "GET"
-        # Assert calls to the 2nd resource (http://foo.bar):
-        assert rsp2.call_count == 1
-        assert rsp2.calls[0] is responses.calls[2]
-        request = rsp2.calls[0].request
-        assert request.url == "http://foo.bar/42/"
-        assert request.method == "PUT"
-        request_payload = json.loads(request.body)
-        assert request_payload == {"name": "Bazz"}
+
+        assert rsp0123.call_count == 1
+        assert rsp0123.calls[0] in responses.calls
+        assert json.loads(rsp0123.calls[0].request.body) == {"client": True, "admin": False, "disabled": False}
+
+        assert rsp1234.call_count == 1
+        assert rsp1234.calls[0] in responses.calls
+        assert json.loads(rsp1234.calls[0].request.body) == {"client": False, "admin": True, "disabled": False}
+        assert rsp1234.calls[0].response.json() == {"OK": False, "uid": "1234"}
+
+        assert rsp2345.call_count == 1
+        assert rsp2345.calls[0] in responses.calls
+        assert json.loads(rsp2345.calls[0].request.body) == {"client": False, "admin": False, "disabled": True}
 
 
 Multiple Responses

@@ -161,7 +161,7 @@ def test_json_params_matcher_json_list_empty():
 
 def test_json_params_matcher_body_is_gzipped():
     json_a = {"foo": 42, "bar": None}
-    json_b = gzip.compress('{"foo": 42, "bar": null}'.encode("utf-8"))
+    json_b = gzip.compress(b'{"foo": 42, "bar": null}')
     mock_request = Mock(body=json_b)
     result = matchers.json_params_matcher(json_a)(mock_request)
     assert result == (True, "")

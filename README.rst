@@ -1094,8 +1094,8 @@ in the global list of ``Registry``.
     @responses.activate
     def test_assert_calls_on_resp():
         rsp = responses.add(responses.GET, "http://www.example.com")
-        rsp2 = responses.add(
-            responses.PUT, "http://foo.bar/42/", json={"id": 42, "name": "Bazz"}
+        rsp2 = responses.put(
+            "http://foo.bar/42/", json={"id": 42, "name": "Bazz"}
         )
 
         requests.get("http://www.example.com")

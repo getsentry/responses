@@ -1,6 +1,7 @@
 0.24.0
 ------
 
+* Added `BaseResponse.calls` to access calls data of a separate mocked request. See #664
 * Added support for re.Pattern based header matching.
 * Added support for gzipped response bodies to `json_params_matcher`.
 * Moved types-pyyaml dependency to `tests_requires`

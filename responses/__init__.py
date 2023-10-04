@@ -1023,7 +1023,7 @@ class RequestsMock:
         *,
         retries: Optional["_Retry"] = None,
         **kwargs: Any,
-    ) -> "Union[models.Response, models.Response]":
+    ) -> "models.Response":
         # add attributes params and req_kwargs to 'request' object for further match comparison
         # original request object does not have these attributes
         request.params = self._parse_request_params(request.path_url)  # type: ignore[attr-defined]

@@ -49,7 +49,8 @@ except ImportError:  # pragma: no cover
 try:
     from requests.packages.urllib3.connection import HTTPHeaderDict
 except ImportError:  # pragma: no cover
-    from urllib3.response import HTTPHeaderDict  # type: ignore[attr-defined]
+    from urllib3.response import HTTPHeaderDict
+
 try:
     from requests.packages.urllib3.util.url import parse_url
 except ImportError:  # pragma: no cover

@@ -1330,6 +1330,29 @@ def test_headers():
     assert_reset()
 
 
+def test_headers_deduplicated_content_type():
+    """Test to ensure that we do not have two values for `content-type`.
+
+    For more details see https://github.com/getsentry/responses/issues/644
+    """
+
+    @responses.activate
+    def run():
+        responses.get(
+            "https://example.org/",
+            json={},
+            headers={"Content-Type": "application/json"},
+        )
+        responses.start()
+
+        resp = requests.get("https://example.org/")
+
+        assert resp.headers["Content-Type"] == "application/json"
+
+    run()
+    assert_reset()
+
+
 def test_content_length_error(monkeypatch):
     """
     Currently 'requests' does not enforce content length validation,

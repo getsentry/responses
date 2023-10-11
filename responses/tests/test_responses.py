@@ -1331,6 +1331,29 @@ def test_headers():
     assert_reset()
 
 
+def test_headers_deduplicated_content_type():
+    """Test to ensure that we do not have two values for `content-type`.
+
+    For more details see https://github.com/getsentry/responses/issues/644
+    """
+
+    @responses.activate
+    def run():
+        responses.get(
+            "https://example.org/",
+            json={},
+            headers={"Content-Type": "application/json"},
+        )
+        responses.start()
+
+        resp = requests.get("https://example.org/")
+
+        assert resp.headers["Content-Type"] == "application/json"
+
+    run()
+    assert_reset()
+
+
 def test_content_length_error(monkeypatch):
     """
     Currently 'requests' does not enforce content length validation,
@@ -1835,6 +1858,34 @@ class TestPassthru:
                 clean_url = "http://xn--4gbrim.xn----ymcbaaajlc6dj7bxne2c.xn--wgbh1c/"
                 m.add_passthru(url)
                 assert m.passthru_prefixes[0] == clean_url
+
+        run()
+        assert_reset()
+
+    def test_real_send_argument(self):
+        def run():
+            # the following mock will serve to catch the real send request from another mock and
+            # will "donate" `unbound_on_send` method
+            mock_to_catch_real_send = responses.RequestsMock(
+                assert_all_requests_are_fired=True
+            )
+            mock_to_catch_real_send.post(
+                "http://send-this-request-through.com", status=500
+            )
+
+            with responses.RequestsMock(
+                assert_all_requests_are_fired=True,
+                real_adapter_send=mock_to_catch_real_send.unbound_on_send(),
+            ) as r_mock:
+                r_mock.add_passthru("http://send-this-request-through.com")
+
+                r_mock.add(responses.POST, "https://example.org", status=200)
+
+                response = requests.post("https://example.org")
+                assert response.status_code == 200
+
+                response = requests.post("http://send-this-request-through.com")
+                assert response.status_code == 500
 
         run()
         assert_reset()

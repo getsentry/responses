@@ -2,8 +2,11 @@
 ------
 
 * Added `BaseResponse.calls` to access calls data of a separate mocked request. See #664
+* Added `real_adapter_send` parameter to `RequestsMock` that will allow users to set
+  through which function they would like to send real requests
 * Added support for re.Pattern based header matching.
 * Added support for gzipped response bodies to `json_params_matcher`.
+* Fix `Content-Type` headers issue when the header was duplicated. See #644
 * Moved types-pyyaml dependency to `tests_requires`
 
 0.23.3

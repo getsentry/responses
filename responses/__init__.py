@@ -41,21 +41,6 @@ try:
 except ImportError:  # pragma: no cover
     from typing import Literal  # type: ignore  # pragma: no cover
 
-try:
-    from requests.packages.urllib3.response import HTTPResponse
-except ImportError:  # pragma: no cover
-    from urllib3.response import HTTPResponse  # pragma: no cover
-
-try:
-    from requests.packages.urllib3.connection import HTTPHeaderDict
-except ImportError:  # pragma: no cover
-    from urllib3.response import HTTPHeaderDict
-
-try:
-    from requests.packages.urllib3.util.url import parse_url
-except ImportError:  # pragma: no cover
-    from urllib3.util.url import parse_url  # pragma: no cover
-
 from io import BufferedReader
 from io import BytesIO
 from unittest import mock as std_mock
@@ -64,6 +49,10 @@ from urllib.parse import quote
 from urllib.parse import urlsplit
 from urllib.parse import urlunparse
 from urllib.parse import urlunsplit
+
+from urllib3.response import HTTPHeaderDict
+from urllib3.response import HTTPResponse
+from urllib3.util.url import parse_url  # pragma: no cover
 
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
@@ -1096,7 +1085,7 @@ class RequestsMock:
 
         retries = retries or adapter.max_retries
         # first validate that current request is eligible to be retried.
-        # See ``requests.packages.urllib3.util.retry.Retry`` documentation.
+        # See ``urllib3.util.retry.Retry`` documentation.
         if retries.is_retry(
             method=response.request.method, status_code=response.status_code  # type: ignore[misc]
         ):

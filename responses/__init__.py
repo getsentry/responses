@@ -1103,7 +1103,7 @@ class RequestsMock:
 
         if resp_callback:
             response = resp_callback(response)  # type: ignore[misc]
-        call = Call(request, response)
+        call = Call(request, response)  # type: ignore[misc]
         self._calls.add_call(call)
         match.calls.add_call(call)
 

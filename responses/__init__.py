@@ -51,7 +51,7 @@ from urllib.parse import urlunsplit
 
 from urllib3.response import HTTPHeaderDict
 from urllib3.response import HTTPResponse
-from urllib3.util.url import parse_url  # pragma: no cover
+from urllib3.util.url import parse_url
 
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run

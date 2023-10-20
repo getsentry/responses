@@ -1,3 +1,4 @@
+import base64
 from functools import wraps
 from typing import TYPE_CHECKING
 
@@ -22,6 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 import yaml
 
+from responses import _UNSET
 from responses import RequestsMock
 from responses import Response
 from responses import _real_send
@@ -45,12 +47,19 @@ def _dump(
     for rsp in registered:
         try:
             content_length = rsp.auto_calculate_content_length  # type: ignore[attr-defined]
+            body = rsp.body  # type: ignore[attr-defined]
+            if isinstance(body, bytes):
+                body = base64.urlsafe_b64encode(body).decode()
+                body_encoded = True
+            else:
+                body_encoded = False
             data["responses"].append(
                 {
                     "response": {
                         "method": rsp.method,
                         "url": rsp.url,
-                        "body": rsp.body,  # type: ignore[attr-defined]
+                        "body": body,  # type: ignore[attr-defined]
+                        "body_encoded": body_encoded,
                         "status": rsp.status,  # type: ignore[attr-defined]
                         "headers": rsp.headers,
                         "content_type": rsp.content_type,
@@ -116,11 +125,18 @@ class Recorder(RequestsMock):
         request.params = self._parse_request_params(request.path_url)  # type: ignore[attr-defined]
         request.req_kwargs = kwargs  # type: ignore[attr-defined]
         requests_response = _real_send(adapter, request, **kwargs)
+        requests_headers = dict(requests_response.headers)
+        if "Content-Type" in requests_headers:
+            requests_content_type = requests_headers.pop("Content-Type")
+        else:
+            requests_content_type = _UNSET
         responses_response = Response(
             method=str(request.method),
             url=str(requests_response.request.url),
             status=requests_response.status_code,
-            body=requests_response.text,
+            headers=requests_headers,
+            body=requests_response.content,
+            content_type=requests_content_type,
         )
         self._registry.add(responses_response)
         return requests_response

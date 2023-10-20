@@ -1,3 +1,4 @@
+import base64
 import inspect
 import json as json_module
 import logging
@@ -821,11 +822,18 @@ class RequestsMock:
 
         for rsp in data["responses"]:
             rsp = rsp["response"]
+            headers = dict(rsp.get("headers") or {})
+            if "Content-Type" in headers:
+                headers.pop("Content-Type")
+            body = rsp["body"]
+            if rsp.get("body_encoded"):
+                body = base64.urlsafe_b64decode(body)
             self.add(
                 method=rsp["method"],
                 url=rsp["url"],
-                body=rsp["body"],
+                body=body,
                 status=rsp["status"],
+                headers=headers,
                 content_type=rsp["content_type"],
                 auto_calculate_content_length=rsp["auto_calculate_content_length"],
             )

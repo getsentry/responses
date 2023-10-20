@@ -130,12 +130,15 @@ class Recorder(RequestsMock):
             requests_content_type = requests_headers.pop("Content-Type")
         else:
             requests_content_type = _UNSET
+        # do not use requests_response.content as body here
+        # because Content-Encoding: gzip (or some other format) may be in the headers
+        # the raw binary data must be used to make sure it can be decompressed properly
         responses_response = Response(
             method=str(request.method),
             url=str(requests_response.request.url),
             status=requests_response.status_code,
             headers=requests_headers,
-            body=requests_response.content,
+            body=requests_response.raw.read(),
             content_type=requests_content_type,
         )
         self._registry.add(responses_response)

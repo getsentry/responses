@@ -1136,16 +1136,28 @@ applications.
 
         assert rsp0123.call_count == 1
         assert rsp0123.calls[0] in responses.calls
-        assert json.loads(rsp0123.calls[0].request.body) == {"client": True, "admin": False, "disabled": False}
+        assert json.loads(rsp0123.calls[0].request.body) == {
+            "client": True,
+            "admin": False,
+            "disabled": False,
+        }
 
         assert rsp1234.call_count == 1
         assert rsp1234.calls[0] in responses.calls
-        assert json.loads(rsp1234.calls[0].request.body) == {"client": False, "admin": True, "disabled": False}
+        assert json.loads(rsp1234.calls[0].request.body) == {
+            "client": False,
+            "admin": True,
+            "disabled": False,
+        }
         assert rsp1234.calls[0].response.json() == {"OK": False, "uid": "1234"}
 
         assert rsp2345.call_count == 1
         assert rsp2345.calls[0] in responses.calls
-        assert json.loads(rsp2345.calls[0].request.body) == {"client": False, "admin": False, "disabled": True}
+        assert json.loads(rsp2345.calls[0].request.body) == {
+            "client": False,
+            "admin": False,
+            "disabled": True,
+        }
 
 
 Multiple Responses

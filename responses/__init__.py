@@ -22,7 +22,6 @@ from typing import Sized
 from typing import Tuple
 from typing import Type
 from typing import Union
-from typing import overload
 from warnings import warn
 
 import yaml
@@ -239,14 +238,6 @@ class CallList(Sequence[Any], Sized):
 
     def __len__(self) -> int:
         return len(self._calls)
-
-    @overload
-    def __getitem__(self, idx: int) -> Call:
-        """Overload when get a single item."""
-
-    @overload
-    def __getitem__(self, idx: slice) -> List[Call]:
-        """Overload when a slice is requested."""
 
     def __getitem__(self, idx: Union[int, slice]) -> Union[Call, List[Call]]:
         return self._calls[idx]
@@ -516,14 +507,14 @@ def _form_response(
     status: int,
 ) -> HTTPResponse:
     # The requests library's cookie handling depends on the response object
-    # having an original response object with the headers as the `msg`, so
-    # we give it what it needs.
+    # having an original response object with the headers as the `msg` instead
+    # of `HTTPMessage`, so we give it what it needs.
     data = BytesIO()
     data.close()
 
     orig_response = HTTPResponse(
         body=data,  # required to avoid "ValueError: Unable to determine whether fp is closed."
-        msg=headers,
+        msg=headers,  # type: ignore[arg-type] # see comment above why we use headers
         preload_content=False,
     )
     return HTTPResponse(
@@ -531,7 +522,7 @@ def _form_response(
         reason=client.responses.get(status, None),
         body=body,
         headers=headers,
-        original_response=orig_response,
+        original_response=orig_response,  # type: ignore[arg-type]
         preload_content=False,
     )
 
@@ -950,23 +941,6 @@ class RequestsMock:
         finally:
             self.reset()
         return success
-
-    @overload
-    def activate(self, func: "_F" = ...) -> "_F":
-        """Overload for scenario when 'responses.activate' is used."""
-
-    @overload
-    def activate(
-        self,
-        *,
-        registry: Type[Any] = ...,
-        assert_all_requests_are_fired: bool = ...,
-    ) -> Callable[["_F"], "_F"]:
-        """Overload for scenario when
-        'responses.activate(registry=, assert_all_requests_are_fired=True)' is used.
-
-        See https://github.com/getsentry/responses/pull/469 for more details
-        """
 
     def activate(
         self,

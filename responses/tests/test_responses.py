@@ -1383,15 +1383,13 @@ def test_content_length_error(monkeypatch):
     # Type errors here and on 1250 are ignored because the stubs for requests
     # are off https://github.com/python/typeshed/blob/f8501d33c737482a829c6db557a0be26895c5941
     #   /stubs/requests/requests/packages/__init__.pyi#L1
-    original_init = getattr(requests.packages.urllib3.HTTPResponse, "__init__")  # type: ignore
+    original_init = getattr(urllib3.HTTPResponse, "__init__")  # type: ignore
 
     def patched_init(self, *args, **kwargs):
         kwargs["enforce_content_length"] = True
         original_init(self, *args, **kwargs)
 
-    monkeypatch.setattr(
-        requests.packages.urllib3.HTTPResponse, "__init__", patched_init  # type: ignore
-    )
+    monkeypatch.setattr(urllib3.HTTPResponse, "__init__", patched_init)  # type: ignore
 
     run()
     assert_reset()

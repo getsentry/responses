@@ -8,6 +8,7 @@
 * Added support for gzipped response bodies to `json_params_matcher`.
 * Fix `Content-Type` headers issue when the header was duplicated. See #644
 * Moved types-pyyaml dependency to `tests_requires`
+* Removed Python3.7 support
 
 0.23.3
 ------

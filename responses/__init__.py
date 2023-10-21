@@ -22,7 +22,6 @@ from typing import Sized
 from typing import Tuple
 from typing import Type
 from typing import Union
-from typing import overload
 from warnings import warn
 
 import yaml
@@ -41,27 +40,6 @@ try:
 except ImportError:  # pragma: no cover
     from typing import Literal  # type: ignore  # pragma: no cover
 
-try:
-    from requests.packages.urllib3.response import (
-        HTTPResponse,  # type: ignore[import-untyped]
-    )
-except ImportError:  # pragma: no cover
-    from urllib3.response import HTTPResponse  # pragma: no cover
-
-try:
-    from requests.packages.urllib3.connection import (
-        HTTPHeaderDict,  # type: ignore[import-untyped]
-    )
-except ImportError:  # pragma: no cover
-    from urllib3.response import HTTPHeaderDict
-
-try:
-    from requests.packages.urllib3.util.url import (
-        parse_url,  # type: ignore[import-untyped]
-    )
-except ImportError:  # pragma: no cover
-    from urllib3.util.url import parse_url  # pragma: no cover
-
 from io import BufferedReader
 from io import BytesIO
 from unittest import mock as std_mock
@@ -70,6 +48,10 @@ from urllib.parse import quote
 from urllib.parse import urlsplit
 from urllib.parse import urlunparse
 from urllib.parse import urlunsplit
+
+from urllib3.response import HTTPHeaderDict
+from urllib3.response import HTTPResponse
+from urllib3.util.url import parse_url
 
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
@@ -256,14 +238,6 @@ class CallList(Sequence[Any], Sized):
 
     def __len__(self) -> int:
         return len(self._calls)
-
-    @overload
-    def __getitem__(self, idx: int) -> Call:  # type: ignore[misc]
-        """Overload when get a single item."""
-
-    @overload
-    def __getitem__(self, idx: slice) -> List[Call]:  # type: ignore[misc]
-        """Overload when a slice is requested."""
 
     def __getitem__(self, idx: Union[int, slice]) -> Union[Call, List[Call]]:
         return self._calls[idx]
@@ -544,14 +518,14 @@ def _form_response(
     status: int,
 ) -> HTTPResponse:
     # The requests library's cookie handling depends on the response object
-    # having an original response object with the headers as the `msg`, so
-    # we give it what it needs.
+    # having an original response object with the headers as the `msg` instead
+    # of `HTTPMessage`, so we give it what it needs.
     data = BytesIO()
     data.close()
 
     orig_response = HTTPResponse(
         body=data,  # required to avoid "ValueError: Unable to determine whether fp is closed."
-        msg=headers,
+        msg=headers,  # type: ignore[arg-type] # see comment above why we use headers
         preload_content=False,
     )
     return HTTPResponse(
@@ -559,7 +533,7 @@ def _form_response(
         reason=client.responses.get(status, None),
         body=body,
         headers=headers,
-        original_response=orig_response,
+        original_response=orig_response,  # type: ignore[arg-type]
         preload_content=False,
     )
 
@@ -979,23 +953,6 @@ class RequestsMock:
             self.reset()
         return success
 
-    @overload
-    def activate(self, func: "_F" = ...) -> "_F":
-        """Overload for scenario when 'responses.activate' is used."""
-
-    @overload
-    def activate(  # type: ignore[misc]
-        self,
-        *,
-        registry: Type[Any] = ...,
-        assert_all_requests_are_fired: bool = ...,
-    ) -> Callable[["_F"], "_F"]:
-        """Overload for scenario when
-        'responses.activate(registry=, assert_all_requests_are_fired=True)' is used.
-
-        See https://github.com/getsentry/responses/pull/469 for more details
-        """
-
     def activate(
         self,
         func: Optional["_F"] = None,
@@ -1115,7 +1072,7 @@ class RequestsMock:
 
         retries = retries or adapter.max_retries
         # first validate that current request is eligible to be retried.
-        # See ``requests.packages.urllib3.util.retry.Retry`` documentation.
+        # See ``urllib3.util.retry.Retry`` documentation.
         if retries.is_retry(
             method=response.request.method, status_code=response.status_code  # type: ignore[misc]
         ):

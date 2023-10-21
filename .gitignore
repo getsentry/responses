@@ -16,3 +16,5 @@ venv
 /.artifacts
 /test_*
 /*.yaml
+*.bin
+!/example_bins/*.bin

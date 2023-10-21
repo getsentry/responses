@@ -1,7 +1,7 @@
-import base64
 import inspect
 import json as json_module
 import logging
+import os
 from collections import namedtuple
 from functools import partialmethod
 from functools import wraps
@@ -68,7 +68,6 @@ from urllib.parse import urlunsplit
 
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
-    import os
     from typing import Protocol
     from unittest.mock import _patch as _mock_patcher
 
@@ -819,15 +818,18 @@ class RequestsMock:
 
     def _add_from_file(self, file_path: "Union[str, bytes, os.PathLike[Any]]") -> None:
         data = self._parse_response_file(file_path)
+        parent_directory = os.path.dirname(os.path.abspath(file_path))
 
         for rsp in data["responses"]:
             rsp = rsp["response"]
             headers = dict(rsp.get("headers") or {})
             if "Content-Type" in headers:
                 headers.pop("Content-Type")
-            body = rsp["body"]
-            if rsp.get("body_encoded"):
-                body = base64.urlsafe_b64decode(body)
+            if "body_file" in rsp:
+                with open(os.path.join(parent_directory, rsp["body_file"]), "rb") as f:
+                    body = f.read()
+            else:
+                body = rsp["body"]
             self.add(
                 method=rsp["method"],
                 url=rsp["url"],

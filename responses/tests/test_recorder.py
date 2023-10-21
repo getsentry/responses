@@ -1,4 +1,5 @@
 import collections.abc
+import shutil
 from pathlib import Path
 
 import pytest
@@ -55,8 +56,7 @@ def get_data_for_cmp(host, port):
                 "response": {
                     "method": "GET",
                     "url": f"http://{host}:{port}/404",
-                    "body": "NDA0IE5vdCBGb3VuZA==",
-                    "body_encoded": True,
+                    "body_file": _NOT_CARE,
                     "headers": {
                         "Connection": "keep-alive",
                         "Content-Length": "13",
@@ -74,8 +74,7 @@ def get_data_for_cmp(host, port):
                 "response": {
                     "method": "GET",
                     "url": f"http://{host}:{port}/status/wrong",
-                    "body": "SW52YWxpZCBzdGF0dXMgY29kZQ==",
-                    "body_encoded": True,
+                    "body_file": _NOT_CARE,
                     "headers": {
                         "Connection": "keep-alive",
                         "Content-Length": "19",
@@ -93,8 +92,7 @@ def get_data_for_cmp(host, port):
                 "response": {
                     "method": "GET",
                     "url": f"http://{host}:{port}/500",
-                    "body": "NTAwIEludGVybmFsIFNlcnZlciBFcnJvcg==",
-                    "body_encoded": True,
+                    "body_file": _NOT_CARE,
                     "headers": {
                         "Connection": "keep-alive",
                         "Content-Length": "25",
@@ -112,8 +110,7 @@ def get_data_for_cmp(host, port):
                 "response": {
                     "method": "PUT",
                     "url": f"http://{host}:{port}/202",
-                    "body": "T0s=",
-                    "body_encoded": True,
+                    "body_file": _NOT_CARE,
                     "headers": {
                         "Connection": "keep-alive",
                         "Content-Length": "2",
@@ -149,8 +146,7 @@ def get_data_for_dump(host, port):
                 "response": {
                     "method": "GET",
                     "url": f"http://{host}:{port}/status/wrong",
-                    "body": "SW52YWxpZCBzdGF0dXMgY29kZQ==",
-                    "body_encoded": True,
+                    "body_file": "example_bins/400.bin",
                     "headers": {
                         "Connection": "keep-alive",
                         "Content-Length": "19",
@@ -168,8 +164,7 @@ def get_data_for_dump(host, port):
                 "response": {
                     "method": "GET",
                     "url": f"http://{host}:{port}/500",
-                    "body": "NTAwIEludGVybmFsIFNlcnZlciBFcnJvcg==",
-                    "body_encoded": True,
+                    "body_file": "example_bins/500.bin",
                     "headers": {
                         "Connection": "keep-alive",
                         "Content-Length": "25",
@@ -187,8 +182,7 @@ def get_data_for_dump(host, port):
                 "response": {
                     "method": "PUT",
                     "url": f"http://{host}:{port}/202",
-                    "body": "T0s=",
-                    "body_encoded": True,
+                    "body_file": "example_bins/202.bin",
                     "headers": {
                         "Connection": "keep-alive",
                         "Content-Length": "2",
@@ -212,6 +206,18 @@ class TestRecord:
         self.out_file = Path("response_record")
         if self.out_file.exists():
             self.out_file.unlink()  # pragma: no cover
+
+        self.out_bins_dir = Path("response_record_bins")
+        if self.out_bins_dir.exists():
+            shutil.rmtree(self.out_bins_dir)  # pragma: no cover
+
+        assert not self.out_file.exists()
+
+    def teardown_method(self):
+        if self.out_file.exists():
+            self.out_file.unlink()
+        if self.out_bins_dir.exists():
+            shutil.rmtree(self.out_bins_dir)
 
         assert not self.out_file.exists()
 
@@ -242,8 +248,7 @@ class TestRecord:
         custom_recorder = _recorder.Recorder()
 
         def dump_to_file(file_path, registered):
-            with open(file_path, "wb") as file:
-                _dump(registered, file, tomli_w.dump)
+            _dump(registered, file_path, tomli_w.dump, "wb")
 
         custom_recorder.dump_to_file = dump_to_file
 
@@ -289,10 +294,13 @@ class TestRecord:
 class TestReplay:
     def setup_method(self):
         self.out_file = Path("response_record")
+        self.out_bins_dir = Path("response_record_bins")
 
     def teardown_method(self):
         if self.out_file.exists():
             self.out_file.unlink()
+        if self.out_bins_dir.exists():
+            shutil.rmtree(self.out_bins_dir)
 
         assert not self.out_file.exists()
 

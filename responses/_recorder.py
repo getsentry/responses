@@ -1,10 +1,9 @@
-import base64
+import os
+import uuid
 from functools import wraps
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-    import os
-
     from typing import Any
     from typing import BinaryIO
     from typing import Callable
@@ -40,26 +39,44 @@ def _remove_nones(d: "Any") -> "Any":
 
 def _dump(
     registered: "List[BaseResponse]",
-    destination: "Union[BinaryIO, TextIOWrapper]",
+    config_file: "Union[str, os.PathLike]",
     dumper: "Callable[[Union[Dict[Any, Any], List[Any]], Union[BinaryIO, TextIOWrapper]], Any]",
-) -> None:
+    dumper_mode: "str" = "w",
+):
     data: Dict[str, Any] = {"responses": []}
+
+    # e.g. config_file = 'my/dir/responses.yaml'
+    # parent_directory = 'my/dir'
+    # binary_directory = 'my/dir/responses'
+    fname, fext = os.path.splitext(os.path.basename(config_file))
+    parent_directory = os.path.dirname(os.path.abspath(config_file))
+    binary_directory = os.path.join(
+        parent_directory, fname if fext else f"{fname}_bins"
+    )
+
     for rsp in registered:
         try:
             content_length = rsp.auto_calculate_content_length  # type: ignore[attr-defined]
             body = rsp.body  # type: ignore[attr-defined]
             if isinstance(body, bytes):
-                body = base64.urlsafe_b64encode(body).decode()
-                body_encoded = True
+                os.makedirs(binary_directory, exist_ok=True)
+                bin_file = os.path.join(binary_directory, f"{uuid.uuid4()}.bin")
+                with open(bin_file, "wb") as bf:
+                    bf.write(body)
+
+                # make sure the stored binary file path is relative to config file
+                # or the config file and binary directory will be hard to move
+                body_file = os.path.relpath(bin_file, parent_directory)
+                body = None
             else:
-                body_encoded = False
+                body_file = None
             data["responses"].append(
                 {
                     "response": {
                         "method": rsp.method,
                         "url": rsp.url,
                         "body": body,  # type: ignore[attr-defined]
-                        "body_encoded": body_encoded,
+                        "body_file": body_file,
                         "status": rsp.status,  # type: ignore[attr-defined]
                         "headers": rsp.headers,
                         "content_type": rsp.content_type,
@@ -72,7 +89,9 @@ def _dump(
                 "Cannot dump response object."
                 "Probably you use custom Response object that is missing required attributes"
             ) from exc
-    dumper(_remove_nones(data), destination)
+
+    with open(config_file, dumper_mode) as cfile:
+        dumper(_remove_nones(data), cfile)
 
 
 class Recorder(RequestsMock):
@@ -111,8 +130,7 @@ class Recorder(RequestsMock):
         file_path: "Union[str, bytes, os.PathLike[Any]]",
         registered: "List[BaseResponse]",
     ) -> None:
-        with open(file_path, "w") as file:
-            _dump(registered, file, yaml.dump)
+        _dump(registered, file_path, yaml.dump)
 
     def _on_request(
         self,

@@ -239,9 +239,6 @@ class TestRecord:
         with open(self.out_file) as file:
             data = yaml.safe_load(file)
 
-        import pprint
-
-        pprint.pprint(data)
         assert data == get_data_for_cmp(httpserver.host, httpserver.port)
 
     def test_recorder_toml(self, httpserver):

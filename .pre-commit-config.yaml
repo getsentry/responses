@@ -1,3 +1,4 @@
+exclude: ^example_bins
 repos:
   - repo: https://github.com/psf/black
     rev: 23.3.0

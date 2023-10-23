@@ -1113,7 +1113,7 @@ applications.
             for future in concurrent.futures.as_completed(future_to_uid):
                 uid = future_to_uid[future]
                 response = future.result()
-                print("%s updated with %d status code" % (uid, response.status_code))
+                print(f"{uid} updated with {response.status_code} status code")
 
         assert len(responses.calls) == 3  # total calls count
 

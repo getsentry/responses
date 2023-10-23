@@ -2058,31 +2058,31 @@ def test_response_and_requests_mock_calls_are_equal():
 def test_response_call_request():
     @responses.activate
     def run():
-        rsp = responses.add(responses.GET, "http://www.example.com")
+        rsp1 = responses.add(responses.GET, "http://www.example.com")
         rsp2 = responses.add(
             responses.PUT, "http://www.foo.bar/42/", json={"id": 42, "name": "Bazz"}
         )
+        request_payload = {"name": "Bazz"}
 
         requests.get("http://www.example.com")
         requests.get("http://www.example.com?hello=world")
         requests.put(
             "http://www.foo.bar/42/",
-            json={"name": "Bazz"},
+            json=request_payload,
         )
 
-        assert rsp.call_count == 2
-        request = rsp.calls[0].request
-        assert request.url == "http://www.example.com/"
-        assert request.method == "GET"
-        request = rsp.calls[1].request
-        assert request.url == "http://www.example.com/?hello=world"
-        assert request.method == "GET"
+        assert rsp1.call_count == 2
+        rsp1_request1 = rsp1.calls[0].request
+        assert rsp1_request1.url == "http://www.example.com/"
+        assert rsp1_request1.method == "GET"
+        rsp1_request2 = rsp1.calls[1].request
+        assert rsp1_request2.url == "http://www.example.com/?hello=world"
+        assert rsp1_request2.method == "GET"
         assert rsp2.call_count == 1
-        request = rsp2.calls[0].request
-        assert request.url == "http://www.foo.bar/42/"
-        assert request.method == "PUT"
-        request_payload = json.loads(request.body)
-        assert request_payload == {"name": "Bazz"}
+        rsp2_request1 = rsp2.calls[0].request
+        assert rsp2_request1.url == "http://www.foo.bar/42/"
+        assert rsp2_request1.method == "PUT"
+        assert json.loads(rsp2_request1.body) == request_payload
 
     run()
     assert_reset()
@@ -2091,7 +2091,7 @@ def test_response_call_request():
 def test_response_call_response():
     @responses.activate
     def run():
-        rsp = responses.add(responses.GET, "http://www.example.com", body=b"test")
+        rsp1 = responses.add(responses.GET, "http://www.example.com", body=b"test")
         rsp2 = responses.add(
             responses.POST,
             "http://www.foo.bar/42/",
@@ -2105,14 +2105,14 @@ def test_response_call_response():
             json={"name": "Bazz"},
         )
 
-        assert rsp.call_count == 1
-        response = rsp.calls[0].response
-        assert response.content == b"test"
-        assert response.status_code == 200
+        assert rsp1.call_count == 1
+        rsp1_response = rsp1.calls[0].response
+        assert rsp1_response.content == b"test"
+        assert rsp1_response.status_code == 200
         assert rsp2.call_count == 1
-        response = rsp2.calls[0].response
-        assert response.json() == {"id": 42, "name": "Bazz"}
-        assert response.status_code == 201
+        rsp2_response = rsp2.calls[0].response
+        assert rsp2_response.json() == {"id": 42, "name": "Bazz"}
+        assert rsp2_response.status_code == 201
 
     run()
     assert_reset()

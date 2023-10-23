@@ -1,6 +1,8 @@
+import http
 import inspect
 import json as json_module
 import logging
+import socket
 from collections import namedtuple
 from functools import partialmethod
 from functools import wraps
@@ -506,23 +508,25 @@ def _form_response(
     headers: Optional[Mapping[str, str]],
     status: int,
 ) -> HTTPResponse:
-    # The requests library's cookie handling depends on the response object
-    # having an original response object with the headers as the `msg` instead
-    # of `HTTPMessage`, so we give it what it needs.
-    data = BytesIO()
-    data.close()
+    dummy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    orig_response = http.client.HTTPResponse(sock=dummy_socket)
+    """
+    The cookie handling functionality of the `requests` library relies on the response object
+    having an original response object with the headers stored in the `msg` attribute.
+    Instead of supplying a file-like object of type `HTTPMessage` for the headers, we provide
+    the headers directly. This approach eliminates the need to parse the headers into a file-like
+    object and then rely on the library to unparse it back. These additional conversions can
+    introduce potential errors.
+    Therefore, we intentionally ignore type checking for this assignment.
+    """
+    orig_response.msg = headers  # type: ignore[assignment]
 
-    orig_response = HTTPResponse(
-        body=data,  # required to avoid "ValueError: Unable to determine whether fp is closed."
-        msg=headers,  # type: ignore[arg-type] # see comment above why we use headers
-        preload_content=False,
-    )
     return HTTPResponse(
         status=status,
         reason=client.responses.get(status, None),
         body=body,
         headers=headers,
-        original_response=orig_response,  # type: ignore[arg-type]
+        original_response=orig_response,
         preload_content=False,
     )
 

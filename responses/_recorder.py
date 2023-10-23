@@ -51,7 +51,7 @@ def _dump(
     fname, fext = os.path.splitext(os.path.basename(config_file))
     parent_directory = os.path.dirname(os.path.abspath(config_file))
     binary_directory = os.path.join(
-        parent_directory, fname if fext else f"{fname}_bins"
+        parent_directory, fname if fext else f"{fname}_bodies"
     )
 
     for rsp in registered:

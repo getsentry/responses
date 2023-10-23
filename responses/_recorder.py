@@ -39,10 +39,10 @@ def _remove_nones(d: "Any") -> "Any":
 
 def _dump(
     registered: "List[BaseResponse]",
-    config_file: "Union[str, os.PathLike]",
+    config_file: "Union[str, bytes, os.PathLike[Any]]",
     dumper: "Callable[[Union[Dict[Any, Any], List[Any]], Union[BinaryIO, TextIOWrapper]], Any]",
     dumper_mode: "str" = "w",
-):
+) -> None:
     data: Dict[str, Any] = {"responses": []}
 
     # e.g. config_file = 'my/dir/responses.yaml'
@@ -75,7 +75,7 @@ def _dump(
                     "response": {
                         "method": rsp.method,
                         "url": rsp.url,
-                        "body": body,  # type: ignore[attr-defined]
+                        "body": body,
                         "body_file": body_file,
                         "status": rsp.status,  # type: ignore[attr-defined]
                         "headers": rsp.headers,

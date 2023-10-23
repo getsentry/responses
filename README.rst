@@ -1096,36 +1096,19 @@ applications.
 
     @responses.activate
     def test_assert_calls_on_resp():
-        uid_with_permissions = [
-            ("0123", {"client": True, "admin": False, "disabled": False}),
-            ("1234", {"client": False, "admin": True, "disabled": False}),
-            ("2345", {"client": False, "admin": False, "disabled": True}),
-        ]
-        rsp0123 = responses.patch(
-            "http://www.foo.bar/0123/",
-            json={"OK": True, "uid": "0123"},
-            status=200,
-        )
-        rsp1234 = responses.patch(
-            "http://www.foo.bar/1234/",
-            json={"OK": False, "uid": "1234"},
-            status=400,
-        )
-        rsp2345 = responses.patch(
-            "http://www.foo.bar/2345/",
-            json={"OK": True, "uid": "2345"},
-            status=200,
-        )
+        rsp1 = responses.patch("http://www.foo.bar/1/", status=200)
+        rsp2 = responses.patch("http://www.foo.bar/2/", status=400)
+        rsp3 = responses.patch("http://www.foo.bar/3/", status=200)
 
-        def update_permissions(uid, permissions):
+        def update_user(uid, is_active):
             url = f"http://www.foo.bar/{uid}/"
-            response = requests.patch(url, json=permissions)
+            response = requests.patch(url, json={"is_active": is_active})
             return response
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             future_to_uid = {
-                executor.submit(update_permissions, uid, permissions): uid
-                for (uid, permissions) in uid_with_permissions
+                executor.submit(update_user, uid, is_active): uid
+                for (uid, is_active) in [("3", True), ("2", True), ("1", False)]
             }
             for future in concurrent.futures.as_completed(future_to_uid):
                 uid = future_to_uid[future]
@@ -1134,31 +1117,20 @@ applications.
 
         assert len(responses.calls) == 3  # total calls count
 
-        assert rsp0123.call_count == 1
-        assert rsp0123.calls[0] in responses.calls
-        assert json.loads(rsp0123.calls[0].request.body) == {
-            "client": True,
-            "admin": False,
-            "disabled": False,
-        }
+        assert rsp1.call_count == 1
+        assert rsp1.calls[0] in responses.calls
+        assert rsp1.calls[0].response.status_code == 200
+        assert json.loads(rsp1.calls[0].request.body) == {"is_active": False}
 
-        assert rsp1234.call_count == 1
-        assert rsp1234.calls[0] in responses.calls
-        assert json.loads(rsp1234.calls[0].request.body) == {
-            "client": False,
-            "admin": True,
-            "disabled": False,
-        }
-        assert rsp1234.calls[0].response.json() == {"OK": False, "uid": "1234"}
+        assert rsp2.call_count == 1
+        assert rsp2.calls[0] in responses.calls
+        assert rsp2.calls[0].response.status_code == 400
+        assert json.loads(rsp2.calls[0].request.body) == {"is_active": True}
 
-        assert rsp2345.call_count == 1
-        assert rsp2345.calls[0] in responses.calls
-        assert json.loads(rsp2345.calls[0].request.body) == {
-            "client": False,
-            "admin": False,
-            "disabled": True,
-        }
-
+        assert rsp3.call_count == 1
+        assert rsp3.calls[0] in responses.calls
+        assert rsp3.calls[0].response.status_code == 200
+        assert json.loads(rsp3.calls[0].request.body) == {"is_active": True}
 
 Multiple Responses
 ------------------

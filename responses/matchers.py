@@ -13,7 +13,7 @@ from urllib.parse import parse_qsl
 from urllib.parse import urlparse
 
 from requests import PreparedRequest
-from requests.packages.urllib3.util.url import parse_url
+from urllib3.util.url import parse_url
 
 
 def _create_key_val_str(input_dict: Union[Dict[Any, Any], Any]) -> str:
@@ -256,7 +256,7 @@ def query_string_matcher(query: Optional[str]) -> Callable[..., Any]:
 
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
-        data = parse_url(request.url)
+        data = parse_url(request.url or "")
         request_query = data.query
 
         request_qsl = sorted(parse_qsl(request_query)) if request_query else {}

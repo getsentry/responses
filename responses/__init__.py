@@ -1,7 +1,9 @@
+import http
 import inspect
 import json as json_module
 import logging
 import os
+import socket
 from collections import namedtuple
 from functools import partialmethod
 from functools import wraps
@@ -23,7 +25,6 @@ from typing import Sized
 from typing import Tuple
 from typing import Type
 from typing import Union
-from typing import overload
 from warnings import warn
 
 import yaml
@@ -42,21 +43,6 @@ try:
 except ImportError:  # pragma: no cover
     from typing import Literal  # type: ignore  # pragma: no cover
 
-try:
-    from requests.packages.urllib3.response import HTTPResponse
-except ImportError:  # pragma: no cover
-    from urllib3.response import HTTPResponse  # pragma: no cover
-
-try:
-    from requests.packages.urllib3.connection import HTTPHeaderDict
-except ImportError:  # pragma: no cover
-    from urllib3.response import HTTPHeaderDict
-
-try:
-    from requests.packages.urllib3.util.url import parse_url
-except ImportError:  # pragma: no cover
-    from urllib3.util.url import parse_url  # pragma: no cover
-
 from io import BufferedReader
 from io import BytesIO
 from unittest import mock as std_mock
@@ -65,6 +51,10 @@ from urllib.parse import quote
 from urllib.parse import urlsplit
 from urllib.parse import urlunparse
 from urllib.parse import urlunsplit
+
+from urllib3.response import HTTPHeaderDict
+from urllib3.response import HTTPResponse
+from urllib3.util.url import parse_url
 
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
@@ -97,10 +87,10 @@ if TYPE_CHECKING:  # pragma: no cover
             HTTPAdapter,
             PreparedRequest,
             bool,
-            float | tuple[float, float] | tuple[float, None] | None,
-            bool | str,
-            bytes | str | tuple[bytes | str, bytes | str] | None,
-            Mapping[str, str] | None,
+            Union[float, Tuple[float, float], Tuple[float, None], None],
+            Union[bool, str],
+            Union[bytes, str, Tuple[Union[bytes, str], Union[bytes, str]], None],
+            Optional[Mapping[str, str]],
         ],
         models.Response,
     ]
@@ -250,14 +240,6 @@ class CallList(Sequence[Any], Sized):
 
     def __len__(self) -> int:
         return len(self._calls)
-
-    @overload
-    def __getitem__(self, idx: int) -> Call:
-        """Overload when get a single item."""
-
-    @overload
-    def __getitem__(self, idx: slice) -> List[Call]:
-        """Overload when a slice is requested."""
 
     def __getitem__(self, idx: Union[int, slice]) -> Union[Call, List[Call]]:
         return self._calls[idx]
@@ -526,17 +508,19 @@ def _form_response(
     headers: Optional[Mapping[str, str]],
     status: int,
 ) -> HTTPResponse:
-    # The requests library's cookie handling depends on the response object
-    # having an original response object with the headers as the `msg`, so
-    # we give it what it needs.
-    data = BytesIO()
-    data.close()
+    dummy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    orig_response = http.client.HTTPResponse(sock=dummy_socket)
+    """
+    The cookie handling functionality of the `requests` library relies on the response object
+    having an original response object with the headers stored in the `msg` attribute.
+    Instead of supplying a file-like object of type `HTTPMessage` for the headers, we provide
+    the headers directly. This approach eliminates the need to parse the headers into a file-like
+    object and then rely on the library to unparse it back. These additional conversions can
+    introduce potential errors.
+    Therefore, we intentionally ignore type checking for this assignment.
+    """
+    orig_response.msg = headers  # type: ignore[assignment]
 
-    orig_response = HTTPResponse(
-        body=data,  # required to avoid "ValueError: Unable to determine whether fp is closed."
-        msg=headers,
-        preload_content=False,
-    )
     return HTTPResponse(
         status=status,
         reason=client.responses.get(status, None),
@@ -972,23 +956,6 @@ class RequestsMock:
             self.reset()
         return success
 
-    @overload
-    def activate(self, func: "_F" = ...) -> "_F":
-        """Overload for scenario when 'responses.activate' is used."""
-
-    @overload
-    def activate(
-        self,
-        *,
-        registry: Type[Any] = ...,
-        assert_all_requests_are_fired: bool = ...,
-    ) -> Callable[["_F"], "_F"]:
-        """Overload for scenario when
-        'responses.activate(registry=, assert_all_requests_are_fired=True)' is used.
-
-        See https://github.com/getsentry/responses/pull/469 for more details
-        """
-
     def activate(
         self,
         func: Optional["_F"] = None,
@@ -1106,7 +1073,7 @@ class RequestsMock:
 
         retries = retries or adapter.max_retries
         # first validate that current request is eligible to be retried.
-        # See ``requests.packages.urllib3.util.retry.Retry`` documentation.
+        # See ``urllib3.util.retry.Retry`` documentation.
         if retries.is_retry(
             method=response.request.method, status_code=response.status_code  # type: ignore[misc]
         ):

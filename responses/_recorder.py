@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
     from typing import Any
-    from typing import BinaryIO
     from typing import Callable
     from typing import Dict
     from typing import List
     from typing import Type
     from typing import Union
+    from typing import IO
     from responses import FirstMatchRegistry
     from responses import HTTPAdapter
     from responses import PreparedRequest
@@ -18,7 +18,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from responses import _F
     from responses import BaseResponse
 
-    from io import TextIOWrapper
 
 import yaml
 
@@ -39,8 +38,8 @@ def _remove_nones(d: "Any") -> "Any":
 
 def _dump(
     registered: "List[BaseResponse]",
-    config_file: "Union[str, bytes, os.PathLike[Any]]",
-    dumper: "Callable[[Union[Dict[Any, Any], List[Any]], Union[BinaryIO, TextIOWrapper]], Any]",
+    config_file: "Union[str, os.PathLike[str]]",
+    dumper: "Callable[[Union[Dict[Any, Any], List[Any]], Union[IO[Any]]], Any]",
     dumper_mode: "str" = "w",
 ) -> None:
     data: Dict[str, Any] = {"responses": []}
@@ -107,7 +106,7 @@ class Recorder(RequestsMock):
         self._registry = OrderedRegistry()
 
     def record(
-        self, *, file_path: "Union[str, bytes, os.PathLike[Any]]" = "response.yaml"
+        self, *, file_path: "Union[str, os.PathLike[str]]" = "response.yaml"
     ) -> "Union[Callable[[_F], _F], _F]":
         def deco_record(function: "_F") -> "Callable[..., Any]":
             @wraps(function)
@@ -127,7 +126,7 @@ class Recorder(RequestsMock):
     def dump_to_file(
         self,
         *,
-        file_path: "Union[str, bytes, os.PathLike[Any]]",
+        file_path: "Union[str, os.PathLike[str]]",
         registered: "List[BaseResponse]",
     ) -> None:
         _dump(registered, file_path, yaml.dump)
@@ -147,7 +146,7 @@ class Recorder(RequestsMock):
         if "Content-Type" in requests_headers:
             requests_content_type = requests_headers.pop("Content-Type")
         else:
-            requests_content_type = _UNSET
+            requests_content_type = _UNSET  # type: ignore[assignment]
         # Content-Encoding should be removed to
         # avoid 'Content-Encoding: gzip' causing the error in requests
         if "Content-Encoding" in requests_headers:

@@ -1,4 +1,5 @@
 import os
+import pathlib
 import uuid
 from functools import wraps
 from typing import TYPE_CHECKING
@@ -47,11 +48,10 @@ def _dump(
     # e.g. config_file = 'my/dir/responses.yaml'
     # parent_directory = 'my/dir'
     # binary_directory = 'my/dir/responses'
-    fname, fext = os.path.splitext(os.path.basename(config_file))
-    parent_directory = os.path.dirname(os.path.abspath(config_file))
-    binary_directory = os.path.join(
-        parent_directory, fname if fext else f"{fname}_bodies"
-    )
+    config_file = pathlib.Path(config_file)
+    fname, fext = os.path.splitext(config_file.name)
+    parent_directory = config_file.absolute().parent
+    binary_directory = parent_directory / (fname if fext else f"{fname}_bodies")
 
     for rsp in registered:
         try:

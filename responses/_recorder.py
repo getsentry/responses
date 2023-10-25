@@ -151,6 +151,12 @@ class Recorder(RequestsMock):
         # avoid 'Content-Encoding: gzip' causing the error in requests
         if "Content-Encoding" in requests_headers:
             requests_headers.pop("Content-Encoding")
+
+            # When something like 'Content-Encoding: gzip' is used
+            # the 'Content-Length' may be the length of compressed data,
+            # so we need to replace it with decompressed length
+            if "Content-Length" in requests_headers:
+                requests_headers["Content-Length"] = str(len(requests_response.content))
         responses_response = Response(
             method=str(request.method),
             url=str(requests_response.request.url),

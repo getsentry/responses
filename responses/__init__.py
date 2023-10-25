@@ -504,6 +504,7 @@ class BaseResponse:
 
 
 def _form_response(
+    method: Optional[str],
     body: Union[BufferedReader, BytesIO],
     headers: Optional[Mapping[str, str]],
     status: int,
@@ -528,6 +529,7 @@ def _form_response(
         headers=headers,
         original_response=orig_response,
         preload_content=False,
+        request_method=method,
     )
 
 
@@ -593,7 +595,7 @@ class Response(BaseResponse):
             content_length = len(body.getvalue())
             headers["Content-Length"] = str(content_length)
 
-        return _form_response(body, headers, status)
+        return _form_response(request.method, body, headers, status)
 
     def __repr__(self) -> str:
         return (
@@ -655,7 +657,7 @@ class CallbackResponse(BaseResponse):
         body = _handle_body(body)
         headers.extend(r_headers)
 
-        return _form_response(body, headers, status)
+        return _form_response(request.method, body, headers, status)
 
 
 class PassthroughResponse(BaseResponse):

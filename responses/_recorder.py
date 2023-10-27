@@ -1,3 +1,4 @@
+import copy
 import os
 import pathlib
 import uuid
@@ -18,7 +19,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from responses import models
     from responses import _F
     from responses import BaseResponse
-
 
 import yaml
 
@@ -142,7 +142,12 @@ class Recorder(RequestsMock):
         request.params = self._parse_request_params(request.path_url)  # type: ignore[attr-defined]
         request.req_kwargs = kwargs  # type: ignore[attr-defined]
         requests_response = _real_send(adapter, request, **kwargs)
-        requests_headers = dict(requests_response.headers)
+        # the object is a requests.structures.CaseInsensitiveDict object,
+        # if you re-construct the headers with a primitive dict object,
+        # some lower case headers like 'content-type' will not be able to be processed properly
+        # the deepcopy is for making sure the original headers object
+        # not changed by the following operations
+        requests_headers = copy.deepcopy(requests_response.headers)
         if "Content-Type" in requests_headers:
             requests_content_type = requests_headers.pop("Content-Type")
         else:
@@ -161,7 +166,7 @@ class Recorder(RequestsMock):
             method=str(request.method),
             url=str(requests_response.request.url),
             status=requests_response.status_code,
-            headers=requests_headers,
+            headers=dict(requests_headers),
             body=requests_response.content,
             content_type=requests_content_type,
         )

@@ -1080,7 +1080,7 @@ Assert that the request was called exactly n times.
 
 
 Assert Request Calls data
-------------------
+-------------------------
 
 ``Request`` object has ``calls`` list which elements correspond to ``Call`` objects
 in the global list of ``Registry``. This can be useful when the order of requests is not

@@ -2035,6 +2035,36 @@ def test_call_count_without_matcher():
     assert_reset()
 
 
+def test_response_calls_and_registry_calls_are_equal():
+    @responses.activate
+    def run():
+        rsp1 = responses.add(responses.GET, "http://www.example.com")
+        rsp2 = responses.add(responses.GET, "http://www.example.com/1")
+        rsp3 = responses.add(
+            responses.GET, "http://www.example.com/2"
+        )  # won't be requested
+
+        requests.get("http://www.example.com")
+        requests.get("http://www.example.com/1")
+        requests.get("http://www.example.com")
+
+        assert len(responses.calls) == len(rsp1.calls) + len(rsp2.calls) + len(
+            rsp3.calls
+        )
+        assert rsp1.call_count == 2
+        assert len(rsp1.calls) == 2
+        assert rsp1.calls[0] is responses.calls[0]
+        assert rsp1.calls[1] is responses.calls[2]
+        assert rsp2.call_count == 1
+        assert len(rsp2.calls) == 1
+        assert rsp2.calls[0] is responses.calls[1]
+        assert rsp3.call_count == 0
+        assert len(rsp3.calls) == 0
+
+    run()
+    assert_reset()
+
+
 def test_fail_request_error():
     """
     Validate that exception is raised if request URL/Method/kwargs don't match

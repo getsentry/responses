@@ -5,6 +5,7 @@ import warnings
 from io import BufferedReader
 from io import BytesIO
 from typing import Any
+from typing import List
 from typing import Optional
 from unittest.mock import Mock
 from unittest.mock import patch
@@ -20,6 +21,7 @@ from urllib3.util.retry import Retry
 
 import responses
 from responses import BaseResponse
+from responses import Call
 from responses import CallbackResponse
 from responses import PassthroughResponse
 from responses import Response
@@ -2033,6 +2035,37 @@ def test_call_count_without_matcher():
 
     run()
     assert_reset()
+
+
+def test_response_calls_indexing_and_slicing():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://www.example.com")
+        responses.add(responses.GET, "http://www.example.com/1")
+        responses.add(responses.GET, "http://www.example.com/2")
+
+        requests.get("http://www.example.com")
+        requests.get("http://www.example.com/1")
+        requests.get("http://www.example.com/2")
+        requests.get("http://www.example.com/1")
+        requests.get("http://www.example.com")
+
+        # Use of a type hints here ensures mypy knows the difference between index and slice.
+        individual_call: Call = responses.calls[0]
+        call_slice: List[Call] = responses.calls[1:-1]
+
+        assert individual_call.request.url == "http://www.example.com"
+
+        assert call_slice == [
+            responses.calls[1],
+            responses.calls[2],
+            responses.calls[3],
+        ]
+        assert [c.request.url for c in call_slice] == [
+            "http://www.example.com/1",
+            "http://www.example.com/2",
+            "http://www.example.com/1",
+        ]
 
 
 def test_response_calls_and_registry_calls_are_equal():

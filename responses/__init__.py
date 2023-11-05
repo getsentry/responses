@@ -3,7 +3,6 @@ import inspect
 import json as json_module
 import logging
 import socket
-from collections import namedtuple
 from functools import partialmethod
 from functools import wraps
 from http import client
@@ -18,6 +17,7 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Mapping
+from typing import NamedTuple
 from typing import Optional
 from typing import Sequence
 from typing import Sized
@@ -97,7 +97,11 @@ if TYPE_CHECKING:  # pragma: no cover
     ]
 
 
-Call = namedtuple("Call", ["request", "response"])
+class Call(NamedTuple):
+    request: "PreparedRequest"
+    response: "_Body"
+
+
 _real_send = HTTPAdapter.send
 _UNSET = object()
 

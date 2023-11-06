@@ -3,7 +3,6 @@ import inspect
 import json as json_module
 import logging
 import socket
-from collections import namedtuple
 from functools import partialmethod
 from functools import wraps
 from http import client
@@ -18,12 +17,14 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Mapping
+from typing import NamedTuple
 from typing import Optional
 from typing import Sequence
 from typing import Sized
 from typing import Tuple
 from typing import Type
 from typing import Union
+from typing import overload
 from warnings import warn
 
 import yaml
@@ -96,7 +97,11 @@ if TYPE_CHECKING:  # pragma: no cover
     ]
 
 
-Call = namedtuple("Call", ["request", "response"])
+class Call(NamedTuple):
+    request: "PreparedRequest"
+    response: "_Body"
+
+
 _real_send = HTTPAdapter.send
 _UNSET = object()
 
@@ -240,6 +245,14 @@ class CallList(Sequence[Any], Sized):
 
     def __len__(self) -> int:
         return len(self._calls)
+
+    @overload
+    def __getitem__(self, idx: int) -> Call:
+        ...
+
+    @overload
+    def __getitem__(self, idx: slice) -> List[Call]:
+        ...
 
     def __getitem__(self, idx: Union[int, slice]) -> Union[Call, List[Call]]:
         return self._calls[idx]

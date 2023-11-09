@@ -4,7 +4,6 @@ import json as json_module
 import logging
 import os
 import socket
-from collections import namedtuple
 from functools import partialmethod
 from functools import wraps
 from http import client
@@ -19,12 +18,14 @@ from typing import Iterable
 from typing import Iterator
 from typing import List
 from typing import Mapping
+from typing import NamedTuple
 from typing import Optional
 from typing import Sequence
 from typing import Sized
 from typing import Tuple
 from typing import Type
 from typing import Union
+from typing import overload
 from warnings import warn
 
 import yaml
@@ -96,7 +97,11 @@ if TYPE_CHECKING:  # pragma: no cover
     ]
 
 
-Call = namedtuple("Call", ["request", "response"])
+class Call(NamedTuple):
+    request: "PreparedRequest"
+    response: "_Body"
+
+
 _real_send = HTTPAdapter.send
 _UNSET = object()
 
@@ -241,11 +246,22 @@ class CallList(Sequence[Any], Sized):
     def __len__(self) -> int:
         return len(self._calls)
 
+    @overload
+    def __getitem__(self, idx: int) -> Call:
+        ...
+
+    @overload
+    def __getitem__(self, idx: slice) -> List[Call]:
+        ...
+
     def __getitem__(self, idx: Union[int, slice]) -> Union[Call, List[Call]]:
         return self._calls[idx]
 
     def add(self, request: "PreparedRequest", response: "_Body") -> None:
         self._calls.append(Call(request, response))
+
+    def add_call(self, call: Call) -> None:
+        self._calls.append(call)
 
     def reset(self) -> None:
         self._calls = []
@@ -386,7 +402,7 @@ class BaseResponse:
             )
 
         self.match: "_MatcherIterable" = match
-        self.call_count: int = 0
+        self._calls: CallList = CallList()
         self.passthrough = passthrough
 
     def __eq__(self, other: Any) -> bool:
@@ -501,6 +517,14 @@ class BaseResponse:
             return False, reason
 
         return True, ""
+
+    @property
+    def call_count(self) -> int:
+        return len(self._calls)
+
+    @property
+    def calls(self) -> CallList:
+        return self._calls
 
 
 def _form_response(
@@ -1064,14 +1088,16 @@ class RequestsMock:
                     request, match.get_response(request)
                 )
             except BaseException as response:
-                match.call_count += 1
-                self._calls.add(request, response)
+                call = Call(request, response)
+                self._calls.add_call(call)
+                match.calls.add_call(call)
                 raise
 
         if resp_callback:
             response = resp_callback(response)  # type: ignore[misc]
-        match.call_count += 1
-        self._calls.add(request, response)  # type: ignore[misc]
+        call = Call(request, response)  # type: ignore[misc]
+        self._calls.add_call(call)
+        match.calls.add_call(call)
 
         retries = retries or adapter.max_retries
         # first validate that current request is eligible to be retried.

@@ -1,7 +1,7 @@
 0.24.1
 ------
 
-* Reintroduced overloads for better typing in `CallList`.
+* Reverted overloads removal
 * Added typing to `Call` attributes.
 
 

@@ -3,6 +3,7 @@
 
 * Reverted overloads removal
 * Added typing to `Call` attributes.
+* Fix socket issues (see #693)
 
 
 0.24.0

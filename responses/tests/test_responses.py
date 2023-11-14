@@ -2054,7 +2054,7 @@ def test_response_calls_indexing_and_slicing():
         individual_call: Call = responses.calls[0]
         call_slice: List[Call] = responses.calls[1:-1]
 
-        assert individual_call.request.url == "http://www.example.com"
+        assert individual_call.request.url == "http://www.example.com/"
 
         assert call_slice == [
             responses.calls[1],
@@ -2066,6 +2066,9 @@ def test_response_calls_indexing_and_slicing():
             "http://www.example.com/2",
             "http://www.example.com/1",
         ]
+
+    run()
+    assert_reset()
 
 
 def test_response_calls_and_registry_calls_are_equal():

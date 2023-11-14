@@ -2067,6 +2067,9 @@ def test_response_calls_indexing_and_slicing():
             "http://www.example.com/1",
         ]
 
+    run()
+    assert_reset()
+
 
 def test_response_calls_and_registry_calls_are_equal():
     @responses.activate

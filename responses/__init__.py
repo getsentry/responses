@@ -405,6 +405,9 @@ class BaseResponse:
         self._calls: CallList = CallList()
         self.passthrough = passthrough
 
+        self.status: int = 200
+        self.body: "_Body" = ""
+
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, BaseResponse):
             return False
@@ -569,6 +572,8 @@ class Response(BaseResponse):
         auto_calculate_content_length: bool = False,
         **kwargs: Any,
     ) -> None:
+        super().__init__(method, url, **kwargs)
+
         # if we were passed a `json` argument,
         # override the body and content_type
         if json is not None:
@@ -596,7 +601,6 @@ class Response(BaseResponse):
         self.stream: Optional[bool] = stream
         self.content_type: str = content_type  # type: ignore[assignment]
         self.auto_calculate_content_length: bool = auto_calculate_content_length
-        super().__init__(method, url, **kwargs)
 
     def get_response(self, request: "PreparedRequest") -> HTTPResponse:
         if self.body and isinstance(self.body, Exception):
@@ -641,6 +645,8 @@ class CallbackResponse(BaseResponse):
         content_type: Optional[str] = "text/plain",
         **kwargs: Any,
     ) -> None:
+        super().__init__(method, url, **kwargs)
+
         self.callback = callback
 
         if stream is not None:
@@ -650,7 +656,6 @@ class CallbackResponse(BaseResponse):
             )
         self.stream: Optional[bool] = stream
         self.content_type: Optional[str] = content_type
-        super().__init__(method, url, **kwargs)
 
     def get_response(self, request: "PreparedRequest") -> HTTPResponse:
         headers = self.get_headers()
@@ -969,6 +974,22 @@ class RequestsMock:
         finally:
             self.reset()
         return success
+
+    @overload
+    def activate(self, func: "_F" = ...) -> "_F":
+        """Overload for scenario when 'responses.activate' is used."""
+
+    @overload
+    def activate(  # type: ignore[misc]
+        self,
+        *,
+        registry: Type[Any] = ...,
+        assert_all_requests_are_fired: bool = ...,
+    ) -> Callable[["_F"], "_F"]:
+        """Overload for scenario when
+        'responses.activate(registry=, assert_all_requests_are_fired=True)' is used.
+        See https://github.com/getsentry/responses/pull/469 for more details
+        """
 
     def activate(
         self,

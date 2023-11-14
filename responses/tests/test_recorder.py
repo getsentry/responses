@@ -97,9 +97,9 @@ class TestRecord:
 
         def dump_to_file(file_path, registered):
             with open(file_path, "wb") as file:
-                _dump(registered, file, tomli_w.dump)
+                _dump(registered, file, tomli_w.dump)  # type: ignore[arg-type]
 
-        custom_recorder.dump_to_file = dump_to_file
+        custom_recorder.dump_to_file = dump_to_file  # type: ignore[method-assign]
 
         url202, url400, url404, url500 = self.prepare_server(httpserver)
 
@@ -151,12 +151,12 @@ class TestReplay:
         assert not self.out_file.exists()
 
     @pytest.mark.parametrize("parser", (yaml, tomli_w))
-    def test_add_from_file(self, parser):
+    def test_add_from_file(self, parser):  # type: ignore[misc]
         if parser == yaml:
             with open(self.out_file, "w") as file:
                 parser.dump(get_data("example.com", "8080"), file)
         else:
-            with open(self.out_file, "wb") as file:
+            with open(self.out_file, "wb") as file:  # type: ignore[assignment]
                 parser.dump(get_data("example.com", "8080"), file)
 
         @responses.activate
@@ -164,12 +164,12 @@ class TestReplay:
             responses.patch("http://httpbin.org")
             if parser == tomli_w:
 
-                def _parse_response_file(file_path):
+                def _parse_resp_f(file_path):
                     with open(file_path, "rb") as file:
                         data = _toml.load(file)
                     return data
 
-                responses.mock._parse_response_file = _parse_response_file
+                responses.mock._parse_response_file = _parse_resp_f  # type: ignore[method-assign]
 
             responses._add_from_file(file_path=self.out_file)
             responses.post("http://httpbin.org/form")

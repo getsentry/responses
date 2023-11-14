@@ -123,7 +123,7 @@ def test_response_with_instance():
         ),
     ],
 )
-def test_replace(original, replacement):
+def test_replace(original, replacement):  # type: ignore[misc]
     @responses.activate
     def run():
         responses.add(responses.GET, "http://example.com/one", body="test1")
@@ -157,7 +157,7 @@ def test_replace(original, replacement):
         (re.compile(r"http://example\.com/one"), "http://example.com/one"),
     ],
 )
-def test_replace_error(original, replacement):
+def test_replace_error(original, replacement):  # type: ignore[misc]
     @responses.activate
     def run():
         responses.add(responses.GET, original)
@@ -203,7 +203,7 @@ def test_replace_response_object_error():
         ),
     ],
 )
-def test_upsert_replace(original, replacement):
+def test_upsert_replace(original, replacement):  # type: ignore[misc]
     @responses.activate
     def run():
         responses.add(responses.GET, "http://example.com/one", body="test1")
@@ -241,7 +241,7 @@ def test_upsert_replace(original, replacement):
         ),
     ],
 )
-def test_upsert_add(original, replacement):
+def test_upsert_add(original, replacement):  # type: ignore[misc]
     @responses.activate
     def run():
         responses.add(responses.GET, "http://example.com/one", body="test1")
@@ -299,7 +299,7 @@ def test_remove():
         ),
     ],
 )
-def test_response_equality(args1, kwargs1, args2, kwargs2, expected):
+def test_response_equality(args1, kwargs1, args2, kwargs2, expected):  # type: ignore[misc]
     o1 = BaseResponse(*args1, **kwargs1)
     o2 = BaseResponse(*args2, **kwargs2)
     assert (o1 == o2) is expected
@@ -847,7 +847,7 @@ class TestAdapters:
         "adapter_class",
         (CustomAdapter, PositionalArgsAdapter, PositionalArgsIncompleteAdapter),
     )
-    def test_custom_adapter(self, adapter_class):
+    def test_custom_adapter(self, adapter_class):  # type: ignore[misc]
         """Test basic adapter implementation and that responses can patch them properly."""
 
         @responses.activate
@@ -902,12 +902,12 @@ def test_activate_doesnt_change_signature():
 
 
 @pytest.fixture
-def my_fruit():
+def my_fruit():  # type: ignore[misc]
     return "apple"
 
 
 @pytest.fixture
-def fruit_basket(my_fruit):
+def fruit_basket(my_fruit):  # type: ignore[misc]
     return ["banana", my_fruit]
 
 
@@ -926,7 +926,7 @@ class TestFixtures:
 
 def test_activate_mock_interaction():
     @patch("sys.stdout")
-    def test_function(mock_stdout):
+    def test_function(mock_stdout):  # type: ignore[misc]
         return mock_stdout
 
     decorated_test_function = responses.activate(test_function)
@@ -1045,7 +1045,7 @@ def test_response_cookies_multiple():
 
 @pytest.mark.parametrize("request_stream", (True, False, None))
 @pytest.mark.parametrize("responses_stream", (True, False, None))
-def test_response_cookies_session(request_stream, responses_stream):
+def test_response_cookies_session(request_stream, responses_stream):  # type: ignore[misc]
     @responses.activate
     def run():
         url = "https://example.com/path"
@@ -1384,13 +1384,13 @@ def test_content_length_error(monkeypatch):
     # Type errors here and on 1250 are ignored because the stubs for requests
     # are off https://github.com/python/typeshed/blob/f8501d33c737482a829c6db557a0be26895c5941
     #   /stubs/requests/requests/packages/__init__.pyi#L1
-    original_init = getattr(urllib3.HTTPResponse, "__init__")  # type: ignore
+    original_init = getattr(urllib3.HTTPResponse, "__init__")
 
     def patched_init(self, *args, **kwargs):
         kwargs["enforce_content_length"] = True
         original_init(self, *args, **kwargs)
 
-    monkeypatch.setattr(urllib3.HTTPResponse, "__init__", patched_init)  # type: ignore
+    monkeypatch.setattr(urllib3.HTTPResponse, "__init__", patched_init)
 
     run()
     assert_reset()
@@ -1919,7 +1919,7 @@ def test_custom_target(monkeypatch):
         "http://example.com/other/path/",
     ),
 )
-def test_request_param(url):
+def test_request_param(url):  # type: ignore[misc]
     @responses.activate
     def run():
         params = {"hello": "world", "example": "params"}
@@ -1962,7 +1962,7 @@ def test_request_param_with_multiple_values_for_the_same_key():
 @pytest.mark.parametrize(
     "url", ("http://example.com", "http://example.com?hello=world")
 )
-def test_assert_call_count(url):
+def test_assert_call_count(url):  # type: ignore[misc]
     @responses.activate
     def run():
         responses.add(responses.GET, url)
@@ -2160,7 +2160,7 @@ def test_fail_request_error():
         ),
     ],
 )
-def test_response_representations(response_params, expected_representation):
+def test_response_representations(response_params, expected_representation):  # type: ignore[misc]
     response = Response(**response_params)
 
     assert str(response) == expected_representation
@@ -2206,7 +2206,7 @@ def test_mocked_responses_list_registered():
         ("http://fizzbuzz/foo", "http://fizzbuzz/foo"),
     ],
 )
-def test_rfc_compliance(url, other_url):
+def test_rfc_compliance(url, other_url):  # type: ignore[misc]
     @responses.activate
     def run():
         responses.add(method=responses.GET, url=url)
@@ -2314,7 +2314,7 @@ class TestStrictWrapper:
         run_not_strict()
 
     @pytest.mark.parametrize("assert_fired", (True, False, None))
-    def test_nested_decorators(self, assert_fired):
+    def test_nested_decorators(self, assert_fired):  # type: ignore[misc]
         """Validate if assert_all_requests_are_fired is applied from the correct function.
 
         assert_all_requests_are_fired must be applied from the function
@@ -2607,7 +2607,7 @@ class TestMaxRetry:
         assert_reset()
 
     @pytest.mark.parametrize("raise_on_status", (True, False))
-    def test_max_retries_exceed(self, raise_on_status):
+    def test_max_retries_exceed(self, raise_on_status):  # type: ignore[misc]
         @responses.activate(registry=registries.OrderedRegistry)
         def run():
             url = "https://example.com"

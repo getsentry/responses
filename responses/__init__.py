@@ -1,9 +1,7 @@
-import http
 import inspect
 import json as json_module
 import logging
 import os
-import socket
 from functools import partialmethod
 from functools import wraps
 from http import client
@@ -405,6 +403,9 @@ class BaseResponse:
         self._calls: CallList = CallList()
         self.passthrough = passthrough
 
+        self.status: int = 200
+        self.body: "_Body" = ""
+
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, BaseResponse):
             return False
@@ -533,25 +534,38 @@ def _form_response(
     headers: Optional[Mapping[str, str]],
     status: int,
 ) -> HTTPResponse:
-    dummy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    orig_response = http.client.HTTPResponse(sock=dummy_socket)
     """
+    Function to generate `urllib3.response.HTTPResponse` object.
+
     The cookie handling functionality of the `requests` library relies on the response object
     having an original response object with the headers stored in the `msg` attribute.
     Instead of supplying a file-like object of type `HTTPMessage` for the headers, we provide
     the headers directly. This approach eliminates the need to parse the headers into a file-like
     object and then rely on the library to unparse it back. These additional conversions can
     introduce potential errors.
-    Therefore, we intentionally ignore type checking for this assignment.
     """
-    orig_response.msg = headers  # type: ignore[assignment]
 
+    data = BytesIO()
+    data.close()
+
+    """
+    The type `urllib3.response.HTTPResponse` is incorrect; we should
+    use `http.client.HTTPResponse` instead. However, changing this requires opening
+    a real socket to imitate the object. This may not be desired, as some users may
+    want to completely restrict network access in their tests.
+    See https://github.com/getsentry/responses/issues/691
+    """
+    orig_response = HTTPResponse(
+        body=data,  # required to avoid "ValueError: Unable to determine whether fp is closed."
+        msg=headers,  # type: ignore[arg-type]
+        preload_content=False,
+    )
     return HTTPResponse(
         status=status,
         reason=client.responses.get(status, None),
         body=body,
         headers=headers,
-        original_response=orig_response,
+        original_response=orig_response,  # type: ignore[arg-type]  # See comment above
         preload_content=False,
         request_method=method,
     )
@@ -571,6 +585,8 @@ class Response(BaseResponse):
         auto_calculate_content_length: bool = False,
         **kwargs: Any,
     ) -> None:
+        super().__init__(method, url, **kwargs)
+
         # if we were passed a `json` argument,
         # override the body and content_type
         if json is not None:
@@ -598,7 +614,6 @@ class Response(BaseResponse):
         self.stream: Optional[bool] = stream
         self.content_type: str = content_type  # type: ignore[assignment]
         self.auto_calculate_content_length: bool = auto_calculate_content_length
-        super().__init__(method, url, **kwargs)
 
     def get_response(self, request: "PreparedRequest") -> HTTPResponse:
         if self.body and isinstance(self.body, Exception):
@@ -643,6 +658,8 @@ class CallbackResponse(BaseResponse):
         content_type: Optional[str] = "text/plain",
         **kwargs: Any,
     ) -> None:
+        super().__init__(method, url, **kwargs)
+
         self.callback = callback
 
         if stream is not None:
@@ -652,7 +669,6 @@ class CallbackResponse(BaseResponse):
             )
         self.stream: Optional[bool] = stream
         self.content_type: Optional[str] = content_type
-        super().__init__(method, url, **kwargs)
 
     def get_response(self, request: "PreparedRequest") -> HTTPResponse:
         headers = self.get_headers()
@@ -981,6 +997,22 @@ class RequestsMock:
         finally:
             self.reset()
         return success
+
+    @overload
+    def activate(self, func: "_F" = ...) -> "_F":
+        """Overload for scenario when 'responses.activate' is used."""
+
+    @overload
+    def activate(  # type: ignore[misc]
+        self,
+        *,
+        registry: Type[Any] = ...,
+        assert_all_requests_are_fired: bool = ...,
+    ) -> Callable[["_F"], "_F"]:
+        """Overload for scenario when
+        'responses.activate(registry=, assert_all_requests_are_fired=True)' is used.
+        See https://github.com/getsentry/responses/pull/469 for more details
+        """
 
     def activate(
         self,

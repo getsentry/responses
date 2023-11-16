@@ -10,7 +10,7 @@ import responses
 
 
 @pytest.mark.parametrize("execution_number", range(10))
-def test_multithreading_lock(execution_number):
+def test_multithreading_lock(execution_number):  # type: ignore[misc]
     """Reruns test multiple times since error is random and
     depends on CPU and can lead to false positive result.
 

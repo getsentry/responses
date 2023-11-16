@@ -1,5 +1,7 @@
 import gzip
 import re
+from typing import Any
+from typing import List
 from unittest.mock import Mock
 
 import pytest
@@ -152,7 +154,7 @@ def test_json_params_matcher_json_list():
 
 
 def test_json_params_matcher_json_list_empty():
-    json_a = []
+    json_a: "List[Any]" = []
     json_b = "[]"
     mock_request = Mock(body=json_b)
     result = matchers.json_params_matcher(json_a)(mock_request)
@@ -457,7 +459,7 @@ def test_fail_matchers_error():
         (b"\xacHello World!", b"\xacHello World!"),
     ],
 )
-def test_multipart_matcher(req_file, match_file):
+def test_multipart_matcher(req_file, match_file):  # type: ignore[misc]
     @responses.activate
     def run():
         req_data = {"some": "other", "data": "fields"}
@@ -796,7 +798,7 @@ def test_matchers_create_key_val_str():
 
 class TestHeaderWithRegex:
     @property
-    def url(self):
+    def url(self):  # type: ignore[misc]
         return "http://example.com/"
 
     def _register(self):

@@ -40,7 +40,7 @@ def _remove_nones(d: "Any") -> "Any":
 def _dump(
     registered: "List[BaseResponse]",
     config_file: "Union[str, os.PathLike[str]]",
-    dumper: "Callable[[Union[Dict[Any, Any], List[Any]], Union[IO[Any]]], Any]",
+    dumper: "Callable[[Union[Dict[Any, Any], List[Any]], Union[IO[Any]]], None]",
     dumper_mode: "str" = "w",
 ) -> None:
     data: Dict[str, Any] = {"responses": []}
@@ -56,7 +56,7 @@ def _dump(
     for rsp in registered:
         try:
             content_length = rsp.auto_calculate_content_length  # type: ignore[attr-defined]
-            body = rsp.body  # type: ignore[attr-defined]
+            body = rsp.body
             if isinstance(body, bytes):
                 os.makedirs(binary_directory, exist_ok=True)
                 bin_file = os.path.join(binary_directory, f"{uuid.uuid4()}.bin")
@@ -76,7 +76,7 @@ def _dump(
                         "url": rsp.url,
                         "body": body,
                         "body_file": body_file,
-                        "status": rsp.status,  # type: ignore[attr-defined]
+                        "status": rsp.status,
                         "headers": rsp.headers,
                         "content_type": rsp.content_type,
                         "auto_calculate_content_length": content_length,

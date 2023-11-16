@@ -237,7 +237,7 @@ class TestRecord:
         custom_recorder = _recorder.Recorder()
 
         def dump_to_file(file_path, registered):
-            _dump(registered, file_path, tomli_w.dump, "wb")
+            _dump(registered, file_path, tomli_w.dump, "wb")  # type: ignore[arg-type]
 
         custom_recorder.dump_to_file = dump_to_file  # type: ignore[method-assign]
 
@@ -299,7 +299,7 @@ class TestReplay:
             with open(self.out_file, "w") as file:
                 parser.dump(get_data_for_dump("example.com", "8080"), file)
         else:
-            with open(self.out_file, "wb") as file:
+            with open(self.out_file, "wb") as file:  # type: ignore[assignment]
                 parser.dump(get_data_for_dump("example.com", "8080"), file)
 
         @responses.activate

@@ -12,7 +12,7 @@ from responses._recorder import _dump
 try:
     import tomli as _toml
 except ImportError:
-    # python 3.11
+    # python 3.11+
     import tomllib as _toml  # type: ignore[no-redef]
 
 

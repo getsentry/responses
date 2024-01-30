@@ -2,6 +2,7 @@
 ------
 
 * Added support for Python 3.12
+* Fixed `matchers.header_matcher` not failing when a matched header is missing from the request. See #702
 
 
 0.24.1

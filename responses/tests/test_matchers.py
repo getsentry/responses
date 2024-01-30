@@ -626,7 +626,7 @@ def test_request_matches_headers():
     assert_reset()
 
 
-def test_request_matches_headers_no_match():
+def test_request_header_value_mismatch_raises():
     @responses.activate
     def run():
         url = "http://example.com/"
@@ -645,6 +645,27 @@ def test_request_matches_headers_no_match():
             "Headers do not match: {Accept: application/xml} doesn't match "
             "{Accept: application/json}"
         ) in msg
+
+    run()
+    assert_reset()
+
+
+def test_request_headers_missing_raises():
+    @responses.activate
+    def run():
+        url = "http://example.com/"
+        responses.add(
+            method=responses.GET,
+            url=url,
+            json={"success": True},
+            match=[matchers.header_matcher({"x-custom-header": "foo"})],
+        )
+
+        with pytest.raises(ConnectionError) as excinfo:
+            requests.get(url, headers={})
+
+        msg = str(excinfo.value)
+        assert ("Headers do not match: {} doesn't match {x-custom-header: foo}") in msg
 
     run()
     assert_reset()

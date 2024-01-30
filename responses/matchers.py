@@ -421,7 +421,7 @@ def header_matcher(
                 else:
                     if not v == request_headers[k]:
                         return False
-            elif strict_match:
+            else:
                 return False
 
         return True

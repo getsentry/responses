@@ -2264,7 +2264,7 @@ def test_responses_reuse():
 
 
 @pytest.mark.asyncio
-async def test_async_calls():
+async def test_async_calls():  # type: ignore[misc]
     @responses.activate
     async def run():
         responses.add(

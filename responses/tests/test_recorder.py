@@ -21,42 +21,141 @@ def get_data(host, port):
         "responses": [
             {
                 "response": {
-                    "method": "GET",
-                    "url": f"http://{host}:{port}/404",
+                    "auto_calculate_content_length": False,
                     "body": "404 Not Found",
+                    "content_type": "text/plain",
+                    "matchers": [
+                        {
+                            "query_param_matcher": {
+                                "args": {"params": {}, "strict_match": True},
+                                "matcher_import_path": "responses.matchers",
+                            }
+                        },
+                        {
+                            "header_matcher": {
+                                "args": {
+                                    "headers": {
+                                        "Accept": "*/*",
+                                        "Accept-Encoding": "gzip, deflate",
+                                        "Connection": "keep-alive",
+                                        "User-Agent": "python-requests/2.30.0",
+                                    },
+                                    "strict_match": False,
+                                },
+                                "matcher_import_path": "responses.matchers",
+                            }
+                        },
+                    ],
+                    "method": "GET",
                     "status": 404,
-                    "content_type": "text/plain",
-                    "auto_calculate_content_length": False,
+                    "url": f"http://{host}:{port}/404",
                 }
             },
             {
                 "response": {
-                    "method": "GET",
-                    "url": f"http://{host}:{port}/status/wrong",
+                    "auto_calculate_content_length": False,
                     "body": "Invalid status code",
-                    "status": 400,
                     "content_type": "text/plain",
-                    "auto_calculate_content_length": False,
-                }
-            },
-            {
-                "response": {
+                    "matchers": [
+                        {
+                            "query_param_matcher": {
+                                "args": {"params": {}, "strict_match": True},
+                                "matcher_import_path": "responses.matchers",
+                            }
+                        },
+                        {
+                            "header_matcher": {
+                                "args": {
+                                    "headers": {
+                                        "Accept": "*/*",
+                                        "Accept-Encoding": "gzip, deflate",
+                                        "Connection": "keep-alive",
+                                        "User-Agent": "python-requests/2.30.0",
+                                    },
+                                    "strict_match": False,
+                                },
+                                "matcher_import_path": "responses.matchers",
+                            }
+                        },
+                    ],
                     "method": "GET",
-                    "url": f"http://{host}:{port}/500",
-                    "body": "500 Internal Server Error",
-                    "status": 500,
-                    "content_type": "text/plain",
-                    "auto_calculate_content_length": False,
+                    "status": 400,
+                    "url": f"http://{host}:{port}/status/wrong",
                 }
             },
             {
                 "response": {
-                    "method": "PUT",
-                    "url": f"http://{host}:{port}/202",
-                    "body": "OK",
-                    "status": 202,
-                    "content_type": "text/plain",
                     "auto_calculate_content_length": False,
+                    "body": "500 Internal Server Error",
+                    "content_type": "text/plain",
+                    "matchers": [
+                        {
+                            "query_param_matcher": {
+                                "args": {
+                                    "params": {"query": "smth"},
+                                    "strict_match": True,
+                                },
+                                "matcher_import_path": "responses.matchers",
+                            }
+                        },
+                        {
+                            "header_matcher": {
+                                "args": {
+                                    "headers": {
+                                        "Accept": "*/*",
+                                        "Accept-Encoding": "gzip, deflate",
+                                        "Connection": "keep-alive",
+                                        "User-Agent": "python-requests/2.30.0",
+                                    },
+                                    "strict_match": False,
+                                },
+                                "matcher_import_path": "responses.matchers",
+                            }
+                        },
+                        {
+                            "query_string_matcher": {
+                                "args": {"query": "query=smth"},
+                                "matcher_import_path": "responses.matchers",
+                            }
+                        },
+                    ],
+                    "method": "GET",
+                    "status": 500,
+                    "url": f"http://{host}:{port}/500?query=smth",
+                }
+            },
+            {
+                "response": {
+                    "auto_calculate_content_length": False,
+                    "body": "OK",
+                    "content_type": "text/plain",
+                    "matchers": [
+                        {
+                            "query_param_matcher": {
+                                "args": {"params": {}, "strict_match": True},
+                                "matcher_import_path": "responses.matchers",
+                            }
+                        },
+                        {
+                            "header_matcher": {
+                                "args": {
+                                    "headers": {
+                                        "Accept": "*/*",
+                                        "Accept-Encoding": "gzip, deflate",
+                                        "Connection": "keep-alive",
+                                        "Content-Length": "0",
+                                        "User-Agent": "python-requests/2.30.0",
+                                        "XAuth": "54579",
+                                    },
+                                    "strict_match": False,
+                                },
+                                "matcher_import_path": "responses.matchers",
+                            }
+                        },
+                    ],
+                    "method": "PUT",
+                    "status": 202,
+                    "url": f"http://{host}:{port}/202",
                 }
             },
         ]
@@ -76,8 +175,8 @@ class TestRecord:
         url202, url400, url404, url500 = self.prepare_server(httpserver)
 
         def another():
-            requests.get(url500)
-            requests.put(url202)
+            requests.get(url500, params={"query": "smth"})
+            requests.put(url202, headers={"XAuth": "54579"})
 
         @_recorder.record(file_path=self.out_file)
         def run():

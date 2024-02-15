@@ -1,6 +1,7 @@
 import inspect
 import json as json_module
 import logging
+import os
 from functools import partialmethod
 from functools import wraps
 from http import client
@@ -56,7 +57,6 @@ from urllib3.util.url import parse_url
 
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
-    import os
     from typing import Protocol
     from unittest.mock import _patch as _mock_patcher
 
@@ -529,6 +529,7 @@ class BaseResponse:
 
 
 def _form_response(
+    method: Optional[str],
     body: Union[BufferedReader, BytesIO],
     headers: Optional[Mapping[str, str]],
     status: int,
@@ -566,6 +567,7 @@ def _form_response(
         headers=headers,
         original_response=orig_response,  # type: ignore[arg-type]  # See comment above
         preload_content=False,
+        request_method=method,
     )
 
 
@@ -632,7 +634,7 @@ class Response(BaseResponse):
             content_length = len(body.getvalue())
             headers["Content-Length"] = str(content_length)
 
-        return _form_response(body, headers, status)
+        return _form_response(request.method, body, headers, status)
 
     def __repr__(self) -> str:
         return (
@@ -695,7 +697,7 @@ class CallbackResponse(BaseResponse):
         body = _handle_body(body)
         headers.extend(r_headers)
 
-        return _form_response(body, headers, status)
+        return _form_response(request.method, body, headers, status)
 
 
 class PassthroughResponse(BaseResponse):
@@ -842,14 +844,24 @@ class RequestsMock:
 
     def _add_from_file(self, file_path: "Union[str, bytes, os.PathLike[Any]]") -> None:
         data = self._parse_response_file(file_path)
+        parent_directory = os.path.dirname(os.path.abspath(file_path))
 
         for rsp in data["responses"]:
             rsp = rsp["response"]
+            headers = dict(rsp.get("headers") or {})
+            if "Content-Type" in headers:
+                headers.pop("Content-Type")
+            if "body_file" in rsp:
+                with open(os.path.join(parent_directory, rsp["body_file"]), "rb") as f:
+                    body = f.read()
+            else:
+                body = rsp["body"]
             self.add(
                 method=rsp["method"],
                 url=rsp["url"],
-                body=rsp["body"],
+                body=body,
                 status=rsp["status"],
+                headers=headers,
                 content_type=rsp["content_type"],
                 auto_calculate_content_length=rsp["auto_calculate_content_length"],
             )

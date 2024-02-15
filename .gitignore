@@ -14,3 +14,7 @@ venv
 /.pytest_cache
 /.tox
 /.artifacts
+/test_*
+/*.yaml
+*.bin
+!/example_bins/*.bin

@@ -63,7 +63,8 @@ def test_set_registry_reversed():
     assert_reset()
 
 
-async def test_registry_async():
+@pytest.mark.asyncio
+async def test_registry_async():  # type: ignore[misc]
     class CustomRegistry(registries.FirstMatchRegistry):
         pass
 

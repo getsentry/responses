@@ -1,3 +1,8 @@
+0.25.2
+------
+
+* Fixed error messages when matches fail: inputs are not sorted or reformatted. See #704
+
 0.25.1
 ------
 

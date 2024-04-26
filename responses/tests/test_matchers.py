@@ -135,11 +135,25 @@ def test_json_params_matcher_not_strict_diff_values():
             )
         assert (
             "- POST http://example.com/ request.body doesn't match: "
-            "{page: {type: json}} doesn't match {page: {diff: value, type: json}}"
+            "{'page': {'type': 'json'}} doesn't match {'page': {'type': 'json', 'diff': 'value'}}"
         ) in str(exc.value)
 
     run()
     assert_reset()
+
+
+def test_failed_matchers_dont_modify_inputs_order_in_error_message():
+    json_a = {"array": ["C", "B", "A"]}
+    json_b = '{"array" : ["B", "A", "C"]}'
+    mock_request = Mock(body=json_b)
+    result = matchers.json_params_matcher(json_a)(mock_request)
+    assert result == (
+        False,
+        (
+            "request.body doesn't match: {'array': ['B', 'A', 'C']} "
+            "doesn't match {'array': ['C', 'B', 'A']}"
+        ),
+    )
 
 
 def test_json_params_matcher_json_list():
@@ -250,7 +264,7 @@ def test_query_param_matcher_loose_fail():
 
         assert (
             "- GET https://example.com/ Parameters do not match. {} doesn't"
-            " match {does_not_exist: test}\n"
+            " match {'does_not_exist': 'test'}\n"
             "You can use `strict_match=True` to do a strict parameters check."
         ) in str(exc.value)
 
@@ -304,7 +318,7 @@ def test_request_matches_empty_body():
                 )
 
             msg = str(excinfo.value)
-            assert "request.body doesn't match: {my: data} doesn't match {}" in msg
+            assert "request.body doesn't match: {'my': 'data'} doesn't match {}" in msg
 
         with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
             rsps.add(
@@ -322,9 +336,9 @@ def test_request_matches_empty_body():
                 )
             msg = str(excinfo.value)
             assert (
-                "request.body doesn't match: {page: second, type: urlencoded} doesn't match {}"
-                in msg
-            )
+                "request.body doesn't match: {'page': 'second', "
+                "'type': 'urlencoded'} doesn't match {}"
+            ) in msg
 
     run()
     assert_reset()
@@ -389,7 +403,8 @@ def test_fail_matchers_error():
 
             msg = str(excinfo.value)
             assert (
-                "request.body doesn't match: {id: bad} doesn't match {foo: bar}" in msg
+                "request.body doesn't match: {'id': 'bad'} doesn't match {'foo': 'bar'}"
+                in msg
             )
 
             assert (
@@ -418,10 +433,11 @@ def test_fail_matchers_error():
 
             msg = str(excinfo.value)
             assert (
-                "Parameters do not match. {id: bad} doesn't match {my: params}" in msg
+                "Parameters do not match. {'id': 'bad'} doesn't match {'my': 'params'}"
+                in msg
             )
             assert (
-                "request.body doesn't match: {page: two} doesn't match {page: one}"
+                "request.body doesn't match: {'page': 'two'} doesn't match {'page': 'one'}"
                 in msg
             )
 
@@ -442,7 +458,7 @@ def test_fail_matchers_error():
             msg = str(excinfo.value)
             assert (
                 "Arguments don't match: "
-                "{stream: True, verify: True} doesn't match {stream: True, verify: False}"
+                "{'stream': True, 'verify': True} doesn't match {'stream': True, 'verify': False}"
             ) in msg
 
     run()
@@ -587,9 +603,9 @@ def test_query_string_matcher_raises():
 
             msg = str(excinfo.value)
             assert (
-                "Query string doesn't match. {didi: pro, test: 1} doesn't match {didi: pro}"
-                in msg
-            )
+                "Query string doesn't match. {'didi': 'pro', 'test': '1'} "
+                "doesn't match {'didi': 'pro'}"
+            ) in msg
 
     run()
     assert_reset()
@@ -642,8 +658,8 @@ def test_request_header_value_mismatch_raises():
 
         msg = str(excinfo.value)
         assert (
-            "Headers do not match: {Accept: application/xml} doesn't match "
-            "{Accept: application/json}"
+            "Headers do not match: {'Accept': 'application/xml'} doesn't match "
+            "{'Accept': 'application/json'}"
         ) in msg
 
     run()
@@ -665,7 +681,9 @@ def test_request_headers_missing_raises():
             requests.get(url, headers={})
 
         msg = str(excinfo.value)
-        assert ("Headers do not match: {} doesn't match {x-custom-header: foo}") in msg
+        assert (
+            "Headers do not match: {} doesn't match {'x-custom-header': 'foo'}"
+        ) in msg
 
     run()
     assert_reset()
@@ -716,8 +734,8 @@ def test_request_matches_headers_strict_match():
 
         msg = str(excinfo.value)
         assert (
-            "Headers do not match: {Accept: text/plain, Accept-Charset: utf-8} "
-            "doesn't match {Accept: text/plain}"
+            "Headers do not match: {'Accept': 'text/plain', 'Accept-Charset': 'utf-8'} "
+            "doesn't match {'Accept': 'text/plain'}"
         ) in msg
 
     run()
@@ -790,31 +808,6 @@ def test_fragment_identifier_matcher_and_match_querystring():
 
     run()
     assert_reset()
-
-
-def test_matchers_create_key_val_str():
-    """
-    Test that matchers._create_key_val_str does recursive conversion
-    """
-    data = {
-        "my_list": [
-            1,
-            2,
-            "a",
-            {"key1": "val1", "key2": 2, 3: "test"},
-            "!",
-            [["list", "nested"], {"nested": "dict"}],
-        ],
-        1: 4,
-        "test": "val",
-        "high": {"nested": "nested_dict"},
-    }
-    conv_str = matchers._create_key_val_str(data)
-    reference = (
-        "{1: 4, high: {nested: nested_dict}, my_list: [!, 1, 2, [[list, nested], {nested: dict}], "
-        "a, {3: test, key1: val1, key2: 2}], test: val}"
-    )
-    assert conv_str == reference
 
 
 class TestHeaderWithRegex:
@@ -892,9 +885,9 @@ class TestHeaderWithRegex:
                 session.send(prepped)
             msg = str(excinfo.value)
             assert (
-                "Headers do not match: {Accept: text/plain, Message-Signature: "
-                'signature="123",created=abc} '
-                "doesn't match {Accept: text/plain, Message-Signature: "
+                "Headers do not match: {'Accept': 'text/plain', 'Message-Signature': "
+                """'signature="123",created=abc'} """
+                "doesn't match {'Accept': 'text/plain', 'Message-Signature': "
                 "re.compile('signature=\"\\\\S+\",created=\\\\d+')}"
             ) in msg
 
@@ -921,8 +914,8 @@ class TestHeaderWithRegex:
                 session.send(prepped)
             msg = str(excinfo.value)
             assert (
-                "Headers do not match: {Accept: text/plain, Accept-Charset: utf-8} "
-                "doesn't match {Accept: text/plain, Message-Signature: "
+                "Headers do not match: {'Accept': 'text/plain', 'Accept-Charset': 'utf-8'} "
+                "doesn't match {'Accept': 'text/plain', 'Message-Signature': "
                 "re.compile('signature=\"\\\\S+\",created=\\\\d+')}"
             ) in msg
 
@@ -950,10 +943,9 @@ class TestHeaderWithRegex:
                 session.send(prepped)
             msg = str(excinfo.value)
             assert (
-                "Headers do not match: {Accept: text/plain, Accept-Charset: utf-8, "
-                'Message-Signature: signature="abc",'
-                "created=1243} "
-                "doesn't match {Accept: text/plain, Message-Signature: "
+                "Headers do not match: {'Accept': 'text/plain', 'Accept-Charset': 'utf-8', "
+                """'Message-Signature': 'signature="abc",created=1243'} """
+                "doesn't match {'Accept': 'text/plain', 'Message-Signature': "
                 "re.compile('signature=\"\\\\S+\",created=\\\\d+')}"
             ) in msg
 

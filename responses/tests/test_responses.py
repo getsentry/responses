@@ -2416,6 +2416,18 @@ class TestShortcuts:
         run()
         assert_reset()
 
+    def test_head_with_content_length(self):
+        @responses.activate
+        def run():
+            headers = {"content-length": "1000"}
+            responses.head("http://example.com/1", status=200, headers=headers)
+            resp = requests.head("http://example.com/1")
+            assert resp.status_code == 200
+            assert resp.headers["Content-Length"] == "1000"
+
+        run()
+        assert_reset()
+
     def test_options(self):
         @responses.activate
         def run():

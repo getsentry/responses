@@ -2,6 +2,7 @@
 ------
 
 * Fixed tests failures during RPM package builds. See #706
+* Fix mocked HEAD responses that have `Content-Length` set. See #712
 
 0.25.0
 ------

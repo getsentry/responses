@@ -50,7 +50,7 @@ def urlencoded_params_matcher(
     params: Optional[Mapping[str, str]], *, allow_blank: bool = False
 ) -> Callable[..., Any]:
     """
-    Matches URL encoded datarequest_body
+    Matches URL encoded data
 
     :param params: (dict) data provided to 'data' arg of request
     :return: (func) matcher

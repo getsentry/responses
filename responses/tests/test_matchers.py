@@ -14,6 +14,40 @@ from responses.tests.test_responses import assert_reset
 from responses.tests.test_responses import assert_response
 
 
+def test_body_match_get():
+    @responses.activate
+    def run():
+        url = "http://example.com"
+        responses.add(
+            responses.GET,
+            url,
+            body=b"test",
+            match=[matchers.body_matcher("123456")],
+        )
+        resp = requests.get("http://example.com", data="123456")
+        assert_response(resp, "test")
+
+    run()
+    assert_reset()
+
+
+def test_body_match_post():
+    @responses.activate
+    def run():
+        url = "http://example.com"
+        responses.add(
+            responses.POST,
+            url,
+            body=b"test",
+            match=[matchers.body_matcher("123456")],
+        )
+        resp = requests.post("http://example.com", data="123456")
+        assert_response(resp, "test")
+
+    run()
+    assert_reset()
+
+
 def test_query_string_matcher():
     @responses.activate
     def run():

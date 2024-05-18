@@ -31,11 +31,26 @@ def _filter_dict_recursively(
     return filtered_dict
 
 
+def body_matcher(params: str, *, allow_blank: bool = False) -> Callable[..., Any]:
+    def match(request: PreparedRequest) -> Tuple[bool, str]:
+        reason = ""
+        if isinstance(request.body, bytes):
+            request_body = request.body.decode("utf-8")
+        else:
+            request_body = request.body
+        valid = True if request_body == params else False
+        if not valid:
+            reason = f"request.body doesn't match {params} doesn't match {request_body}"
+        return valid, reason
+
+    return match
+
+
 def urlencoded_params_matcher(
     params: Optional[Mapping[str, str]], *, allow_blank: bool = False
 ) -> Callable[..., Any]:
     """
-    Matches URL encoded data
+    Matches URL encoded datarequest_body
 
     :param params: (dict) data provided to 'data' arg of request
     :return: (func) matcher
@@ -159,7 +174,8 @@ def query_param_matcher(
         conjunction with ``strict_match=False``.
     strict_match : bool, default=True
         If set to ``True``, validates that all parameters match.
-        If set to ``False``, original request may contain additional parameters.
+        If set to ``False``, original request may contain additional parameters.request_body
+        = request.bodyrequest_body = request.body.decode("utf-8").decode("utf-8")
 
 
     Returns

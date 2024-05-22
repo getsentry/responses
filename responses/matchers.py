@@ -175,7 +175,6 @@ def query_param_matcher(
     strict_match : bool, default=True
         If set to ``True``, validates that all parameters match.
         If set to ``False``, original request may contain additional parameters.request_body
-        = request.bodyrequest_body = request.body.decode("utf-8").decode("utf-8")
 
 
     Returns

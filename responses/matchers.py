@@ -174,7 +174,7 @@ def query_param_matcher(
         conjunction with ``strict_match=False``.
     strict_match : bool, default=True
         If set to ``True``, validates that all parameters match.
-        If set to ``False``, original request may contain additional parameters.request_body
+        If set to ``False``, original request may contain additional parameters.
 
 
     Returns

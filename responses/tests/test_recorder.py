@@ -23,6 +23,7 @@ def get_data(host, port):
                 "response": {
                     "method": "GET",
                     "url": f"http://{host}:{port}/404",
+                    "headers": {"x": "foo"},
                     "body": "404 Not Found",
                     "status": 404,
                     "content_type": "text/plain",
@@ -33,6 +34,7 @@ def get_data(host, port):
                 "response": {
                     "method": "GET",
                     "url": f"http://{host}:{port}/status/wrong",
+                    "headers": {"x": "foo"},
                     "body": "Invalid status code",
                     "status": 400,
                     "content_type": "text/plain",
@@ -43,6 +45,7 @@ def get_data(host, port):
                 "response": {
                     "method": "GET",
                     "url": f"http://{host}:{port}/500",
+                    "headers": {"x": "foo"},
                     "body": "500 Internal Server Error",
                     "status": 500,
                     "content_type": "text/plain",
@@ -89,7 +92,6 @@ class TestRecord:
 
         with open(self.out_file) as file:
             data = yaml.safe_load(file)
-
         assert data == get_data(httpserver.host, httpserver.port)
 
     def test_recorder_toml(self, httpserver):
@@ -122,16 +124,27 @@ class TestRecord:
 
     def prepare_server(self, httpserver):
         httpserver.expect_request("/500").respond_with_data(
-            "500 Internal Server Error", status=500, content_type="text/plain"
+            "500 Internal Server Error",
+            status=500,
+            content_type="text/plain",
+            headers={"x": "foo"},
         )
         httpserver.expect_request("/202").respond_with_data(
-            "OK", status=202, content_type="text/plain"
+            "OK",
+            status=202,
+            content_type="text/plain",
         )
         httpserver.expect_request("/404").respond_with_data(
-            "404 Not Found", status=404, content_type="text/plain"
+            "404 Not Found",
+            status=404,
+            content_type="text/plain",
+            headers={"x": "foo"},
         )
         httpserver.expect_request("/status/wrong").respond_with_data(
-            "Invalid status code", status=400, content_type="text/plain"
+            "Invalid status code",
+            status=400,
+            content_type="text/plain",
+            headers={"x": "foo"},
         )
         url500 = httpserver.url_for("/500")
         url202 = httpserver.url_for("/202")

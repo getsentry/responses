@@ -26,7 +26,10 @@
     "python.linting.flake8Enabled": true,
     "python.formatting.provider": "black",
     "python.pythonPath": "${env.WORKON_HOME}/responses/bin/python",
-    "python.testing.pytestEnabled": false,
+    "python.testing.pytestEnabled": true,
     "python.testing.unittestEnabled": false,
-    "python.testing.nosetestsEnabled": false
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestArgs": [
+        "."
+    ]
 }

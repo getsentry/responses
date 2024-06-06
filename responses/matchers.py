@@ -31,6 +31,21 @@ def _filter_dict_recursively(
     return filtered_dict
 
 
+def body_matcher(params: str, *, allow_blank: bool = False) -> Callable[..., Any]:
+    def match(request: PreparedRequest) -> Tuple[bool, str]:
+        reason = ""
+        if isinstance(request.body, bytes):
+            request_body = request.body.decode("utf-8")
+        else:
+            request_body = request.body
+        valid = True if request_body == params else False
+        if not valid:
+            reason = f"request.body doesn't match {params} doesn't match {request_body}"
+        return valid, reason
+
+    return match
+
+
 def urlencoded_params_matcher(
     params: Optional[Mapping[str, str]], *, allow_blank: bool = False
 ) -> Callable[..., Any]:

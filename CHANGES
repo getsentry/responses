@@ -2,6 +2,7 @@
 ------
 
 * Mulligan on 0.25.1 to run release pipeline correctly.
+* Added `matchers.body_matcher` for matching string request bodies. See #717
 
 0.25.1
 ------

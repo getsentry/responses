@@ -37,7 +37,7 @@ def body_matcher(params: str, *, allow_blank: bool = False) -> Callable[..., Any
         if isinstance(request.body, bytes):
             request_body = request.body.decode("utf-8")
         else:
-            request_body = request.body
+            request_body = str(request.body)
         valid = True if request_body == params else False
         if not valid:
             reason = f"request.body doesn't match {params} doesn't match {request_body}"

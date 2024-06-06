@@ -1106,7 +1106,7 @@ class RequestsMock:
             response = self._real_send(adapter, request, **kwargs)  # type: ignore
         else:
             try:
-                response = adapter.build_response(  # type: ignore[no-untyped-call]
+                response = adapter.build_response(  # type: ignore[assignment]
                     request, match.get_response(request)
                 )
             except BaseException as response:

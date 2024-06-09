@@ -48,6 +48,7 @@ def _remove_default_headers(data: "Any") -> "Any":
             "Date",
             "Server",
             "Connection",
+            "Content-Encoding",
         ]
         for i, response in enumerate(data["responses"]):
             for key in keys_to_remove:

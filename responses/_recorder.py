@@ -140,22 +140,9 @@ class Recorder(RequestsMock):
         request.params = self._parse_request_params(request.path_url)  # type: ignore[attr-defined]
         request.req_kwargs = kwargs  # type: ignore[attr-defined]
         requests_response = _real_send(adapter, request, **kwargs)
-        # headers is requests_response.values() returns a ValueView
-        # converting that to a dictionary with the dict() method
-        # resulted in *** ValueError: dictionary update sequence
-        # element #0 has length 28; 2 is required
-        # I need to coerce the key:value maping of headers into a dictionary by some method
-        # If I dont and try and write the key:value to the recording file,
-        # it will have pyyaml tags on them which can't be safe loaded back in
-        # like this
-        # The best way I found was to parse it as a string, and then use
-        # ast to evaluate it but I know this is hacky.
-
-        import ast
-
-        headers_values = ast.literal_eval(
-            str(requests_response.headers.values())[11:-1]
-        )
+        headers_values = {
+            key: value for key, value in requests_response.headers.items()
+        }
         responses_response = Response(
             method=str(request.method),
             url=str(requests_response.request.url),

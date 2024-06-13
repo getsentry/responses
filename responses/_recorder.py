@@ -1,5 +1,9 @@
+import inspect
 from functools import wraps
 from typing import TYPE_CHECKING
+
+from responses.matchers import header_matcher
+from responses.matchers import query_param_matcher
 
 if TYPE_CHECKING:  # pragma: no cover
     import os
@@ -58,12 +62,28 @@ def _dump(
                     }
                 }
             )
+            if rsp.match:
+                matchers = data["responses"][-1]["response"]["matchers"] = []
+                for matcher in rsp.match:
+                    matchers.append(parse_matchers_function(matcher))
+
         except AttributeError as exc:  # pragma: no cover
             raise AttributeError(
                 "Cannot dump response object."
                 "Probably you use custom Response object that is missing required attributes"
             ) from exc
     dumper(_remove_nones(data), destination)
+
+
+def parse_matchers_function(func: "Callable[..., Any]") -> "Dict[str, Any]":
+    matcher_name = func.__qualname__.split(".")[0]
+    matcher_constructor: Dict[str, Any] = {
+        matcher_name: {
+            "args": inspect.getclosurevars(func).nonlocals,
+            "matcher_import_path": func.__module__,
+        }
+    }
+    return matcher_constructor
 
 
 class Recorder(RequestsMock):
@@ -121,6 +141,10 @@ class Recorder(RequestsMock):
             url=str(requests_response.request.url),
             status=requests_response.status_code,
             body=requests_response.text,
+            match=(
+                query_param_matcher(request.params),  # type: ignore[attr-defined]
+                header_matcher(dict(request.headers)),
+            ),
         )
         self._registry.add(responses_response)
         return requests_response

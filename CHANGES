@@ -1,3 +1,8 @@
+0.25.3
+------
+
+* Fixed `recorder` not saving and loading response headers with yaml files. See #715
+
 0.25.2
 ------
 

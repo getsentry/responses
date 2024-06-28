@@ -27,6 +27,8 @@ from responses import Response
 from responses import _real_send
 from responses.registries import OrderedRegistry
 
+from ._compat import MOCKED_LIBRARY
+
 
 def _remove_nones(d: "Any") -> "Any":
     if isinstance(d, dict):
@@ -94,7 +96,7 @@ class Recorder(RequestsMock):
     def __init__(
         self,
         *,
-        target: str = "requests.adapters.HTTPAdapter.send",
+        target: str = f"{MOCKED_LIBRARY}.adapters.HTTPAdapter.send",
         registry: "Type[FirstMatchRegistry]" = OrderedRegistry,
     ) -> None:
         super().__init__(target=target, registry=registry)

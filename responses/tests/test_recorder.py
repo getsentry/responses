@@ -1,13 +1,14 @@
 from pathlib import Path
 
 import pytest
-import requests
 import tomli_w
 import yaml
 
 import responses
 from responses import _recorder
 from responses._recorder import _dump
+
+from .._compat import requests
 
 try:
     import tomli as _toml

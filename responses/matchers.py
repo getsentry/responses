@@ -14,8 +14,9 @@ from typing import Union
 from urllib.parse import parse_qsl
 from urllib.parse import urlparse
 
-from requests import PreparedRequest
 from urllib3.util.url import parse_url
+
+from ._compat import PreparedRequest
 
 
 def _filter_dict_recursively(

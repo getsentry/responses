@@ -13,7 +13,7 @@ Responses
 .. image:: https://codecov.io/gh/getsentry/responses/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/getsentry/responses/
 
-A utility library for mocking out the ``requests`` Python library.
+A utility library for mocking out the ``requests`` or the ``niquests`` Python library.
 
 ..  note::
 

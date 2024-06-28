@@ -4,9 +4,10 @@ Separate file for multithreading since it takes time to run
 import threading
 
 import pytest
-import requests
 
 import responses
+
+from .._compat import requests
 
 
 @pytest.mark.parametrize("execution_number", range(10))

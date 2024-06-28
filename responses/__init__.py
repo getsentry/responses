@@ -26,15 +26,17 @@ from typing import overload
 from warnings import warn
 
 import yaml
-from requests.adapters import HTTPAdapter
-from requests.adapters import MaxRetryError
-from requests.exceptions import ConnectionError
-from requests.exceptions import RetryError
 
 from responses.matchers import json_params_matcher as _json_params_matcher
 from responses.matchers import query_string_matcher as _query_string_matcher
 from responses.matchers import urlencoded_params_matcher as _urlencoded_params_matcher
 from responses.registries import FirstMatchRegistry
+
+from ._compat import MOCKED_LIBRARY
+from ._compat import ConnectionError
+from ._compat import HTTPAdapter
+from ._compat import MaxRetryError
+from ._compat import RetryError
 
 try:
     from typing_extensions import Literal
@@ -469,7 +471,9 @@ class BaseResponse:
             if _has_unicode(url):
                 url = _clean_unicode(url)
 
-            return _get_url_and_path(url) == _get_url_and_path(other)
+            return _get_url_and_path(url) == _get_url_and_path(
+                _ensure_url_default_path(other)  # type: ignore[arg-type]
+            )
 
         elif isinstance(url, Pattern) and url.match(other):
             return True
@@ -721,7 +725,7 @@ class RequestsMock:
         assert_all_requests_are_fired: bool = True,
         response_callback: Optional[Callable[[Any], Any]] = None,
         passthru_prefixes: Tuple[str, ...] = (),
-        target: str = "requests.adapters.HTTPAdapter.send",
+        target: str = f"{MOCKED_LIBRARY}.adapters.HTTPAdapter.send",
         registry: Type[FirstMatchRegistry] = FirstMatchRegistry,
         *,
         real_adapter_send: "_HTTPAdapterSend" = _real_send,
@@ -1219,7 +1223,8 @@ class RequestsMock:
             [
                 1
                 for call in self.calls
-                if call.request.url == _ensure_url_default_path(url)
+                if _ensure_url_default_path(call.request.url)  # type: ignore[arg-type]
+                == _ensure_url_default_path(url)  # type: ignore[arg-type]
             ]
         )
         if call_count == count:

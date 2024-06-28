@@ -5,13 +5,14 @@ from typing import List
 from unittest.mock import Mock
 
 import pytest
-import requests
-from requests.exceptions import ConnectionError
 
 import responses
 from responses import matchers
 from responses.tests.test_responses import assert_reset
 from responses.tests.test_responses import assert_response
+
+from .._compat import ConnectionError
+from .._compat import requests
 
 
 def test_body_match_get():

@@ -40,7 +40,7 @@ tests_require = [
 if "test" in sys.argv:
     setup_requires.extend(tests_require)
 
-extras_require = {"tests": tests_require}
+extras_require = {"tests": tests_require, "niquests": ["niquests>=3,<4"]}
 
 
 class PyTest(TestCommand):

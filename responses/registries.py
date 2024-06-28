@@ -6,9 +6,9 @@ from typing import Tuple
 
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
-    from requests import PreparedRequest
-
     from responses import BaseResponse
+
+    from ._compat import PreparedRequest
 
 
 class FirstMatchRegistry:

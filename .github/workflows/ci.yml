@@ -32,9 +32,15 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-        requests-version: ['"requests>=2.0,<3.0"']
-        urllib3-version: ['"urllib3<2"', '"urllib3>=2,<3.0"']
-
+        requests-version: ['"requests>=2.0,<3.0"', '"niquests>=3,<4"']
+        urllib3-version: ['"urllib3<2"', '"urllib3>=2,<3.0"', '"urllib3-future>=2,<3"']
+        exclude:
+          - requests-version: '"niquests>=3,<4"'
+            urllib3-version: '"urllib3<2"'
+          - requests-version: '"niquests>=3,<4"'
+            urllib3-version: '"urllib3>=2,<3.0"'
+          - requests-version: '"requests>=2.0,<3.0"'
+            urllib3-version: '"urllib3-future>=2,<3"'
 
     steps:
     - uses: actions/checkout@v3

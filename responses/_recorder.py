@@ -144,13 +144,20 @@ class Recorder(RequestsMock):
         headers_values = {
             key: value for key, value in requests_response.headers.items()
         }
-        responses_response = Response(
-            method=str(request.method),
-            url=str(requests_response.request.url),
-            status=requests_response.status_code,
-            body=requests_response.text,
-            headers=headers_values,
-        )
+
+        response_params = {
+            "method": str(request.method),
+            "url": str(requests_response.request.url),
+            "status": requests_response.status_code,
+            "body": requests_response.text,
+            "headers": headers_values,
+        }
+
+        # If the header has a content type then pass it in.
+        if content_type := requests_response.headers.get("content-type"):
+            response_params["content_type"] = content_type
+
+        responses_response = Response(**response_params)
         self._registry.add(responses_response)
         return requests_response
 

@@ -42,17 +42,18 @@ def _remove_default_headers(data: "Any") -> "Any":
     record functionality.
     """
     if isinstance(data, dict):
+        # Items in this keys_to_remove list must be lower case!
         keys_to_remove = [
-            "Content-Length",
-            "Content-Type",
-            "Date",
-            "Server",
-            "Connection",
-            "Content-Encoding",
+            "content-length",
+            "content-type",
+            "date",
+            "server",
+            "connection",
+            "content-encoding",
         ]
         for i, response in enumerate(data["responses"]):
-            for key in keys_to_remove:
-                if key in response["response"]["headers"]:
+            for key in [key for key in response["response"]["headers"]]:
+                if key.lower() in keys_to_remove:
                     del data["responses"][i]["response"]["headers"][key]
             if not response["response"]["headers"]:
                 del data["responses"][i]["response"]["headers"]

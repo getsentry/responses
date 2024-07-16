@@ -202,6 +202,8 @@ def get_wrapped(
         Wrapped function
 
     """
+    if assert_all_requests_are_fired is None:
+        assert_all_requests_are_fired = mock.assert_all_requests_are_fired
     assert_mock = std_mock.patch.object(
         target=responses,
         attribute="assert_all_requests_are_fired",
@@ -1014,7 +1016,7 @@ class RequestsMock:
         func: Optional["_F"] = None,
         *,
         registry: Optional[Type[Any]] = None,
-        assert_all_requests_are_fired: bool = False,
+        assert_all_requests_are_fired: bool | None = None,
     ) -> Union[Callable[["_F"], "_F"], "_F"]:
         if func is not None:
             return get_wrapped(func, self)

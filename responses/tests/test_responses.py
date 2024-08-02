@@ -11,12 +11,7 @@ from unittest.mock import Mock
 from unittest.mock import patch
 
 import pytest
-import requests
 import urllib3
-from requests.exceptions import ChunkedEncodingError
-from requests.exceptions import ConnectionError
-from requests.exceptions import HTTPError
-from requests.exceptions import RetryError
 from urllib3.util.retry import Retry
 
 import responses
@@ -27,6 +22,12 @@ from responses import PassthroughResponse
 from responses import Response
 from responses import matchers
 from responses import registries
+
+from .._compat import ChunkedEncodingError
+from .._compat import ConnectionError
+from .._compat import HTTPError
+from .._compat import RetryError
+from .._compat import requests
 
 
 def assert_reset():
@@ -61,13 +62,23 @@ def test_response():
         resp = requests.get("http://example.com")
         assert_response(resp, "test")
         assert len(responses.calls) == 1
-        assert responses.calls[0].request.url == "http://example.com/"
+        assert (
+            responses._ensure_url_default_path(  # type: ignore[arg-type]
+                responses.calls[0].request.url
+            )
+            == "http://example.com/"
+        )
         assert responses.calls[0].response.content == b"test"
 
         resp = requests.get("http://example.com?foo=bar")
         assert_response(resp, "test")
         assert len(responses.calls) == 2
-        assert responses.calls[1].request.url == "http://example.com/?foo=bar"
+        assert (
+            responses._ensure_url_default_path(  # type: ignore[arg-type]
+                responses.calls[1].request.url
+            )
+            == "http://example.com/?foo=bar"
+        )
         assert responses.calls[1].response.content == b"test"
 
     run()
@@ -96,12 +107,22 @@ def test_response_with_instance():
         resp = requests.get("http://example.com")
         assert_response(resp, "")
         assert len(responses.calls) == 1
-        assert responses.calls[0].request.url == "http://example.com/"
+        assert (
+            responses._ensure_url_default_path(
+                responses.calls[0].request.url  # type: ignore[arg-type]
+            )
+            == "http://example.com/"
+        )
 
         resp = requests.get("http://example.com?foo=bar")
         assert_response(resp, "")
         assert len(responses.calls) == 2
-        assert responses.calls[1].request.url == "http://example.com/?foo=bar"
+        assert (
+            responses._ensure_url_default_path(
+                responses.calls[1].request.url  # type: ignore[arg-type]
+            )
+            == "http://example.com/?foo=bar"
+        )
 
     run()
     assert_reset()
@@ -611,6 +632,7 @@ def test_callback_match_querystring_default_false():
 
     with warnings.catch_warnings():
         warnings.simplefilter("error")
+        warnings.filterwarnings("ignore", "Passing msg=..")
         run()
 
     assert_reset()
@@ -822,8 +844,11 @@ class TestAdapters:
             verify=True,
             cert=None,
             proxies=None,
+            **kwargs,
         ):
-            return super().send(request, stream, timeout, verify, cert, proxies)
+            return super().send(
+                request, stream, timeout, verify, cert, proxies, **kwargs
+            )
 
     class PositionalArgsIncompleteAdapter(requests.adapters.HTTPAdapter):
         """Custom adapter that sends only positional args.
@@ -840,6 +865,7 @@ class TestAdapters:
             # following args are intentionally not forwarded
             cert=None,
             proxies=None,
+            **kwargs,
         ):
             return super().send(request, stream, timeout, verify)
 
@@ -875,13 +901,23 @@ def test_responses_as_context_manager():
             resp = requests.get("http://example.com")
             assert_response(resp, "test")
             assert len(responses.calls) == 1
-            assert responses.calls[0].request.url == "http://example.com/"
+            assert (
+                responses._ensure_url_default_path(
+                    responses.calls[0].request.url  # type: ignore[arg-type]
+                )
+                == "http://example.com/"
+            )
             assert responses.calls[0].response.content == b"test"
 
             resp = requests.get("http://example.com?foo=bar")
             assert_response(resp, "test")
             assert len(responses.calls) == 2
-            assert responses.calls[1].request.url == "http://example.com/?foo=bar"
+            assert (
+                responses._ensure_url_default_path(
+                    responses.calls[1].request.url  # type: ignore[arg-type]
+                )
+                == "http://example.com/?foo=bar"
+            )
             assert responses.calls[1].response.content == b"test"
 
     run()
@@ -1058,7 +1094,7 @@ def test_response_cookies_session(request_stream, responses_stream):  # type: ig
             body="ok",
             stream=responses_stream,
         )
-        session = requests.session()
+        session = requests.Session()
         resp = session.get(url, stream=request_stream)
         assert resp.text == "ok"
         assert resp.status_code == 200
@@ -2054,7 +2090,12 @@ def test_response_calls_indexing_and_slicing():
         individual_call: Call = responses.calls[0]
         call_slice: List[Call] = responses.calls[1:-1]
 
-        assert individual_call.request.url == "http://www.example.com/"
+        assert (
+            responses._ensure_url_default_path(
+                individual_call.request.url  # type: ignore[arg-type]
+            )
+            == "http://www.example.com/"
+        )
 
         assert call_slice == [
             responses.calls[1],

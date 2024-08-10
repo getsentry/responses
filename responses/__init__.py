@@ -203,7 +203,7 @@ def get_wrapped(
 
     """
     if assert_all_requests_are_fired is None:
-        assert_all_requests_are_fired = mock.assert_all_requests_are_fired
+        assert_all_requests_are_fired = responses.assert_all_requests_are_fired
     assert_mock = std_mock.patch.object(
         target=responses,
         attribute="assert_all_requests_are_fired",

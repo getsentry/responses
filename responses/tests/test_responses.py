@@ -2708,3 +2708,23 @@ def test_request_object_attached_to_exception():
 
     run()
     assert_reset()
+
+
+def test_file_like_body_in_request():
+    """Validate that when file-like objects are used in requests the data can be accessed
+    in the call list. This ensures that we are not storing file handles that may be closed
+    by the time the user wants to assert on the data in the request. GH #719.
+    """
+
+    @responses.activate
+    def run():
+        responses.add(responses.POST, "https://example.com")
+        with tempfile.TemporaryFile() as f:
+            f.write(b"test")
+            f.seek(0)
+            requests.post("https://example.com", data=f)
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.body == b"test"
+
+    run()
+    assert_reset()

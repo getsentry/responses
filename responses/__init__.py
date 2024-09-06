@@ -1064,7 +1064,8 @@ class RequestsMock:
         # See GH #719
         if isinstance(body, str) or isinstance(body, bytes) or body is None:
             return body
-        # Based on https://github.com/urllib3/urllib3/blob/abbfbcb1dd274fc54b4f0a7785fd04d59b634195/src/urllib3/util/request.py#L220
+        # Based on
+        # https://github.com/urllib3/urllib3/blob/abbfbcb1dd274fc54b4f0a7785fd04d59b634195/src/urllib3/util/request.py#L220
         if hasattr(body, "read"):
             return body.read()  # type: ignore[attr-defined]
         return body  # type: ignore[no-any-return]

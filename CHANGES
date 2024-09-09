@@ -1,3 +1,9 @@
+0.25.4
+------
+
+* Responses can now match requests that use `data` with file-like objects.
+  Files will be read as bytes and stored in the request mock. See #736
+
 0.25.3
 ------
 

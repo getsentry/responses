@@ -820,7 +820,7 @@ class RequestsMock:
         # must have only one of method or method_or_response
         assert (method is not None and method_or_response is None) or (
             method is None and method_or_response is not None
-        )
+        ), "Only one of `method` or `method_or_response` should be used."
 
         # for backwards compatibility, method takes priority over method_or_response
         actual_method = method if method is not None else method_or_response

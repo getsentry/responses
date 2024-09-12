@@ -714,6 +714,11 @@ class RequestsMock:
     POST: Literal["POST"] = "POST"
     PUT: Literal["PUT"] = "PUT"
 
+    Response: Type[Response] = Response
+
+    # Make the `matchers` name available under a RequestsMock instance
+    from responses import matchers
+
     response_callback: Optional[Callable[[Any], Any]] = None
 
     def __init__(

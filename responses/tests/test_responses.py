@@ -108,6 +108,29 @@ def test_response_with_instance():
     assert_reset()
 
 
+def test_response_with_instance_under_requests_mock_object():
+    def run():
+        # ensure all access to responses is only going through
+        # the RequestsMock instance in the context manager
+        responses = None  # noqa: F841
+        from responses import RequestsMock
+
+        with RequestsMock(assert_all_requests_are_fired=True) as rsps:
+            rsps.add(rsps.Response(method=rsps.GET, url="http://example.com"))
+            resp = requests.get("http://example.com")
+            assert_response(resp, "")
+            assert len(rsps.calls) == 1
+            assert rsps.calls[0].request.url == "http://example.com/"
+
+            resp = requests.get("http://example.com?foo=bar")
+            assert_response(resp, "")
+            assert len(rsps.calls) == 2
+            assert rsps.calls[1].request.url == "http://example.com/?foo=bar"
+
+    run()
+    assert_reset()
+
+
 @pytest.mark.parametrize(
     "original,replacement",
     [

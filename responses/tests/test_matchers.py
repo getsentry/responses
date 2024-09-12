@@ -844,6 +844,29 @@ def test_fragment_identifier_matcher_and_match_querystring():
     assert_reset()
 
 
+def test_matchers_under_requests_mock_object():
+    def run():
+        # ensure all access to responses or matchers is only going
+        # through the RequestsMock instance in the context manager
+        responses = None  # noqa: F841
+        matchers = None  # noqa: F841
+        from responses import RequestsMock
+
+        with RequestsMock(assert_all_requests_are_fired=True) as rsps:
+            url = "http://example.com"
+            rsps.add(
+                rsps.GET,
+                url,
+                body=b"test",
+                match=[rsps.matchers.body_matcher("123456")],
+            )
+            resp = requests.get("http://example.com", data="123456")
+            assert_response(resp, "test")
+
+    run()
+    assert_reset()
+
+
 class TestHeaderWithRegex:
     @property
     def url(self):  # type: ignore[misc]

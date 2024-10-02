@@ -899,16 +899,19 @@ Integration with unit test frameworks
 Responses as a ``pytest`` fixture
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Use the pytest-responses package to export ``responses`` as a pytest fixture.
+
+``pip install pytest-responses``
+
+You can then access it in a pytest script using:
+
 .. code-block:: python
 
-    @pytest.fixture
-    def mocked_responses():
-        with responses.RequestsMock() as rsps:
-            yield rsps
+    import pytest_responses
 
 
-    def test_api(mocked_responses):
-        mocked_responses.get(
+    def test_api(responses):
+        responses.get(
             "http://twitter.com/api/1/foobar",
             body="{}",
             status=200,

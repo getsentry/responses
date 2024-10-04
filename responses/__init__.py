@@ -783,6 +783,7 @@ class RequestsMock:
         url: "Optional[_URLPatternType]" = None,
         body: "_Body" = "",
         adding_headers: "_HeaderSet" = None,
+        method_or_response: "_HTTPMethodOrResponse" = None,
         *args: Any,
         **kwargs: Any,
     ) -> BaseResponse:
@@ -813,9 +814,24 @@ class RequestsMock:
         >>>     headers={'X-Header': 'foo'},
         >>> )
 
+        Use the keyword argument method_or_response in place of method:
+
+        >>> responses.add(
+        >>>     method_or_response='GET',
+        >>>     url='http://example.com',
+        >>> )
+
         """
-        if isinstance(method, BaseResponse):
-            return self._registry.add(method)
+        # must have only one of method or method_or_response
+        assert (method is not None and method_or_response is None) or (
+            method is None and method_or_response is not None
+        ), "Only one of `method` or `method_or_response` should be used."
+
+        # for backwards compatibility, method takes priority over method_or_response
+        actual_method = method if method is not None else method_or_response
+
+        if isinstance(actual_method, BaseResponse):
+            return self._registry.add(actual_method)
 
         if adding_headers is not None:
             kwargs.setdefault("headers", adding_headers)
@@ -832,8 +848,8 @@ class RequestsMock:
                 )
 
         assert url is not None
-        assert isinstance(method, str)
-        response = Response(method=method, url=url, body=body, **kwargs)
+        assert isinstance(actual_method, str)
+        response = Response(method=actual_method, url=url, body=body, **kwargs)
         return self._registry.add(response)
 
     delete = partialmethod(add, DELETE)

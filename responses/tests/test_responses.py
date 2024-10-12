@@ -74,41 +74,6 @@ def test_response():
     assert_reset()
 
 
-def test_response_using_method_or_response():
-    @responses.activate
-    def run():
-        responses.add(
-            responses.GET, "http://example.net/rest/path/varname", body="return value"
-        )
-        resp = requests.get("http://example.net/rest/path/varname")
-        assert_response(resp, "return value")
-
-        responses.add(
-            method_or_response=responses.GET,
-            url="http://example.net/rest/path/varname",
-            body="return value",
-        )
-        resp = requests.get("http://example.net/rest/path/varname")
-        assert_response(resp, "return value")
-
-        with pytest.raises(AssertionError) as exc:
-            responses.add(
-                method=responses.GET,
-                method_or_response=responses.GET,
-                url="http://example.net/rest/path/varname",
-                body="return value",
-            )
-            resp = requests.get("http://example.net/rest/path/varname")
-            assert_response(resp, "return value")
-        assert (
-            exc.value.args[0]
-            == "Only one of `method` or `method_or_response` should be used."
-        )
-
-    run()
-    assert_reset()
-
-
 def test_response_encoded():
     @responses.activate
     def run():
@@ -180,6 +145,39 @@ def test_replace(original, replacement):  # type: ignore[misc]
 
         resp = requests.get("http://example.com/two")
         assert_response(resp, "testtwo")
+
+    run()
+    assert_reset()
+
+
+def test_replace_keyword_arg_method():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com/one", body="one")
+        responses.replace(
+            method=responses.GET, url="http://example.com/one", body="testone"
+        )
+        resp = requests.get("http://example.com/one")
+        assert_response(resp, "testone")
+
+        responses.add(responses.GET, "http://example.com/two", body="two")
+        replacement_dict = {
+            "method": "GET",
+            "url": "http://example.com/two",
+            "body": "testtwo",
+        }
+        responses.replace(**replacement_dict)
+        resp = requests.get("http://example.com/two")
+        assert_response(resp, "testtwo")
+
+        responses.add(
+            Response(method=responses.GET, url="http://example.com/three", body="three")
+        )
+        responses.replace(
+            method=Response(responses.GET, "http://example.com/three", body="testthree")
+        )
+        resp = requests.get("http://example.com/three")
+        assert_response(resp, "testthree")
 
     run()
     assert_reset()

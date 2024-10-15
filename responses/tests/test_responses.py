@@ -174,6 +174,39 @@ def test_replace(original, replacement):  # type: ignore[misc]
     assert_reset()
 
 
+def test_replace_keyword_arg_method():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com/one", body="one")
+        responses.replace(
+            method=responses.GET, url="http://example.com/one", body="testone"
+        )
+        resp = requests.get("http://example.com/one")
+        assert_response(resp, "testone")
+
+        responses.add(responses.GET, "http://example.com/two", body="two")
+        replacement_dict = {
+            "method": "GET",
+            "url": "http://example.com/two",
+            "body": "testtwo",
+        }
+        responses.replace(**replacement_dict)
+        resp = requests.get("http://example.com/two")
+        assert_response(resp, "testtwo")
+
+        responses.add(
+            Response(method=responses.GET, url="http://example.com/three", body="three")
+        )
+        responses.replace(
+            method=Response(responses.GET, "http://example.com/three", body="testthree")
+        )
+        resp = requests.get("http://example.com/three")
+        assert_response(resp, "testthree")
+
+    run()
+    assert_reset()
+
+
 @pytest.mark.parametrize(
     "original,replacement",
     [
@@ -282,6 +315,39 @@ def test_upsert_add(original, replacement):  # type: ignore[misc]
     assert_reset()
 
 
+def test_upsert_keyword_arg_method():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com/one", body="one")
+        responses.upsert(
+            method=responses.GET, url="http://example.com/one", body="testone"
+        )
+        resp = requests.get("http://example.com/one")
+        assert_response(resp, "testone")
+
+        responses.add(responses.GET, "http://example.com/two", body="two")
+        replacement_dict = {
+            "method": "GET",
+            "url": "http://example.com/two",
+            "body": "testtwo",
+        }
+        responses.upsert(**replacement_dict)
+        resp = requests.get("http://example.com/two")
+        assert_response(resp, "testtwo")
+
+        responses.add(
+            Response(method=responses.GET, url="http://example.com/three", body="three")
+        )
+        responses.upsert(
+            method=Response(responses.GET, "http://example.com/three", body="testthree")
+        )
+        resp = requests.get("http://example.com/three")
+        assert_response(resp, "testthree")
+
+    run()
+    assert_reset()
+
+
 def test_remove():
     @responses.activate
     def run():
@@ -303,6 +369,34 @@ def test_remove():
         requests.get("http://example.com/three")
         with pytest.raises(ConnectionError):
             requests.get("http://example.com/four")
+
+    run()
+    assert_reset()
+
+
+def test_remove_keyword_arg_method():
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com/one", body="one")
+        responses.remove(method=responses.GET, url="http://example.com/one")
+        with pytest.raises(ConnectionError):
+            _ = requests.get("http://example.com/one")
+
+        responses.add(responses.GET, "http://example.com/two", body="two")
+        remove_dict = {
+            "method": "GET",
+            "url": "http://example.com/two",
+        }
+        responses.remove(**remove_dict)
+        with pytest.raises(ConnectionError):
+            _ = requests.get("http://example.com/two")
+
+        responses.add(
+            Response(method=responses.GET, url="http://example.com/three", body="three")
+        )
+        responses.remove(method=Response(responses.GET, "http://example.com/three"))
+        with pytest.raises(ConnectionError):
+            _ = requests.get("http://example.com/three")
 
     run()
     assert_reset()

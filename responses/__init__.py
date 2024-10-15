@@ -714,6 +714,11 @@ class RequestsMock:
     POST: Literal["POST"] = "POST"
     PUT: Literal["PUT"] = "PUT"
 
+    Response: Type[Response] = Response
+
+    # Make the `matchers` name available under a RequestsMock instance
+    from responses import matchers
+
     response_callback: Optional[Callable[[Any], Any]] = None
 
     def __init__(
@@ -1097,6 +1102,22 @@ class RequestsMock:
             params[key] = values
         return params
 
+    def _read_filelike_body(
+        self, body: Union[str, bytes, BufferedReader, None]
+    ) -> Union[str, bytes, None]:
+        # Requests/urllib support multiple types of body, including file-like objects.
+        # Read from the file if it's a file-like object to avoid storing a closed file
+        # in the call list and allow the user to compare against the data that was in the
+        # request.
+        # See GH #719
+        if isinstance(body, str) or isinstance(body, bytes) or body is None:
+            return body
+        # Based on
+        # https://github.com/urllib3/urllib3/blob/abbfbcb1dd274fc54b4f0a7785fd04d59b634195/src/urllib3/util/request.py#L220
+        if hasattr(body, "read") or isinstance(body, BufferedReader):
+            return body.read()
+        return body
+
     def _on_request(
         self,
         adapter: "HTTPAdapter",
@@ -1110,6 +1131,7 @@ class RequestsMock:
         request.params = self._parse_request_params(request.path_url)  # type: ignore[attr-defined]
         request.req_kwargs = kwargs  # type: ignore[attr-defined]
         request_url = str(request.url)
+        request.body = self._read_filelike_body(request.body)
 
         match, match_failed_reasons = self._find_match(request)
         resp_callback = self.response_callback

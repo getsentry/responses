@@ -1,6 +1,7 @@
 import inspect
 import os
 import re
+import tempfile
 import warnings
 from io import BufferedReader
 from io import BytesIO
@@ -102,6 +103,29 @@ def test_response_with_instance():
         assert_response(resp, "")
         assert len(responses.calls) == 2
         assert responses.calls[1].request.url == "http://example.com/?foo=bar"
+
+    run()
+    assert_reset()
+
+
+def test_response_with_instance_under_requests_mock_object():
+    def run():
+        # ensure all access to responses is only going through
+        # the RequestsMock instance in the context manager
+        responses = None  # noqa: F841
+        from responses import RequestsMock
+
+        with RequestsMock(assert_all_requests_are_fired=True) as rsps:
+            rsps.add(rsps.Response(method=rsps.GET, url="http://example.com"))
+            resp = requests.get("http://example.com")
+            assert_response(resp, "")
+            assert len(rsps.calls) == 1
+            assert rsps.calls[0].request.url == "http://example.com/"
+
+            resp = requests.get("http://example.com?foo=bar")
+            assert_response(resp, "")
+            assert len(rsps.calls) == 2
+            assert rsps.calls[1].request.url == "http://example.com/?foo=bar"
 
     run()
     assert_reset()
@@ -2799,6 +2823,26 @@ def test_request_object_attached_to_exception():
             requests.get(url, timeout=1)
         except requests.ReadTimeout as exc:
             assert type(exc.request) == requests.models.PreparedRequest
+
+    run()
+    assert_reset()
+
+
+def test_file_like_body_in_request():
+    """Validate that when file-like objects are used in requests the data can be accessed
+    in the call list. This ensures that we are not storing file handles that may be closed
+    by the time the user wants to assert on the data in the request. GH #719.
+    """
+
+    @responses.activate
+    def run():
+        responses.add(responses.POST, "https://example.com")
+        with tempfile.TemporaryFile() as f:
+            f.write(b"test")
+            f.seek(0)
+            requests.post("https://example.com", data=f)
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.body == b"test"
 
     run()
     assert_reset()

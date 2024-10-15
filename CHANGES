@@ -1,8 +1,3 @@
-0.25.4
-------
-
-* Added `method=` as an optional keyword argument to the replace, remove, and upsert methods on RequestsMock. See #737
-
 0.25.3
 ------
 

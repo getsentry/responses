@@ -4,6 +4,7 @@ import re
 from json.decoder import JSONDecodeError
 from typing import Any
 from typing import Callable
+from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import MutableMapping
@@ -275,8 +276,19 @@ def request_kwargs_matcher(kwargs: Optional[Mapping[str, Any]]) -> Callable[...,
     return match
 
 
+_FileName = Optional[str]
+_FileContent = Union[str, bytes]
+_FileContentType = str
+_FileCustomHeaders = Mapping[str, str]
+_FileSpecTuple2 = tuple[_FileName, _FileContent]
+_FileSpecTuple3 = tuple[_FileName, _FileContent, _FileContentType]
+_FileSpecTuple4 = tuple[_FileName, _FileContent, _FileContentType, _FileCustomHeaders]
+_FileSpec = Union[_FileContent, _FileSpecTuple2, _FileSpecTuple3, _FileSpecTuple4]
+_Files = Union[Mapping[str, _FileSpec], Iterable[tuple[str, _FileSpec]]]
+
+
 def multipart_matcher(
-    files: Mapping[str, Any], data: Optional[Mapping[str, str]] = None
+    files: _Files, data: Optional[Mapping[str, str]] = None
 ) -> Callable[..., Any]:
     """
     Matcher to match 'multipart/form-data' content-type.

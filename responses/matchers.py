@@ -4,7 +4,6 @@ import re
 from json.decoder import JSONDecodeError
 from typing import Any
 from typing import Callable
-from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import MutableMapping
@@ -16,6 +15,7 @@ from urllib.parse import parse_qsl
 from urllib.parse import urlparse
 
 from requests import PreparedRequest
+from requests.sessions import _Files
 from urllib3.util.url import parse_url
 
 
@@ -274,17 +274,6 @@ def request_kwargs_matcher(kwargs: Optional[Mapping[str, Any]]) -> Callable[...,
         return valid, reason
 
     return match
-
-
-_FileName = Optional[str]
-_FileContent = Union[str, bytes]
-_FileContentType = str
-_FileCustomHeaders = Mapping[str, str]
-_FileSpecTuple2 = tuple[_FileName, _FileContent]
-_FileSpecTuple3 = tuple[_FileName, _FileContent, _FileContentType]
-_FileSpecTuple4 = tuple[_FileName, _FileContent, _FileContentType, _FileCustomHeaders]
-_FileSpec = Union[_FileContent, _FileSpecTuple2, _FileSpecTuple3, _FileSpecTuple4]
-_Files = Union[Mapping[str, _FileSpec], Iterable[tuple[str, _FileSpec]]]
 
 
 def multipart_matcher(

@@ -1,0 +1,5 @@
+[build-system]
+# Suggest a reasonably modern floor for setuptools to ensure
+# the source dist package is assembled with all the expected resources.
+requires = ["setuptools >= 60", "wheel"]
+build-backend = "setuptools.build_meta"

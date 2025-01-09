@@ -4,6 +4,7 @@
 * Responses can now match requests that use `data` with file-like objects.
   Files will be read as bytes and stored in the request mock. See #736
 * `RequestsMock.matchers` was added. This property is an alias to `responses.matchers`. See #739
+* Removed tests from packaged wheels.
 
 0.25.3
 ------

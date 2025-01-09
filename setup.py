@@ -9,12 +9,7 @@ A utility library for mocking out the `requests` Python library.
 :license: Apache 2.0
 """
 
-import sys
-
 from setuptools import setup
-from setuptools.command.test import test as TestCommand
-
-setup_requires = []
 
 install_requires = [
     "requests>=2.30.0,<3.0",
@@ -37,31 +32,11 @@ tests_require = [
     "tomli-w",
 ]
 
-if "test" in sys.argv:
-    setup_requires.extend(tests_require)
-
 extras_require = {"tests": tests_require}
-
-
-class PyTest(TestCommand):
-    """Designed to be run via `python setup.py test`"""
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        # import here, cause outside the eggs aren't loaded
-        import pytest
-
-        errno = pytest.main(self.test_args)
-        sys.exit(errno)
-
 
 setup(
     name="responses",
-    version="0.25.3",
+    version="0.25.4",
     author="David Cramer",
     description="A utility library for mocking out the `requests` Python library.",
     url="https://github.com/getsentry/responses",
@@ -72,17 +47,13 @@ setup(
         "Source Code": "https://github.com/getsentry/responses",
     },
     license="Apache 2.0",
-    long_description=open("README.rst").read(),
+    long_description=open("README.rst", encoding="utf-8").read(),
     long_description_content_type="text/x-rst",
     packages=["responses"],
     zip_safe=False,
     python_requires=">=3.8",
     install_requires=install_requires,
     extras_require=extras_require,
-    tests_require=tests_require,
-    setup_requires=setup_requires,
-    cmdclass={"test": PyTest},
-    include_package_data=True,
     classifiers=[
         "Intended Audience :: Developers",
         "Intended Audience :: System Administrators",

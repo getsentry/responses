@@ -61,6 +61,7 @@ Please ensure to update your code according to the guidance.
      - 0.20.0
      - Use ``responses.mock.assert_all_requests_are_fired``,
        ``responses.mock.passthru_prefixes``, ``responses.mock.target`` instead.
+
 Basics
 ------
 

@@ -130,6 +130,22 @@ will produce next output:
         status: 202
         url: https://httpstat.us/202
 
+If you are in the REPL, you can also activete the recorder for all following responses:
+
+.. code-block:: python
+
+    import requests
+    from responses import _recorder
+
+    _recorder.recorder.start()
+
+    requests.get("https://httpstat.us/500")
+
+    _recorder.recorder.dump_to_file("out.yaml")
+
+    # you can stop or reset the recorder
+    _recorder.recorder.stop()
+    _recorder.recorder.reset()
 
 Replay responses (populate registry) from files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

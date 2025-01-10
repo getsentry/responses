@@ -152,6 +152,35 @@ class TestRecord:
         url400 = httpserver.url_for("/status/wrong")
         return url202, url400, url404, url500
 
+    def test_use_recorder_without_decorator(self, httpserver):
+        """I want to be able to record in the REPL."""
+        url202, url400, url404, url500 = self.prepare_server(httpserver)
+
+        _recorder.recorder.start()
+
+        def another():
+            requests.get(url500)
+            requests.put(url202)
+
+        def run():
+            requests.get(url404)
+            requests.get(url400)
+            another()
+
+        run()
+
+        _recorder.recorder.stop()
+        _recorder.recorder.dump_to_file(self.out_file)
+
+        with open(self.out_file) as file:
+            data = yaml.safe_load(file)
+        assert data == get_data(httpserver.host, httpserver.port)
+
+        # Now, we test that the recorder is properly reset
+        assert _recorder.recorder.get_registry().registered
+        _recorder.recorder.reset()
+        assert not _recorder.recorder.get_registry().registered
+
 
 class TestReplay:
     def setup_method(self):

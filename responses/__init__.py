@@ -249,7 +249,7 @@ class CallList(Sequence[Any], Sized):
         ...
 
     @overload
-    def __getitem__(self, idx: slice) -> List[Call]:
+    def __getitem__(self, idx: "slice[int, int, Optional[int]]") -> List[Call]:
         ...
 
     def __getitem__(self, idx: Union[int, slice]) -> Union[Call, List[Call]]:

@@ -813,7 +813,15 @@ class RequestsMock:
         >>>     headers={'X-Header': 'foo'},
         >>> )
 
+        Use the keyword argument method_or_response in place of method:
+
+        >>> responses.add(
+        >>>     method_or_response='GET',
+        >>>     url='http://example.com',
+        >>> )
+
         """
+
         if isinstance(method, BaseResponse):
             return self._registry.add(method)
 
@@ -889,6 +897,7 @@ class RequestsMock:
         self,
         method_or_response: "_HTTPMethodOrResponse" = None,
         url: "Optional[_URLPatternType]" = None,
+        method: "_HTTPMethodOrResponse" = None,
     ) -> List[BaseResponse]:
         """
         Removes a response previously added using ``add()``, identified
@@ -899,12 +908,16 @@ class RequestsMock:
         >>> responses.add(responses.GET, 'http://example.org')
         >>> responses.remove(responses.GET, 'http://example.org')
         """
-        if isinstance(method_or_response, BaseResponse):
-            response = method_or_response
+        actual_method_or_response = self._check_method_or_response(
+            method, method_or_response
+        )
+
+        if isinstance(actual_method_or_response, BaseResponse):
+            response = actual_method_or_response
         else:
             assert url is not None
-            assert isinstance(method_or_response, str)
-            response = BaseResponse(method=method_or_response, url=url)
+            assert isinstance(actual_method_or_response, str)
+            response = BaseResponse(method=actual_method_or_response, url=url)
 
         return self._registry.remove(response)
 
@@ -913,6 +926,7 @@ class RequestsMock:
         method_or_response: "_HTTPMethodOrResponse" = None,
         url: "Optional[_URLPatternType]" = None,
         body: "_Body" = "",
+        method: "_HTTPMethodOrResponse" = None,
         *args: Any,
         **kwargs: Any,
     ) -> BaseResponse:
@@ -925,12 +939,18 @@ class RequestsMock:
         >>> responses.add(responses.GET, 'http://example.org', json={'data': 1})
         >>> responses.replace(responses.GET, 'http://example.org', json={'data': 2})
         """
-        if isinstance(method_or_response, BaseResponse):
-            response = method_or_response
+        actual_method_or_response = self._check_method_or_response(
+            method, method_or_response
+        )
+
+        if isinstance(actual_method_or_response, BaseResponse):
+            response = actual_method_or_response
         else:
             assert url is not None
-            assert isinstance(method_or_response, str)
-            response = Response(method=method_or_response, url=url, body=body, **kwargs)
+            assert isinstance(actual_method_or_response, str)
+            response = Response(
+                method=actual_method_or_response, url=url, body=body, **kwargs
+            )
 
         return self._registry.replace(response)
 
@@ -939,6 +959,7 @@ class RequestsMock:
         method_or_response: "_HTTPMethodOrResponse" = None,
         url: "Optional[_URLPatternType]" = None,
         body: "_Body" = "",
+        method: "_HTTPMethodOrResponse" = None,
         *args: Any,
         **kwargs: Any,
     ) -> BaseResponse:
@@ -951,10 +972,32 @@ class RequestsMock:
         >>> responses.add(responses.GET, 'http://example.org', json={'data': 1})
         >>> responses.upsert(responses.GET, 'http://example.org', json={'data': 2})
         """
+        actual_method_or_response = self._check_method_or_response(
+            method, method_or_response
+        )
+
         try:
-            return self.replace(method_or_response, url, body, *args, **kwargs)
+            return self.replace(actual_method_or_response, url, body, *args, **kwargs)
         except ValueError:
-            return self.add(method_or_response, url, body, *args, **kwargs)
+            return self.add(actual_method_or_response, url, body, *args, **kwargs)
+
+    def _check_method_or_response(
+        self,
+        method: "_HTTPMethodOrResponse",
+        method_or_response: "_HTTPMethodOrResponse",
+    ) -> "_HTTPMethodOrResponse":
+        """
+        Checks that only one of method or method_or_response is not None.
+
+        Returns whichever one should be used if no exception is raised.
+        """
+        assert (method is not None and method_or_response is None) or (
+            method is None and method_or_response is not None
+        ), "Only one of `method` or `method_or_response` should be used."
+
+        # For backwards compatibility method_or_response takes priority over
+        # method, but by the time we hit here only one or the other should valid
+        return method_or_response if method_or_response is not None else method
 
     def add_callback(
         self,

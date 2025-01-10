@@ -201,7 +201,10 @@ Response Parameters
 The following attributes can be passed to a Response mock:
 
 method (``str``)
-    The HTTP method (GET, POST, etc).
+    The HTTP method (GET, POST, etc). You may also use `method_or_response=`
+    as a keyword parameter in place of `method`, in which case all attributes
+    must be passed in as keyword parameters. This is to match the parameter
+    name on the `remove()`, `replace()`, and `upsert ()` methods.
 
 url (``str`` or ``compiled regular expression``)
     The full resource URL.

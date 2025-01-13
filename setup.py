@@ -51,7 +51,7 @@ setup(
     long_description_content_type="text/x-rst",
     packages=["responses"],
     package_data = {
-        'responses': ['py.typed'],
+        "responses": ["py.typed"],
     },
     zip_safe=False,
     python_requires=">=3.8",

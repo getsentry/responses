@@ -50,6 +50,9 @@ setup(
     long_description=open("README.rst", encoding="utf-8").read(),
     long_description_content_type="text/x-rst",
     packages=["responses"],
+    package_data={
+        "responses": ["py.typed"],
+    },
     zip_safe=False,
     python_requires=">=3.8",
     install_requires=install_requires,

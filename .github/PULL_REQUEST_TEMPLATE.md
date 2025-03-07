@@ -5,11 +5,12 @@
 - [ ] Bug Fix
 - [ ] Optimization
 - [ ] Documentation Update
+- [ ] Other
 
 ## Description
 
 
-## Related Tickets & Documents
+## Related Issues
 <!-- Add many as needed, one per line. -->
 - Closes #
 
@@ -22,7 +23,7 @@ Before submitting this pull request, I have done the following:
 
 
 ## Added/updated tests?
-_We encourage you to keep the code coverage percentage at 80% and above._
+> Current repository has 100% test coverage.
 
 - [ ] Yes
 - [ ] No, and this is why: <!-- _please replace this line with details on why tests

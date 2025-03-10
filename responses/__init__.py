@@ -246,11 +246,11 @@ class CallList(Sequence[Any], Sized):
 
     @overload
     def __getitem__(self, idx: int) -> Call:
-        ...
+        """Overload for scenario when index is provided."""
 
     @overload
     def __getitem__(self, idx: "slice[int, int, Optional[int]]") -> List[Call]:
-        ...
+        """Overload for scenario when slice is provided."""
 
     def __getitem__(self, idx: Union[int, slice]) -> Union[Call, List[Call]]:
         return self._calls[idx]

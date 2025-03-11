@@ -1,7 +1,12 @@
-0.25.6
+0.25.7
 ------
 
 * Added support for python 3.13
+
+0.25.6
+------
+
+* Added py.typed to package_data
 
 0.25.5
 ------

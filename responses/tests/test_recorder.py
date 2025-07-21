@@ -58,7 +58,7 @@ def get_data(host, port):
                     "url": f"http://{host}:{port}/202",
                     "body": "OK",
                     "status": 202,
-                    "content_type": "text/plain",
+                    "content_type": "image/tiff",
                     "auto_calculate_content_length": False,
                 }
             },
@@ -132,7 +132,7 @@ class TestRecord:
         httpserver.expect_request("/202").respond_with_data(
             "OK",
             status=202,
-            content_type="text/plain",
+            content_type="image/tiff",
         )
         httpserver.expect_request("/404").respond_with_data(
             "404 Not Found",

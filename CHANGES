@@ -1,4 +1,4 @@
-0.25.8 (in development)
+0.25.8
 ------
 
 * Fix bug where the content type is always recorded as either text/plain or application/json. See #770

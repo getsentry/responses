@@ -574,7 +574,7 @@ def test_callback():
 
     @responses.activate
     def run():
-        responses.add_callback(responses.GET, url, request_callback)
+        rsp = responses.add_callback(responses.GET, url, request_callback)
         resp = requests.get(url)
         assert resp.text == "test callback"
         assert resp.status_code == status
@@ -582,6 +582,7 @@ def test_callback():
         assert "bar" == resp.headers.get("foo")
         assert "application/json" == resp.headers.get("Content-Type")
         assert "13" == resp.headers.get("Content-Length")
+        assert len(rsp.calls) == 1
 
     run()
     assert_reset()

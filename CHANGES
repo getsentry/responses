@@ -1,3 +1,8 @@
+Unreleased
+----------
+
+* Allow asserts on add_callback() matches. See #727
+
 0.25.7
 ------
 

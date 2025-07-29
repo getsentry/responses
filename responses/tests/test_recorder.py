@@ -103,7 +103,7 @@ class TestRecord:
             with open(file_path, "wb") as file:
                 _dump(registered, file, tomli_w.dump, additional_headers)  # type: ignore[arg-type]
 
-        custom_recorder.dump_to_file = dump_to_file  # type: ignore[assignment]
+        custom_recorder.dump_to_file = dump_to_file  # type: ignore[method-assign]
 
         url202, url400, url404, url500 = self.prepare_server(httpserver)
 

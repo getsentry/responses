@@ -324,7 +324,7 @@ def _get_url_and_path(url: str) -> str:
 
 
 def _handle_body(
-    body: Optional[Union[bytes, BufferedReader, str]]
+    body: Optional[Union[bytes, BufferedReader, str]],
 ) -> Union[BufferedReader, BytesIO]:
     """Generates `Response` body.
 
@@ -1003,7 +1003,7 @@ class RequestsMock:
         """Overload for scenario when 'responses.activate' is used."""
 
     @overload
-    def activate(  # type: ignore[misc]
+    def activate(
         self,
         *,
         registry: Type[Any] = ...,
@@ -1096,9 +1096,11 @@ class RequestsMock:
         if match is None:
             if any(
                 [
-                    p.match(request_url)
-                    if isinstance(p, Pattern)
-                    else request_url.startswith(p)
+                    (
+                        p.match(request_url)
+                        if isinstance(p, Pattern)
+                        else request_url.startswith(p)
+                    )
                     for p in self.passthru_prefixes
                 ]
             ):

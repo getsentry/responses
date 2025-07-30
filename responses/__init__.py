@@ -968,7 +968,7 @@ class RequestsMock:
         content_type: Optional[str] = "text/plain",
         match: "_MatcherIterable" = (),
     ) -> None:
-        self._registry.add(
+        return self._registry.add(
             CallbackResponse(
                 url=url,
                 method=method,

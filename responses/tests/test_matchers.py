@@ -869,7 +869,7 @@ def test_matchers_under_requests_mock_object():
 
 class TestHeaderWithRegex:
     @property
-    def url(self):  # type: ignore[misc]
+    def url(self) -> str:
         return "http://example.com/"
 
     def _register(self):

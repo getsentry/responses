@@ -931,7 +931,7 @@ def my_fruit() -> str:
 
 
 @pytest.fixture
-def fruit_basket(my_fruit: str) -> list[str]:
+def fruit_basket(my_fruit: str) -> "list[str]":
     return ["banana", my_fruit]
 
 

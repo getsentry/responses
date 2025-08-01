@@ -22,7 +22,7 @@ def get_data(host, port):
             {
                 "response": {
                     "method": "GET",
-                    "url": f"http://{host}:{port}/404",
+                    "url": f"http://{host}:{port}/404",  # noqa: E231
                     "headers": {"x": "foo"},
                     "body": "404 Not Found",
                     "status": 404,
@@ -33,7 +33,7 @@ def get_data(host, port):
             {
                 "response": {
                     "method": "GET",
-                    "url": f"http://{host}:{port}/status/wrong",
+                    "url": f"http://{host}:{port}/status/wrong",  # noqa: E231
                     "headers": {"x": "foo"},
                     "body": "Invalid status code",
                     "status": 400,
@@ -44,7 +44,7 @@ def get_data(host, port):
             {
                 "response": {
                     "method": "GET",
-                    "url": f"http://{host}:{port}/500",
+                    "url": f"http://{host}:{port}/500",  # noqa: E231
                     "headers": {"x": "foo"},
                     "body": "500 Internal Server Error",
                     "status": 500,
@@ -55,7 +55,7 @@ def get_data(host, port):
             {
                 "response": {
                     "method": "PUT",
-                    "url": f"http://{host}:{port}/202",
+                    "url": f"http://{host}:{port}/202",  # noqa: E231
                     "body": "OK",
                     "status": 202,
                     "content_type": "image/tiff",
@@ -97,11 +97,13 @@ class TestRecord:
     def test_recorder_toml(self, httpserver):
         custom_recorder = _recorder.Recorder()
 
-        def dump_to_file(file_path, registered):
+        def dump_to_file(file_path, registered=None, additional_headers=None):
+            if registered is None:
+                registered = custom_recorder.get_registry().registered
             with open(file_path, "wb") as file:
-                _dump(registered, file, tomli_w.dump)  # type: ignore[arg-type]
+                _dump(registered, file, tomli_w.dump, additional_headers)  # type: ignore[arg-type]
 
-        custom_recorder.dump_to_file = dump_to_file  # type: ignore[assignment]
+        custom_recorder.dump_to_file = dump_to_file  # type: ignore[method-assign]
 
         url202, url400, url404, url500 = self.prepare_server(httpserver)
 
@@ -238,3 +240,145 @@ class TestReplay:
             assert responses.registered()[3].content_type == "text/plain"
 
         run()
+
+
+class TestRecorderAdditionalHeaders:
+    def setup_method(self):
+        self.out_file = Path("response_record_headers")
+        if self.out_file.exists():
+            self.out_file.unlink()
+        assert not self.out_file.exists()
+
+    def teardown_method(self):
+        if self.out_file.exists():
+            self.out_file.unlink()
+
+    def prepare_server_with_headers(self, httpserver):
+        httpserver.expect_request("/test").respond_with_data(
+            "Test Response",
+            status=200,
+            content_type="text/plain",
+            headers={
+                "Content-Length": "13",
+                "Server": "nginx/1.0",
+                "Connection": "keep-alive",
+                "Content-Encoding": "identity",
+                "Authorization": "Bearer token123",
+                "X-Custom-Header": "custom-value",
+                "User-Agent": "test-agent",
+            },
+        )
+        return httpserver.url_for("/test")
+
+    def test_recorder_with_additional_headers(self, httpserver):
+        url = self.prepare_server_with_headers(httpserver)
+
+        @_recorder.record(
+            file_path=self.out_file,
+            additional_headers=["Authorization", "X-Custom-Header", "Date"],
+        )
+        def run():
+            requests.get(url)
+
+        run()
+
+        with open(self.out_file) as file:
+            data = yaml.safe_load(file)
+
+        response_headers = data["responses"][0]["response"]["headers"]
+
+        # Additional headers should be preserved
+        assert "Authorization" in response_headers
+        assert response_headers["Authorization"] == "Bearer token123"
+        assert "X-Custom-Header" in response_headers
+        assert response_headers["X-Custom-Header"] == "custom-value"
+
+        # Default headers should still be removed (not in additional_headers)
+        assert "Content-Length" not in response_headers
+        assert "Server" not in response_headers
+        assert "Connection" not in response_headers
+        assert "Content-Encoding" not in response_headers
+
+        # Other headers not in default removal list should remain
+        assert "User-Agent" in response_headers
+
+    def test_recorder_with_additional_headers_preserves_default_removal(
+        self, httpserver
+    ):
+        url = self.prepare_server_with_headers(httpserver)
+
+        @_recorder.record(
+            file_path=self.out_file, additional_headers=["Content-Type", "Server"]
+        )
+        def run():
+            requests.get(url)
+
+        run()
+
+        with open(self.out_file) as file:
+            data = yaml.safe_load(file)
+
+        response_headers = data["responses"][0]["response"]["headers"]
+
+        # Headers in additional_headers should be preserved even if normally removed
+        assert "Content-Type" in response_headers
+        assert response_headers["Content-Type"] == "text/plain"
+        assert "Server" in response_headers
+        assert "nginx/1.0" in response_headers["Server"]
+
+        # Other default headers should still be removed
+        assert "Content-Length" not in response_headers
+        assert "Connection" not in response_headers
+        assert "Content-Encoding" not in response_headers
+
+    def test_recorder_without_additional_headers_default_behavior(self, httpserver):
+        url = self.prepare_server_with_headers(httpserver)
+
+        @_recorder.record(file_path=self.out_file)
+        def run():
+            requests.get(url)
+
+        run()
+
+        with open(self.out_file) as file:
+            data = yaml.safe_load(file)
+
+        response_headers = data["responses"][0]["response"]["headers"]
+
+        # Default headers should be removed
+        assert "Content-Length" not in response_headers
+        assert "Content-Type" not in response_headers
+        assert "Server" not in response_headers
+        assert "Connection" not in response_headers
+        assert "Content-Encoding" not in response_headers
+
+        # Non-default headers should remain
+        assert "Authorization" in response_headers
+        assert "X-Custom-Header" in response_headers
+        assert "User-Agent" in response_headers
+
+    def test_dump_to_file_with_additional_headers(self, httpserver):
+        url = self.prepare_server_with_headers(httpserver)
+
+        _recorder.recorder.start()
+        requests.get(url)
+        _recorder.recorder.stop()
+
+        _recorder.recorder.dump_to_file(
+            self.out_file, additional_headers=["Content-Length"]
+        )
+
+        with open(self.out_file) as file:
+            data = yaml.safe_load(file)
+
+        response_headers = data["responses"][0]["response"]["headers"]
+
+        # Additional headers should be preserved
+        assert "Content-Length" in response_headers
+
+        # Other default headers should be removed
+        assert "Server" not in response_headers
+        assert "Connection" not in response_headers
+        assert "Content-Encoding" not in response_headers
+
+        _recorder.recorder.reset()

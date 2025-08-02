@@ -1002,7 +1002,7 @@ class RequestsMock:
         """Overload for scenario when 'responses.activate' is used."""
 
     @overload
-    def activate(  # type: ignore[misc]
+    def activate(
         self,
         *,
         registry: Type[Any] = ...,

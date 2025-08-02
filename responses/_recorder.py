@@ -23,10 +23,10 @@ if TYPE_CHECKING:  # pragma: no cover
 
 import yaml
 
+from responses import _UNSET
 from responses import RequestsMock
 from responses import Response
 from responses import _real_send
-from responses import _UNSET
 from responses.registries import OrderedRegistry
 
 

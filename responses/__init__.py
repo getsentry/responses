@@ -967,7 +967,7 @@ class RequestsMock:
         match_querystring: Union[bool, FalseBool] = FalseBool(),
         content_type: Optional[str] = "text/plain",
         match: "_MatcherIterable" = (),
-    ) -> None:
+    ) -> BaseResponse:
         return self._registry.add(
             CallbackResponse(
                 url=url,

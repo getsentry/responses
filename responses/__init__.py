@@ -990,20 +990,19 @@ class RequestsMock:
         self.start()
         return self
 
-    def __exit__(self, type: Any, value: Any, traceback: Any) -> bool:
+    def __exit__(self, type: Any, value: Any, traceback: Any) -> None:
         success = type is None
         try:
             self.stop(allow_assert=success)
         finally:
             self.reset()
-        return success
 
     @overload
     def activate(self, func: "_F" = ...) -> "_F":
         """Overload for scenario when 'responses.activate' is used."""
 
     @overload
-    def activate(  # type: ignore[misc]
+    def activate(
         self,
         *,
         registry: Type[Any] = ...,

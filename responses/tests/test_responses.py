@@ -927,12 +927,12 @@ def test_activate_doesnt_change_signature():
 
 
 @pytest.fixture
-def my_fruit():  # type: ignore[misc]
+def my_fruit() -> str:
     return "apple"
 
 
 @pytest.fixture
-def fruit_basket(my_fruit):  # type: ignore[misc]
+def fruit_basket(my_fruit: str) -> "list[str]":
     return ["banana", my_fruit]
 
 
@@ -1334,7 +1334,7 @@ def test_handles_buffered_reader_body():
 
     @responses.activate
     def run():
-        responses.add(responses.GET, url, body=BufferedReader(BytesIO(b"test")))  # type: ignore
+        responses.add(responses.GET, url, body=BufferedReader(BytesIO(b"test")))
 
         resp = requests.get(url)
 
@@ -1559,7 +1559,7 @@ def test_auto_calculate_content_length_doesnt_work_for_buffered_reader_body():
         responses.add(
             responses.GET,
             url,
-            body=BufferedReader(BytesIO(b"testing")),  # type: ignore
+            body=BufferedReader(BytesIO(b"testing")),
             auto_calculate_content_length=True,
         )
         resp = requests.get(url)

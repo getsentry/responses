@@ -2,6 +2,7 @@
 ------
 
 * Fix bug where the content type is always recorded as either text/plain or application/json. See #770
+* Allow asserts on add_callback() matches. See #727
 
 0.25.7
 ------

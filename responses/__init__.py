@@ -730,11 +730,13 @@ class RequestsMock:
         registry: Type[FirstMatchRegistry] = FirstMatchRegistry,
         *,
         real_adapter_send: "_HTTPAdapterSend" = _real_send,
+        assert_on_exception: bool = False,
     ) -> None:
         self._calls: CallList = CallList()
         self.reset()
         self._registry: FirstMatchRegistry = registry()  # call only after reset
         self.assert_all_requests_are_fired: bool = assert_all_requests_are_fired
+        self.assert_on_exception: bool = assert_on_exception
         self.response_callback: Optional[Callable[[Any], Response]] = response_callback
         self.passthru_prefixes: Tuple[_URLPatternType, ...] = tuple(passthru_prefixes)
         self.target: str = target
@@ -993,7 +995,7 @@ class RequestsMock:
     def __exit__(self, type: Any, value: Any, traceback: Any) -> None:
         success = type is None
         try:
-            self.stop(allow_assert=success)
+            self.stop(allow_assert=success or self.assert_on_exception)
         finally:
             self.reset()
 

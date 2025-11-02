@@ -917,6 +917,34 @@ the ``assert_all_requests_are_fired`` value:
                 content_type="application/json",
             )
 
+By default, when an exception occurs within the context manager, the assertion
+about unfired requests is suppressed to avoid masking the original exception.
+However, this can hide valuable context about which mocked requests were or weren't
+called. You can use ``assert_on_exception=True`` to always see this information when
+debugging test failures.
+
+.. code-block:: python
+
+    import responses
+    import requests
+
+
+    def test_with_assert_on_exception():
+        with responses.RequestsMock(
+            assert_all_requests_are_fired=True, assert_on_exception=True
+        ) as rsps:
+            rsps.add(responses.GET, "http://example.com/users", body="test")
+            rsps.add(responses.GET, "http://example.com/profile", body="test")
+            requests.get("http://example.com/users")
+            raise ValueError("Something went wrong")
+
+        # Output:
+        # ValueError: Something went wrong
+        #
+        # During handling of the above exception, another exception occurred:
+        #
+        # AssertionError: Not all requests have been executed [('GET', 'http://example.com/profile')]
+
 Assert Request Call Count
 -------------------------
 

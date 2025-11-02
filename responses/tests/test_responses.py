@@ -1217,6 +1217,57 @@ def test_assert_all_requests_fired_multiple():
     assert_reset()
 
 
+def test_assert_on_exception():
+    """Test that assert_on_exception controls assertion behavior during exceptions."""
+
+    def run():
+        # Default behavior (assert_on_exception=False):
+        # assertion should NOT be raised when an exception occurs
+        with pytest.raises(ValueError) as value_exc_info:
+            with responses.RequestsMock(
+                assert_all_requests_are_fired=True, assert_on_exception=False
+            ) as m:
+                m.add(responses.GET, "http://example.com", body=b"test")
+                m.add(responses.GET, "http://not-called.com", body=b"test")
+                requests.get("http://example.com")
+                raise ValueError("Main error")
+
+        # Should only see the ValueError, not the AssertionError about unfired requests
+        assert "Main error" in str(value_exc_info.value)
+        assert "not-called.com" not in str(value_exc_info.value)
+
+        # With assert_on_exception=True: assertion WILL be raised even with an exception
+        # The AssertionError will be the primary exception, with the ValueError as context
+        with pytest.raises(AssertionError) as assert_exc_info:
+            with responses.RequestsMock(
+                assert_all_requests_are_fired=True, assert_on_exception=True
+            ) as m:
+                m.add(responses.GET, "http://example.com", body=b"test")
+                m.add(responses.GET, "http://not-called.com", body=b"test")
+                requests.get("http://example.com")
+                raise ValueError("Main error")
+
+        # The AssertionError should mention the unfired request
+        assert "not-called.com" in str(assert_exc_info.value)
+        # Python automatically chains exceptions, so we should see both in the traceback
+        assert isinstance(assert_exc_info.value.__context__, ValueError)
+        assert "Main error" in str(assert_exc_info.value.__context__)
+
+        # Test that both work normally when no other exception occurs
+        with pytest.raises(AssertionError) as assert_exc_info2:
+            with responses.RequestsMock(
+                assert_all_requests_are_fired=True, assert_on_exception=True
+            ) as m:
+                m.add(responses.GET, "http://example.com", body=b"test")
+                m.add(responses.GET, "http://not-called.com", body=b"test")
+                requests.get("http://example.com")
+
+        assert "not-called.com" in str(assert_exc_info2.value)
+
+    run()
+    assert_reset()
+
+
 def test_allow_redirects_samehost():
     redirecting_url = "http://example.com"
     final_url_path = "/1"

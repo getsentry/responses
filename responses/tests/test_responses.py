@@ -1268,6 +1268,48 @@ def test_assert_on_exception():
     assert_reset()
 
 
+def test_assert_on_exception_with_decorator():
+    """Test that assert_on_exception works with the @responses.activate decorator."""
+
+    # Default behavior with decorator: assertion should NOT be raised when an exception occurs
+    with pytest.raises(ValueError) as value_exc_info:
+
+        @responses.activate(assert_all_requests_are_fired=True)
+        def test_default():
+            responses.add(responses.GET, "http://example.com", body=b"test")
+            responses.add(responses.GET, "http://not-called.com", body=b"test")
+            requests.get("http://example.com")
+            raise ValueError("Main error")
+
+        test_default()
+
+    # Should only see the ValueError, not the AssertionError about unfired requests
+    assert "Main error" in str(value_exc_info.value)
+    assert "not-called.com" not in str(value_exc_info.value)
+
+    # With assert_on_exception=True in decorator: assertion WILL be raised even with an exception
+    with pytest.raises(AssertionError) as assert_exc_info:
+
+        @responses.activate(
+            assert_all_requests_are_fired=True, assert_on_exception=True
+        )
+        def test_with_assert_on_exception():
+            responses.add(responses.GET, "http://example.com", body=b"test")
+            responses.add(responses.GET, "http://not-called.com", body=b"test")
+            requests.get("http://example.com")
+            raise ValueError("Main error")
+
+        test_with_assert_on_exception()
+
+    # The AssertionError should mention the unfired request
+    assert "not-called.com" in str(assert_exc_info.value)
+    # Python automatically chains exceptions, so we should see both in the traceback
+    assert isinstance(assert_exc_info.value.__context__, ValueError)
+    assert "Main error" in str(assert_exc_info.value.__context__)
+
+    assert_reset()
+
+
 def test_allow_redirects_samehost():
     redirecting_url = "http://example.com"
     final_url_path = "/1"

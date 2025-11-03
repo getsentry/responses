@@ -1,3 +1,11 @@
+0.26.0
+------
+
+* Added `assert_on_exception` parameter to `RequestsMock` and `@responses.activate` decorator.
+  When set to True, assertions about unfired requests will be raised even when an exception
+  occurs in the wrapped code, providing valuable debugging context about which mocked
+  requests were or weren't called.
+
 0.25.8
 ------
 

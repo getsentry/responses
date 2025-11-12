@@ -179,7 +179,6 @@ def get_wrapped(
     *,
     registry: Optional[Any] = None,
     assert_all_requests_are_fired: Optional[bool] = None,
-    assert_on_exception: Optional[bool] = None,
 ) -> Callable[..., Any]:
     """Wrap provided function inside ``responses`` context manager.
 
@@ -196,8 +195,6 @@ def get_wrapped(
         Custom registry that should be applied. See ``responses.registries``
     assert_all_requests_are_fired : bool
         Raise an error if not all registered responses were executed.
-    assert_on_exception : bool
-        Raise assertion errors even when an exception occurs in the context manager.
 
     Returns
     -------
@@ -211,12 +208,6 @@ def get_wrapped(
         new=assert_all_requests_are_fired,
     )
 
-    assert_on_exception_mock = std_mock.patch.object(
-        target=responses,
-        attribute="assert_on_exception",
-        new=assert_on_exception,
-    )
-
     if inspect.iscoroutinefunction(func):
         # set asynchronous wrapper if requestor function is asynchronous
         @wraps(func)
@@ -224,7 +215,7 @@ def get_wrapped(
             if registry is not None:
                 responses._set_registry(registry)
 
-            with assert_mock, assert_on_exception_mock, responses:
+            with assert_mock, responses:
                 return await func(*args, **kwargs)
 
     else:
@@ -234,8 +225,8 @@ def get_wrapped(
             if registry is not None:
                 responses._set_registry(registry)
 
-            with assert_mock, assert_on_exception_mock, responses:
-                # set 'assert_all_requests_are_fired' and 'assert_on_exception' temporarily for a
+            with assert_mock, responses:
+                # set 'assert_all_requests_are_fired' temporarily for a
                 # single run. Mock automatically unsets to avoid leakage to another decorated
                 # function since we still apply the value on 'responses.mock' object
                 return func(*args, **kwargs)
@@ -739,13 +730,11 @@ class RequestsMock:
         registry: Type[FirstMatchRegistry] = FirstMatchRegistry,
         *,
         real_adapter_send: "_HTTPAdapterSend" = _real_send,
-        assert_on_exception: bool = False,
     ) -> None:
         self._calls: CallList = CallList()
         self.reset()
         self._registry: FirstMatchRegistry = registry()  # call only after reset
         self.assert_all_requests_are_fired: bool = assert_all_requests_are_fired
-        self.assert_on_exception: bool = assert_on_exception
         self.response_callback: Optional[Callable[[Any], Response]] = response_callback
         self.passthru_prefixes: Tuple[_URLPatternType, ...] = tuple(passthru_prefixes)
         self.target: str = target
@@ -1002,9 +991,8 @@ class RequestsMock:
         return self
 
     def __exit__(self, type: Any, value: Any, traceback: Any) -> None:
-        success = type is None
         try:
-            self.stop(allow_assert=success or self.assert_on_exception)
+            self.stop(allow_assert=True)
         finally:
             self.reset()
 
@@ -1018,7 +1006,6 @@ class RequestsMock:
         *,
         registry: Type[Any] = ...,
         assert_all_requests_are_fired: bool = ...,
-        assert_on_exception: bool = ...,
     ) -> Callable[["_F"], "_F"]:
         """Overload for scenario when 'responses.activate(...)' is used.
         See https://github.com/getsentry/responses/pull/469 for more details
@@ -1030,7 +1017,6 @@ class RequestsMock:
         *,
         registry: Optional[Type[Any]] = None,
         assert_all_requests_are_fired: bool = False,
-        assert_on_exception: bool = False,
     ) -> Union[Callable[["_F"], "_F"], "_F"]:
         if func is not None:
             return get_wrapped(func, self)
@@ -1041,7 +1027,6 @@ class RequestsMock:
                 self,
                 registry=registry,
                 assert_all_requests_are_fired=assert_all_requests_are_fired,
-                assert_on_exception=assert_on_exception,
             )
 
         return deco_activate

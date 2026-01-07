@@ -39,7 +39,7 @@ from responses.registries import FirstMatchRegistry
 try:
     from typing_extensions import Literal
 except ImportError:  # pragma: no cover
-    from typing import Literal  # type: ignore  # pragma: no cover
+    from typing import Literal  # pragma: no cover
 
 from io import BufferedReader
 from io import BytesIO

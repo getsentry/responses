@@ -2773,7 +2773,7 @@ def test_request_object_attached_to_exception():
         try:
             requests.get(url, timeout=1)
         except requests.ReadTimeout as exc:
-            assert type(exc.request) == requests.models.PreparedRequest
+            assert isinstance(exc.request, requests.models.PreparedRequest)
 
     run()
     assert_reset()

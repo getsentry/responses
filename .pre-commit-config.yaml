@@ -21,7 +21,7 @@ repos:
         name: isort (python)
         args: ['--force-single-line-imports', '--profile', 'black']
   - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
+    rev: 7.1.1
     hooks:
       - id: flake8
         args: [ '--max-line-length', '100', '--max-doc-length', '120' ]

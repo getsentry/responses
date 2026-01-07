@@ -1,3 +1,8 @@
+0.x.y
+-----
+
+* Fixed retry support to consider `Retry-After` header, which has "special" handling inside `urllib3`.
+
 0.25.8
 ------
 

@@ -967,8 +967,8 @@ class RequestsMock:
         match_querystring: Union[bool, FalseBool] = FalseBool(),
         content_type: Optional[str] = "text/plain",
         match: "_MatcherIterable" = (),
-    ) -> None:
-        self._registry.add(
+    ) -> BaseResponse:
+        return self._registry.add(
             CallbackResponse(
                 url=url,
                 method=method,
@@ -990,20 +990,19 @@ class RequestsMock:
         self.start()
         return self
 
-    def __exit__(self, type: Any, value: Any, traceback: Any) -> bool:
+    def __exit__(self, type: Any, value: Any, traceback: Any) -> None:
         success = type is None
         try:
             self.stop(allow_assert=success)
         finally:
             self.reset()
-        return success
 
     @overload
     def activate(self, func: "_F" = ...) -> "_F":
         """Overload for scenario when 'responses.activate' is used."""
 
     @overload
-    def activate(  # type: ignore[misc]
+    def activate(
         self,
         *,
         registry: Type[Any] = ...,

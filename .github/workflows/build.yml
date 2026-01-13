@@ -5,6 +5,10 @@ on:
     branches:
       - release/**
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   dist:
     name: distribution packages

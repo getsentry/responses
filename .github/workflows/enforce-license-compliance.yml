@@ -6,10 +6,6 @@ on:
   pull_request:
     branches: [master]
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
   enforce-license-compliance:
     runs-on: ubuntu-latest

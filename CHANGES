@@ -1,7 +1,13 @@
-0.x.y
------
+0.26.0
+------
 
+* When using `assert_all_requests_are_fired=True`, assertions about
+  unfired requests are now raised even when an exception occurs in the context manager or
+  decorated function. Previously, these assertions were suppressed when exceptions occurred.
+  This new behavior provides valuable debugging context about which mocked requests were
+  or weren't called.
 * Consider the `Retry-After` header when handling retries
+
 
 0.25.8
 ------

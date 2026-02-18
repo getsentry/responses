@@ -226,8 +226,8 @@ def get_wrapped(
                 responses._set_registry(registry)
 
             with assert_mock, responses:
-                # set 'assert_all_requests_are_fired' temporarily for a single run.
-                # Mock automatically unsets to avoid leakage to another decorated
+                # set 'assert_all_requests_are_fired' temporarily for a
+                # single run. Mock automatically unsets to avoid leakage to another decorated
                 # function since we still apply the value on 'responses.mock' object
                 return func(*args, **kwargs)
 
@@ -991,9 +991,8 @@ class RequestsMock:
         return self
 
     def __exit__(self, type: Any, value: Any, traceback: Any) -> None:
-        success = type is None
         try:
-            self.stop(allow_assert=success)
+            self.stop(allow_assert=True)
         finally:
             self.reset()
 
@@ -1008,8 +1007,7 @@ class RequestsMock:
         registry: Type[Any] = ...,
         assert_all_requests_are_fired: bool = ...,
     ) -> Callable[["_F"], "_F"]:
-        """Overload for scenario when
-        'responses.activate(registry=, assert_all_requests_are_fired=True)' is used.
+        """Overload for scenario when 'responses.activate(...)' is used.
         See https://github.com/getsentry/responses/pull/469 for more details
         """
 

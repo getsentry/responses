@@ -1163,11 +1163,13 @@ def test_assert_all_requests_are_fired():
             with responses.RequestsMock() as m:
                 m.add(responses.GET, "http://example.com", body=b"test")
 
-        # check that assert_all_requests_are_fired doesn't swallow exceptions
-        with pytest.raises(ValueError):
+        # check that assert_all_requests_are_fired raises assertions even with exceptions
+        with pytest.raises(AssertionError) as exc_info:
             with responses.RequestsMock() as m:
                 m.add(responses.GET, "http://example.com", body=b"test")
                 raise ValueError()
+        # The ValueError should be chained as the context
+        assert isinstance(exc_info.value.__context__, ValueError)
 
         # check that assert_all_requests_are_fired=True doesn't remove urls
         with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
@@ -1214,6 +1216,65 @@ def test_assert_all_requests_fired_multiple():
     assert_reset()
 
     test_some_second_function()
+    assert_reset()
+
+
+def test_assert_all_requests_are_fired_during_exception():
+    """Test that assertions are raised even when an exception occurs."""
+
+    def run():
+        # Assertions WILL be raised even with an exception
+        # The AssertionError will be the primary exception, with the ValueError as context
+        with pytest.raises(AssertionError) as assert_exc_info:
+            with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
+                m.add(responses.GET, "http://example.com", body=b"test")
+                m.add(responses.GET, "http://not-called.com", body=b"test")
+                requests.get("http://example.com")
+                raise ValueError("Main error")
+
+        # The AssertionError should mention the unfired request
+        assert "not-called.com" in str(assert_exc_info.value)
+        # Python automatically chains exceptions, so we should see both in the traceback
+        assert isinstance(assert_exc_info.value.__context__, ValueError)
+        assert "Main error" in str(assert_exc_info.value.__context__)
+
+        # Test that it also works normally when no other exception occurs
+        with pytest.raises(AssertionError) as assert_exc_info2:
+            with responses.RequestsMock(assert_all_requests_are_fired=True) as m:
+                m.add(responses.GET, "http://example.com", body=b"test")
+                m.add(responses.GET, "http://not-called.com", body=b"test")
+                requests.get("http://example.com")
+
+        assert "not-called.com" in str(assert_exc_info2.value)
+
+    run()
+    assert_reset()
+
+
+def test_assert_all_requests_are_fired_during_exception_with_decorator():
+    """Test that assertions are raised even when an exception occurs.
+
+    This tests the behavior with the @responses.activate decorator.
+    """
+
+    # Assertions WILL be raised even with an exception when using the decorator
+    with pytest.raises(AssertionError) as assert_exc_info:
+
+        @responses.activate(assert_all_requests_are_fired=True)
+        def test_with_exception():
+            responses.add(responses.GET, "http://example.com", body=b"test")
+            responses.add(responses.GET, "http://not-called.com", body=b"test")
+            requests.get("http://example.com")
+            raise ValueError("Main error")
+
+        test_with_exception()
+
+    # The AssertionError should mention the unfired request
+    assert "not-called.com" in str(assert_exc_info.value)
+    # Python automatically chains exceptions, so we should see both in the traceback
+    assert isinstance(assert_exc_info.value.__context__, ValueError)
+    assert "Main error" in str(assert_exc_info.value.__context__)
+
     assert_reset()
 
 

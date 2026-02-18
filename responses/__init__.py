@@ -1051,7 +1051,10 @@ class RequestsMock:
         self, url: str
     ) -> Dict[str, Union[str, int, float, List[Optional[Union[str, int, float]]]]]:
         params: Dict[str, Union[str, int, float, List[Any]]] = {}
-        for key, val in groupby(parse_qsl(urlsplit(url).query), lambda kv: kv[0]):
+        for key, val in groupby(
+            parse_qsl(urlsplit(url).query, keep_blank_values=True),
+            lambda kv: kv[0],
+        ):
             values = list(map(lambda x: x[1], val))
             if len(values) == 1:
                 values = values[0]  # type: ignore[assignment]

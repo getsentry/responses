@@ -260,6 +260,24 @@ def test_query_params_numbers():
     assert_reset()
 
 
+def test_query_param_matcher_empty_value():
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "https://example.com/foo",
+            match=[
+                matchers.query_param_matcher({"bar": ""}),
+            ],
+            json={},
+        )
+        resp = requests.get("https://example.com/foo?bar=")
+        assert resp.status_code == 200
+
+    run()
+    assert_reset()
+
+
 def test_query_param_matcher_loose():
     @responses.activate
     def run():

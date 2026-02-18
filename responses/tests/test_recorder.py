@@ -122,6 +122,30 @@ class TestRecord:
 
         assert data == get_data(httpserver.host, httpserver.port)
 
+    def test_recorder_excludes_content_type_from_headers(self, httpserver):
+        """Content-Type should be in content_type, not duplicated in headers."""
+        httpserver.expect_request("/json").respond_with_data(
+            '{"message": "hello"}',
+            status=200,
+            content_type="application/json; charset=UTF-8",
+        )
+        url = httpserver.url_for("/json")
+
+        @_recorder.record(file_path=self.out_file)
+        def record():
+            requests.get(url)
+
+        record()
+
+        with open(self.out_file) as file:
+            data = yaml.safe_load(file)
+
+        rsp = data["responses"][0]["response"]
+        assert rsp["content_type"] == "application/json; charset=UTF-8"
+        headers = rsp.get("headers") or {}
+        assert "Content-Type" not in headers
+        assert "content-type" not in headers
+
     def prepare_server(self, httpserver):
         httpserver.expect_request("/500").respond_with_data(
             "500 Internal Server Error",
@@ -238,3 +262,4 @@ class TestReplay:
             assert responses.registered()[3].content_type == "text/plain"
 
         run()
+

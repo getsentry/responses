@@ -2778,6 +2778,51 @@ class TestMaxRetry:
         run()
         assert_reset()
 
+    def test_retry_with_retry_after_header(self):
+        """Validate that Retry-After header is detected and passed to retry logic"""
+
+        @responses.activate(registry=registries.OrderedRegistry)
+        def run():
+            url = "https://example.com"
+            # Add responses with Retry-After header
+            rsp1 = responses.get(
+                url,
+                body="Error",
+                status=429,
+                headers={"Retry-After": "1"},
+            )
+            rsp2 = responses.get(
+                url,
+                body="Error",
+                status=429,
+                headers={"Retry-After": "1"},
+            )
+            rsp3 = responses.get(url, body="OK", status=200)
+
+            # Create session with retry configuration for 429 status
+            session = requests.Session()
+            adapter = requests.adapters.HTTPAdapter(
+                max_retries=Retry(
+                    total=4,
+                    backoff_factor=0.1,
+                    status_forcelist=[429],
+                    allowed_methods=["GET"],
+                    raise_on_status=True,
+                    respect_retry_after_header=True,
+                )
+            )
+            session.mount("https://", adapter)
+
+            resp = session.get(url)
+
+            assert resp.status_code == 200
+            assert rsp1.call_count == 1
+            assert rsp2.call_count == 1
+            assert rsp3.call_count == 1
+
+        run()
+        assert_reset()
+
 
 def test_request_object_attached_to_exception():
     """Validate that we attach `request` object to custom exception supplied as body"""
@@ -2790,7 +2835,7 @@ def test_request_object_attached_to_exception():
         try:
             requests.get(url, timeout=1)
         except requests.ReadTimeout as exc:
-            assert type(exc.request) == requests.models.PreparedRequest
+            assert isinstance(exc.request, requests.models.PreparedRequest)
 
     run()
     assert_reset()

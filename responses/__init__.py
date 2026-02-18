@@ -39,7 +39,7 @@ from responses.registries import FirstMatchRegistry
 try:
     from typing_extensions import Literal
 except ImportError:  # pragma: no cover
-    from typing import Literal  # type: ignore  # pragma: no cover
+    from typing import Literal  # pragma: no cover
 
 from io import BufferedReader
 from io import BytesIO
@@ -1049,7 +1049,10 @@ class RequestsMock:
         self, url: str
     ) -> Dict[str, Union[str, int, float, List[Optional[Union[str, int, float]]]]]:
         params: Dict[str, Union[str, int, float, List[Any]]] = {}
-        for key, val in groupby(parse_qsl(urlsplit(url).query), lambda kv: kv[0]):
+        for key, val in groupby(
+            parse_qsl(urlsplit(url).query, keep_blank_values=True),
+            lambda kv: kv[0],
+        ):
             values = list(map(lambda x: x[1], val))
             if len(values) == 1:
                 values = values[0]  # type: ignore[assignment]
@@ -1149,7 +1152,9 @@ class RequestsMock:
         # first validate that current request is eligible to be retried.
         # See ``urllib3.util.retry.Retry`` documentation.
         if retries.is_retry(
-            method=response.request.method, status_code=response.status_code  # type: ignore[misc]
+            method=response.request.method,  # type: ignore[misc]
+            status_code=response.status_code,  # type: ignore[misc]
+            has_retry_after="Retry-After" in response.headers,  # type: ignore[misc]
         ):
             try:
                 retries = retries.increment(

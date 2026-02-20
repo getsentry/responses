@@ -145,8 +145,11 @@ class Recorder(RequestsMock):
         request.params = self._parse_request_params(request.path_url)  # type: ignore[attr-defined]
         request.req_kwargs = kwargs  # type: ignore[attr-defined]
         requests_response = _real_send(adapter, request, **kwargs)
+        content_type = requests_response.headers.get("Content-Type", _UNSET)
         headers_values = {
-            key: value for key, value in requests_response.headers.items()
+            key: value
+            for key, value in requests_response.headers.items()
+            if key.lower() != "content-type"
         }
         responses_response = Response(
             method=str(request.method),
@@ -154,7 +157,7 @@ class Recorder(RequestsMock):
             status=requests_response.status_code,
             body=requests_response.text,
             headers=headers_values,
-            content_type=requests_response.headers.get("Content-Type", _UNSET),
+            content_type=content_type,
         )
         self._registry.add(responses_response)
         return requests_response

@@ -856,12 +856,25 @@ class RequestsMock:
 
         for rsp in data["responses"]:
             rsp = rsp["response"]
+            headers = rsp["headers"] if "headers" in rsp else None
+
+            # The recorder stores ``content_type`` as a top-level key AND may
+            # also capture a ``content-type`` / ``Content-Type`` entry inside
+            # ``headers``.  Passing both to ``add()`` raises a RuntimeError.
+            # Resolve the conflict by removing the header entry so the
+            # dedicated ``content_type`` kwarg takes precedence, which is the
+            # behaviour recommended by the library.
+            if headers is not None and "content_type" in rsp:
+                headers = {k: v for k, v in headers.items() if k.lower() != "content-type"}
+                if not headers:
+                    headers = None
+
             self.add(
                 method=rsp["method"],
                 url=rsp["url"],
                 body=rsp["body"],
                 status=rsp["status"],
-                headers=rsp["headers"] if "headers" in rsp else None,
+                headers=headers,
                 content_type=rsp["content_type"],
                 auto_calculate_content_length=rsp["auto_calculate_content_length"],
             )

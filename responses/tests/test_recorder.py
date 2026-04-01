@@ -238,3 +238,63 @@ class TestReplay:
             assert responses.registered()[3].content_type == "text/plain"
 
         run()
+
+    def test_add_from_file_content_type_in_headers(self):
+        """Fixture files may contain Content-Type in both headers and content_type.
+
+        The recorder captures ``Content-Type`` inside the ``headers`` dict *and*
+        as the dedicated ``content_type`` field.  Passing both to ``add()``
+        raises a ``RuntimeError`` because ``content_type`` and a ``Content-Type``
+        header conflict.  ``_add_from_file`` should strip the duplicate header
+        entry so that the dedicated ``content_type`` kwarg wins.
+        """
+        data = {
+            "responses": [
+                {
+                    "response": {
+                        "method": "GET",
+                        "url": "http://example.com/api",
+                        "body": '{"status": "ok"}',
+                        "status": 200,
+                        "headers": {"Content-Type": "application/json"},
+                        "content_type": "application/json",
+                        "auto_calculate_content_length": False,
+                    }
+                },
+                {
+                    "response": {
+                        "method": "POST",
+                        "url": "http://example.com/submit",
+                        "body": "created",
+                        "status": 201,
+                        "headers": {
+                            "Content-Type": "text/plain",
+                            "X-Request-Id": "abc123",
+                        },
+                        "content_type": "text/plain",
+                        "auto_calculate_content_length": False,
+                    }
+                },
+            ]
+        }
+
+        with open(self.out_file, "w") as f:
+            yaml.dump(data, f)
+
+        @responses.activate
+        def run():
+            responses._add_from_file(file_path=self.out_file)
+
+            # Verify responses were registered without RuntimeError
+            assert len(responses.registered()) == 2
+
+            assert responses.registered()[0].url == "http://example.com/api"
+            assert responses.registered()[0].content_type == "application/json"
+
+            assert responses.registered()[1].url == "http://example.com/submit"
+            assert responses.registered()[1].content_type == "text/plain"
+            # Non-content-type headers should be preserved
+            resp = requests.post("http://example.com/submit")
+            assert resp.headers["X-Request-Id"] == "abc123"
+
+        run()

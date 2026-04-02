@@ -247,6 +247,10 @@ class TestReplay:
         raises a ``RuntimeError`` because ``content_type`` and a ``Content-Type``
         header conflict.  ``_add_from_file`` should strip the duplicate header
         entry so that the dedicated ``content_type`` kwarg wins.
+
+        Using mismatched values (``text/html`` in headers vs ``application/json``
+        in ``content_type``) ensures the assertion is non-trivial and confirms
+        that ``content_type`` takes precedence over the header value.
         """
         data = {
             "responses": [
@@ -256,7 +260,10 @@ class TestReplay:
                         "url": "http://example.com/api",
                         "body": '{"status": "ok"}',
                         "status": 200,
-                        "headers": {"Content-Type": "application/json"},
+                        # headers has a *different* Content-Type than content_type
+                        # to verify that content_type wins (not just that both happen
+                        # to be the same value).
+                        "headers": {"Content-Type": "text/html"},
                         "content_type": "application/json",
                         "auto_calculate_content_length": False,
                     }
@@ -268,7 +275,7 @@ class TestReplay:
                         "body": "created",
                         "status": 201,
                         "headers": {
-                            "Content-Type": "text/plain",
+                            "Content-Type": "text/html",
                             "X-Request-Id": "abc123",
                         },
                         "content_type": "text/plain",
@@ -288,6 +295,7 @@ class TestReplay:
             # Verify responses were registered without RuntimeError
             assert len(responses.registered()) == 2
 
+            # content_type must win over the conflicting Content-Type header
             assert responses.registered()[0].url == "http://example.com/api"
             assert responses.registered()[0].content_type == "application/json"
 

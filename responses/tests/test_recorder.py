@@ -190,6 +190,12 @@ class TestReplay:
         if self.out_file.exists():
             self.out_file.unlink()
 
+        # Clean up any extension variants created by individual tests
+        for suffix in (".yaml", ".toml"):
+            p = Path(str(self.out_file) + suffix)
+            if p.exists():
+                p.unlink()
+
         assert not self.out_file.exists()
 
     @pytest.mark.parametrize("parser", (yaml, tomli_w))

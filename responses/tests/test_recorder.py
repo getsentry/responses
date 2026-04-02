@@ -251,6 +251,9 @@ class TestReplay:
         Using mismatched values (``text/html`` in headers vs ``application/json``
         in ``content_type``) ensures the assertion is non-trivial and confirms
         that ``content_type`` takes precedence over the header value.
+
+        The fixture is saved as a ``.yaml`` file so that ``_add_from_file``
+        selects the YAML loader by extension.
         """
         data = {
             "responses": [
@@ -285,12 +288,13 @@ class TestReplay:
             ]
         }
 
-        with open(self.out_file, "w") as f:
+        yaml_file = Path(str(self.out_file) + ".yaml")
+        with open(yaml_file, "w") as f:
             yaml.dump(data, f)
 
         @responses.activate
         def run():
-            responses._add_from_file(file_path=self.out_file)
+            responses._add_from_file(file_path=yaml_file)
 
             # Verify responses were registered without RuntimeError
             assert len(responses.registered()) == 2

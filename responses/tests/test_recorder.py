@@ -190,6 +190,12 @@ class TestReplay:
         if self.out_file.exists():
             self.out_file.unlink()
 
+        # Clean up any extension variants created by individual tests
+        for suffix in (".yaml", ".toml"):
+            p = Path(str(self.out_file) + suffix)
+            if p.exists():
+                p.unlink()
+
         assert not self.out_file.exists()
 
     @pytest.mark.parametrize("parser", (yaml, tomli_w))
@@ -236,5 +242,77 @@ class TestReplay:
             assert responses.registered()[3].body == "500 Internal Server Error"
 
             assert responses.registered()[3].content_type == "text/plain"
+
+        run()
+
+    def test_add_from_file_content_type_in_headers(self):
+        """Fixture files may contain Content-Type in both headers and content_type.
+
+        The recorder captures ``Content-Type`` inside the ``headers`` dict *and*
+        as the dedicated ``content_type`` field.  Passing both to ``add()``
+        raises a ``RuntimeError`` because ``content_type`` and a ``Content-Type``
+        header conflict.  ``_add_from_file`` should strip the duplicate header
+        entry so that the dedicated ``content_type`` kwarg wins.
+
+        Using mismatched values (``text/html`` in headers vs ``application/json``
+        in ``content_type``) ensures the assertion is non-trivial and confirms
+        that ``content_type`` takes precedence over the header value.
+
+        The fixture is saved as a ``.yaml`` file so that ``_add_from_file``
+        selects the YAML loader by extension.
+        """
+        data = {
+            "responses": [
+                {
+                    "response": {
+                        "method": "GET",
+                        "url": "http://example.com/api",
+                        "body": '{"status": "ok"}',
+                        "status": 200,
+                        # headers has a *different* Content-Type than content_type
+                        # to verify that content_type wins (not just that both happen
+                        # to be the same value).
+                        "headers": {"Content-Type": "text/html"},
+                        "content_type": "application/json",
+                        "auto_calculate_content_length": False,
+                    }
+                },
+                {
+                    "response": {
+                        "method": "POST",
+                        "url": "http://example.com/submit",
+                        "body": "created",
+                        "status": 201,
+                        "headers": {
+                            "Content-Type": "text/html",
+                            "X-Request-Id": "abc123",
+                        },
+                        "content_type": "text/plain",
+                        "auto_calculate_content_length": False,
+                    }
+                },
+            ]
+        }
+
+        yaml_file = Path(str(self.out_file) + ".yaml")
+        with open(yaml_file, "w") as f:
+            yaml.dump(data, f)
+
+        @responses.activate
+        def run():
+            responses._add_from_file(file_path=yaml_file)
+
+            # Verify responses were registered without RuntimeError
+            assert len(responses.registered()) == 2
+
+            # content_type must win over the conflicting Content-Type header
+            assert responses.registered()[0].url == "http://example.com/api"
+            assert responses.registered()[0].content_type == "application/json"
+
+            assert responses.registered()[1].url == "http://example.com/submit"
+            assert responses.registered()[1].content_type == "text/plain"
+            # Non-content-type headers should be preserved
+            resp = requests.post("http://example.com/submit")
+            assert resp.headers["X-Request-Id"] == "abc123"
 
         run()

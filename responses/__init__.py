@@ -859,7 +859,9 @@ class RequestsMock:
             headers = rsp["headers"] if "headers" in rsp else None
 
             if headers is not None and "content_type" in rsp:
-                headers = {k: v for k, v in headers.items() if k.lower() != "content-type"}
+                headers = {
+                    k: v for k, v in headers.items() if k.lower() != "content-type"
+                }
                 if not headers:
                     headers = None
 

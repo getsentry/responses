@@ -196,6 +196,14 @@ class TestReplay:
             if p.exists():
                 p.unlink()
 
+        # test_add_from_file[tomli_w] monkey-patches responses.mock._parse_response_file
+        # to a TOML loader and never restores it. Reset it here so later tests
+        # don't inherit the TOML parser when they write YAML fixtures.
+        cls = type(responses.mock)
+        responses.mock._parse_response_file = (  # type: ignore[method-assign]
+            cls._parse_response_file.__get__(responses.mock)
+        )
+
         assert not self.out_file.exists()
 
     @pytest.mark.parametrize("parser", (yaml, tomli_w))

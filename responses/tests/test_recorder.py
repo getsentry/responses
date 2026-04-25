@@ -196,14 +196,6 @@ class TestReplay:
             if p.exists():
                 p.unlink()
 
-        # test_add_from_file[tomli_w] monkey-patches responses.mock._parse_response_file
-        # to a TOML loader and never restores it. Reset it here so later tests
-        # don't inherit the TOML parser when they write YAML fixtures.
-        cls = type(responses.mock)
-        responses.mock._parse_response_file = (  # type: ignore[method-assign]
-            cls._parse_response_file.__get__(responses.mock)
-        )
-
         assert not self.out_file.exists()
 
     @pytest.mark.parametrize("parser", (yaml, tomli_w))
@@ -218,6 +210,8 @@ class TestReplay:
         @responses.activate
         def run():
             responses.patch("http://httpbin.org")
+
+            original_parser = responses.mock._parse_response_file
             if parser == tomli_w:
 
                 def _parse_resp_f(file_path):
@@ -227,29 +221,33 @@ class TestReplay:
 
                 responses.mock._parse_response_file = _parse_resp_f  # type: ignore[method-assign]
 
-            responses._add_from_file(file_path=self.out_file)
-            responses.post("http://httpbin.org/form")
+            try:
+                responses._add_from_file(file_path=self.out_file)
+                responses.post("http://httpbin.org/form")
 
-            assert responses.registered()[0].url == "http://httpbin.org/"
-            assert responses.registered()[1].url == "http://example.com:8080/404"
-            assert (
-                responses.registered()[2].url == "http://example.com:8080/status/wrong"
-            )
-            assert responses.registered()[3].url == "http://example.com:8080/500"
-            assert responses.registered()[4].url == "http://example.com:8080/202"
-            assert responses.registered()[5].url == "http://httpbin.org/form"
+                assert responses.registered()[0].url == "http://httpbin.org/"
+                assert responses.registered()[1].url == "http://example.com:8080/404"
+                assert (
+                    responses.registered()[2].url
+                    == "http://example.com:8080/status/wrong"
+                )
+                assert responses.registered()[3].url == "http://example.com:8080/500"
+                assert responses.registered()[4].url == "http://example.com:8080/202"
+                assert responses.registered()[5].url == "http://httpbin.org/form"
 
-            assert responses.registered()[0].method == "PATCH"
-            assert responses.registered()[2].method == "GET"
-            assert responses.registered()[4].method == "PUT"
-            assert responses.registered()[5].method == "POST"
+                assert responses.registered()[0].method == "PATCH"
+                assert responses.registered()[2].method == "GET"
+                assert responses.registered()[4].method == "PUT"
+                assert responses.registered()[5].method == "POST"
 
-            assert responses.registered()[2].status == 400
-            assert responses.registered()[3].status == 500
+                assert responses.registered()[2].status == 400
+                assert responses.registered()[3].status == 500
 
-            assert responses.registered()[3].body == "500 Internal Server Error"
+                assert responses.registered()[3].body == "500 Internal Server Error"
 
-            assert responses.registered()[3].content_type == "text/plain"
+                assert responses.registered()[3].content_type == "text/plain"
+            finally:
+                responses.mock._parse_response_file = original_parser  # type: ignore[method-assign]
 
         run()
 

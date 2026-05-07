@@ -1,4 +1,9 @@
+0.26.1
+------
+
 * Added Spanish translation of the README (``README.es.rst``)
+* When both `content_type` and `headers['content-type']` are in a response mock file,
+  `content_type` is now used.
 
 0.26.0
 ------

@@ -39,7 +39,7 @@ from responses.registries import FirstMatchRegistry
 try:
     from typing_extensions import Literal
 except ImportError:  # pragma: no cover
-    from typing import Literal  # type: ignore
+    from typing import Literal
 
 from io import BufferedReader
 from io import BytesIO
@@ -249,7 +249,9 @@ class CallList(Sequence[Any], Sized):
         """Overload for scenario when index is provided."""
 
     @overload
-    def __getitem__(self, idx: "slice[int, int, Optional[int]]") -> List[Call]:
+    def __getitem__(
+        self, idx: "slice[Optional[int], Optional[int], Optional[int]]"
+    ) -> List[Call]:
         """Overload for scenario when slice is provided."""
 
     def __getitem__(self, idx: Union[int, slice]) -> Union[Call, List[Call]]:

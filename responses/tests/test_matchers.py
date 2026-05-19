@@ -268,6 +268,7 @@ def test_urlencoded_params_matcher_strict():
                 )
             ],
         )
+        # Fail for insufficient params and strict matching:
         responses.add(
             method=responses.POST,
             url="http://example.com/",
@@ -277,6 +278,13 @@ def test_urlencoded_params_matcher_strict():
                     {"key3": "value3"}, strict_match=True  # Note: Strict match
                 )
             ],
+        )
+        # Fail for non-strict matching of empty params with non-empty body:
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="body4",
+            match=[matchers.urlencoded_params_matcher(None, strict_match=False)],
         )
 
         resp1 = requests.request(
@@ -295,7 +303,7 @@ def test_urlencoded_params_matcher_strict():
         )
         assert_response(resp2, "body2")
 
-        # The third request will NOT match, as it's strict
+        # The third request should NOT match, as it's strict
         with pytest.raises(ConnectionError) as excinfo:
             requests.request(
                 "POST",
@@ -307,6 +315,20 @@ def test_urlencoded_params_matcher_strict():
         assert (
             "request.body doesn't match: {'key3': 'value3', 'type': 'urlencoded'} "
             "doesn't match {'key3': 'value3'}" in msg
+        )
+
+        # The fourth request should NOT match with empty params
+        with pytest.raises(ConnectionError) as excinfo:
+            requests.request(
+                "POST",
+                "http://example.com/",
+                headers={"Content-Type": "x-www-form-urlencoded"},
+                data={"key4": "value4", "type": "urlencoded"},
+            )
+        msg = str(excinfo.value)
+        assert (
+            "request.body doesn't match: {'key4': 'value4', 'type': 'urlencoded'} "
+            "doesn't match {}" in msg
         )
 
     run()

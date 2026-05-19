@@ -21,6 +21,13 @@ from urllib3.util.url import parse_url
 def _filter_dict_recursively(
     dict1: Mapping[Any, Any], dict2: Mapping[Any, Any]
 ) -> Mapping[Any, Any]:
+    """
+    Make a new dictionary using only keys that exist in both
+    dictionary arguments. It will also work with deeply nested keys.
+    :param dict1: dictionary to filter
+    :param dict2: dictionary to filter
+    :return: new dictionary based on `dict1` and `dict2`
+    """
     filtered_dict = {}
     for k, val in dict1.items():
         if k in dict2:
@@ -70,15 +77,24 @@ def urlencoded_params_matcher(
             if request_body
             else {}
         )
-        params_dict = params or {}
+        request_params = qsl_body
+        match_params = params or {}
 
         if not strict_match:
-            qsl_body = _filter_dict_recursively(qsl_body, params_dict)
+            request_params = _filter_dict_recursively(qsl_body, match_params)
 
-        valid = params is None if request_body is None else params_dict == qsl_body
+        valid = (
+            params is None if request_body is None else match_params == request_params
+        )
+
+        # Prevents non-strict match of empty params with non-empty
+        # request body (due to dictionary filtering)
+        if params is None and request_body is not None:
+            valid = False
+
         if not valid:
             reason = (
-                f"request.body doesn't match: {qsl_body} doesn't match {params_dict}"
+                f"request.body doesn't match: {qsl_body} doesn't match {match_params}"
             )
             if not strict_match:
                 reason += (

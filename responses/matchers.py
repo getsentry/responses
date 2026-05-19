@@ -47,29 +47,44 @@ def body_matcher(params: str, *, allow_blank: bool = False) -> Callable[..., Any
 
 
 def urlencoded_params_matcher(
-    params: Optional[Mapping[str, str]], *, allow_blank: bool = False
+    params: Optional[Mapping[str, str]],
+    *,
+    allow_blank: bool = False,
+    strict_match: bool = True,
 ) -> Callable[..., Any]:
     """
     Matches URL encoded data
 
     :param params: (dict) data provided to 'data' arg of request
+    :param allow_blank If true, blank values are accounted as empty strings
+    :param strict_match If true, all keys must match;
+        otherwise, partial matches allowed
     :return: (func) matcher
     """
 
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         request_body = request.body
-        qsl_body = (
+        qsl_body: Mapping[Any, Any] = (
             dict(parse_qsl(request_body, keep_blank_values=allow_blank))  # type: ignore[type-var]
             if request_body
             else {}
         )
         params_dict = params or {}
+
+        if not strict_match:
+            qsl_body = _filter_dict_recursively(qsl_body, params_dict)
+
         valid = params is None if request_body is None else params_dict == qsl_body
         if not valid:
             reason = (
                 f"request.body doesn't match: {qsl_body} doesn't match {params_dict}"
             )
+            if not strict_match:
+                reason += (
+                    "\nNote: You use non-strict parameters check, "
+                    "to change it use `strict_match=True`."
+                )
 
         return valid, reason
 

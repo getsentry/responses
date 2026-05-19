@@ -243,6 +243,76 @@ def test_urlencoded_params_matcher_blank():
     assert_reset()
 
 
+def test_urlencoded_params_matcher_strict():
+    """Test for partial urlencoded parameter matching"""
+
+    @responses.activate
+    def run():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="body1",
+            match=[
+                matchers.urlencoded_params_matcher(
+                    {"key1": "value1"}, strict_match=False
+                )
+            ],
+        )
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="body2",
+            match=[
+                matchers.urlencoded_params_matcher(
+                    {"key2": "value2"}, strict_match=False
+                )
+            ],
+        )
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="body3",
+            match=[
+                matchers.urlencoded_params_matcher(
+                    {"key3": "value3"}, strict_match=True  # Note: Strict match
+                )
+            ],
+        )
+
+        resp1 = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={"Content-Type": "x-www-form-urlencoded"},
+            data={"key1": "value1", "type": "urlencoded"},
+        )
+        assert_response(resp1, "body1")
+
+        resp2 = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={"Content-Type": "x-www-form-urlencoded"},
+            data={"key2": "value2", "type": "urlencoded"},
+        )
+        assert_response(resp2, "body2")
+
+        # The third request will NOT match, as it's strict
+        with pytest.raises(ConnectionError) as excinfo:
+            requests.request(
+                "POST",
+                "http://example.com/",
+                headers={"Content-Type": "x-www-form-urlencoded"},
+                data={"key3": "value3", "type": "urlencoded"},
+            )
+        msg = str(excinfo.value)
+        assert (
+            "request.body doesn't match: {'key3': 'value3', 'type': 'urlencoded'} "
+            "doesn't match {'key3': 'value3'}" in msg
+        )
+
+    run()
+    assert_reset()
+
+
 def test_query_params_numbers():
     @responses.activate
     def run():

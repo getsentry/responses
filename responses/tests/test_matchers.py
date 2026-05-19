@@ -284,7 +284,7 @@ def test_urlencoded_params_matcher_strict():
             method=responses.POST,
             url="http://example.com/",
             body="body4",
-            match=[matchers.urlencoded_params_matcher(None, strict_match=False)],
+            match=[matchers.urlencoded_params_matcher({}, strict_match=False)],
         )
         # Test for successful strict matching:
         responses.add(

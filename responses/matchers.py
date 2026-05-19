@@ -89,7 +89,7 @@ def urlencoded_params_matcher(
 
         # Prevents non-strict match of empty params with non-empty
         # request body (due to dictionary filtering)
-        if params is None and request_body is not None:
+        if not params and request_body:
             valid = False
 
         if not valid:

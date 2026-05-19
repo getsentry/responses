@@ -286,6 +286,17 @@ def test_urlencoded_params_matcher_strict():
             body="body4",
             match=[matchers.urlencoded_params_matcher(None, strict_match=False)],
         )
+        # Test for successful strict matching:
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="body5",
+            match=[
+                matchers.urlencoded_params_matcher(
+                    {"key5": "value5", "type": "urlencoded"}, strict_match=True
+                )
+            ],
+        )
 
         resp1 = requests.request(
             "POST",
@@ -330,6 +341,14 @@ def test_urlencoded_params_matcher_strict():
             "request.body doesn't match: {'key4': 'value4', 'type': 'urlencoded'} "
             "doesn't match {}" in msg
         )
+
+        resp5 = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={"Content-Type": "x-www-form-urlencoded"},
+            data={"key5": "value5", "type": "urlencoded"},
+        )
+        assert_response(resp5, "body5")
 
     run()
     assert_reset()

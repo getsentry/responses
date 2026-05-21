@@ -4,6 +4,8 @@
 * Added Spanish translation of the README (``README.es.rst``)
 * When both `content_type` and `headers['content-type']` are in a response mock file,
   `content_type` is now used.
+* Added strict_match to urlencoded_params_matcher, enabling partial request parameter
+  matching.
 
 0.26.0
 ------

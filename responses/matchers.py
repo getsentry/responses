@@ -96,10 +96,10 @@ def urlencoded_params_matcher(
             reason = (
                 f"request.body doesn't match: {qsl_body} doesn't match {match_params}"
             )
-            if not strict_match:
+            if strict_match:
                 reason += (
-                    "\nNote: You use non-strict parameters check, "
-                    "to change it use `strict_match=True`."
+                    "\nNote: You're using strict parameter check. "
+                    "To try a partial match, use strict_match=False"
                 )
 
         return valid, reason

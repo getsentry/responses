@@ -1513,7 +1513,7 @@ Puedes ejecutar todas las pruebas con:
 
 .. code-block:: shell
 
-    tox -e py37
+    tox -e py38
     tox -e py310
 
 O activando manualmente la versión de Python requerida y ejecutando:

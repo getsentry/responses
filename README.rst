@@ -1500,7 +1500,7 @@ testing. You can run all tests by:
 
 .. code-block:: shell
 
-    tox -e py37
+    tox -e py38
     tox -e py310
 
 OR manually activate required version of Python and run

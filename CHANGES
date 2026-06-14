@@ -6,6 +6,10 @@
   `content_type` is now used.
 * Added strict_match to urlencoded_params_matcher, enabling partial request parameter
   matching.
+* Default headers (such as ``Content-Type``, ``Date`` and ``Server``) are now stripped
+  from recorded files regardless of header name case. Previously, responses recorded from
+  servers that send lowercase header names (for example over HTTP/2) kept these redundant
+  headers in the generated file.
 
 0.26.0
 ------

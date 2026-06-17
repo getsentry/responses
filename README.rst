@@ -1401,7 +1401,7 @@ will produce next output:
         status: 202
         url: https://httpstat.us/202
 
-If you are in the REPL, you can also activete the recorder for all following responses:
+If you are in the REPL, you can also activate the recorder for all following responses:
 
 .. code-block:: python
 

@@ -371,6 +371,24 @@ def test_query_params_numbers():
     assert_reset()
 
 
+def test_query_param_matcher_does_not_mutate_input():
+    """query_param_matcher must not modify the caller's params dict.
+
+    Numeric values (int/float) are converted to strings internally for
+    comparison, but the conversion must not happen on the original dict.
+    """
+    params = {"page": 1, "ratio": 0.5, "name": "test"}
+    original_types = {k: type(v) for k, v in params.items()}
+
+    matchers.query_param_matcher(params)
+
+    for k, expected_type in original_types.items():
+        assert type(params[k]) is expected_type, (
+            f"query_param_matcher mutated params[{k!r}]: "
+            f"expected {expected_type.__name__}, got {type(params[k]).__name__}"
+        )
+
+
 def test_query_param_matcher_empty_value():
     @responses.activate
     def run():

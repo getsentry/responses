@@ -8,6 +8,7 @@ import yaml
 import responses
 from responses import _recorder
 from responses._recorder import _dump
+from responses._recorder import _remove_default_headers
 
 try:
     import tomli as _toml
@@ -65,6 +66,44 @@ def get_data(host, port):
         ]
     }
     return data
+
+
+def test_remove_default_headers_is_case_insensitive():
+    """Default headers should be stripped regardless of their case.
+
+    HTTP/2 servers send header names in lowercase, so the recorded file may
+    contain e.g. ``content-type`` / ``date`` rather than ``Content-Type`` /
+    ``Date``. These still need to be removed, otherwise the recorded file
+    keeps verbose default headers (and, for content-type, a value that is
+    already stored in the ``content_type`` field).
+    """
+    data = {
+        "responses": [
+            {
+                "response": {
+                    # mixed lower/title/upper case to pin the case-insensitive contract
+                    "headers": {
+                        "content-type": "application/json",
+                        "Date": "Mon, 01 Jan 2024 00:00:00 GMT",
+                        "SERVER": "nginx",
+                        "x-custom": "keep-me",
+                    }
+                }
+            },
+            {
+                # a response whose headers are all default ones is left without a
+                # "headers" key at all
+                "response": {
+                    "headers": {"content-length": "12", "connection": "keep-alive"}
+                }
+            },
+        ]
+    }
+
+    result = _remove_default_headers(data)
+
+    assert result["responses"][0]["response"]["headers"] == {"x-custom": "keep-me"}
+    assert "headers" not in result["responses"][1]["response"]
 
 
 class TestRecord:

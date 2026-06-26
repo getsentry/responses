@@ -10,6 +10,8 @@
   from recorded files regardless of header name case. Previously, responses recorded from
   servers that send lowercase header names (for example over HTTP/2) kept these redundant
   headers in the generated file.
+* Fixed `query_param_matcher` mutating the caller's params dict when numeric
+  values are provided. See #801
 
 0.26.0
 ------

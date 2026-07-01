@@ -46,7 +46,7 @@ setup(
         "Documentation": "https://github.com/getsentry/responses/blob/master/README.rst",
         "Source Code": "https://github.com/getsentry/responses",
     },
-    license="Apache 2.0",
+    license="Apache-2.0",
     long_description=open("README.rst", encoding="utf-8").read(),
     long_description_content_type="text/x-rst",
     packages=["responses"],

@@ -69,6 +69,40 @@ def test_query_string_matcher():
     assert_reset()
 
 
+def test_query_string_matcher_blank_values():
+    """A blank-valued query param (``foo=``) is significant: it must be present
+    to match, and an extra blank param must not be ignored."""
+
+    def run():
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+            rsps.add(
+                responses.GET,
+                "http://example.com",
+                body=b"test",
+                match=[matchers.query_string_matcher("test=1&foo=")],
+            )
+            # Exact match, including the blank param, succeeds.
+            resp = requests.get("http://example.com?test=1&foo=")
+            assert_response(resp, "test")
+            # Omitting the required blank param must not match.
+            with pytest.raises(ConnectionError):
+                requests.get("http://example.com?test=1")
+
+        with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+            rsps.add(
+                responses.GET,
+                "http://example.com",
+                body=b"test",
+                match=[matchers.query_string_matcher("test=1")],
+            )
+            # An extra blank param must not be silently ignored.
+            with pytest.raises(ConnectionError):
+                requests.get("http://example.com?test=1&foo=")
+
+    run()
+    assert_reset()
+
+
 def test_request_matches_post_params():
     @responses.activate
     def run(deprecated):

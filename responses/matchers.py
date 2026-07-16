@@ -259,8 +259,12 @@ def query_string_matcher(query: Optional[str]) -> Callable[..., Any]:
         data = parse_url(request.url or "")
         request_query = data.query
 
-        request_qsl = sorted(parse_qsl(request_query)) if request_query else {}
-        matcher_qsl = sorted(parse_qsl(query)) if query else {}
+        request_qsl = (
+            sorted(parse_qsl(request_query, keep_blank_values=True))
+            if request_query
+            else {}
+        )
+        matcher_qsl = sorted(parse_qsl(query, keep_blank_values=True)) if query else {}
 
         valid = not query if request_query is None else request_qsl == matcher_qsl
 

@@ -5,6 +5,10 @@
   registered URL's own query string) discarding blank-valued query params
   (``b=``), which caused requests with an extra or missing blank param to
   match incorrectly. See #804
+* Fixed the default `header_matcher` (``strict_match=False``) matching header
+  field names case-sensitively, so a request whose header casing differed from
+  the matcher spec (for example lowercase names over HTTP/2) failed to match.
+  See #805
 
 0.26.2
 ------

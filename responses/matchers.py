@@ -432,8 +432,12 @@ def header_matcher(
         request_headers: Union[Mapping[Any, Any], Any] = request.headers or {}
 
         if not strict_match:
-            # filter down to just the headers specified in the matcher
-            request_headers = {k: v for k, v in request_headers.items() if k in headers}
+            # Filter to the matcher's headers, keyed by the matcher's names, so
+            # the case-insensitive lookup on request.headers (a
+            # CaseInsensitiveDict) is not lost in the plain-dict rebuild.
+            request_headers = {
+                k: request_headers[k] for k in headers if k in request_headers
+            }
 
         valid = _compare_with_regex(request_headers)
 

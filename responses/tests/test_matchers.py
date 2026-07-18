@@ -857,6 +857,26 @@ def test_request_matches_headers():
     assert_reset()
 
 
+def test_request_matches_headers_case_insensitive_field_names():
+    # HTTP header names are case-insensitive (and HTTP/2 lower-cases them), so
+    # the default matcher must match regardless of the field-name casing.
+    @responses.activate
+    def run():
+        url = "http://example.com/"
+        responses.add(
+            method=responses.GET,
+            url=url,
+            json={"success": True},
+            match=[matchers.header_matcher({"X-Custom": "token"})],
+        )
+
+        resp = requests.get(url, headers={"x-custom": "token"})
+        assert_response(resp, body='{"success": true}', content_type="application/json")
+
+    run()
+    assert_reset()
+
+
 def test_request_header_value_mismatch_raises():
     @responses.activate
     def run():

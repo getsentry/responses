@@ -974,6 +974,37 @@ def test_fragment_identifier_matcher():
     assert_reset()
 
 
+def test_fragment_identifier_matcher_opaque():
+    """Opaque (non key=value) fragments must compare verbatim.
+
+    Previously ``parse_qsl`` reduced any opaque fragment to ``[]``, so a
+    required ``#/users/5`` matched any other opaque fragment (or none).
+    """
+
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "http://example.com/",
+            match=[matchers.fragment_identifier_matcher("/users/5")],
+            body=b"test",
+        )
+
+        # A different opaque fragment, or no fragment, must not match.
+        with pytest.raises(ConnectionError) as excinfo:
+            requests.get("http://example.com/#/users/6")
+        assert (
+            "URL fragment identifier is different: /users/5 doesn't match /users/6"
+        ) in str(excinfo.value)
+
+        # The exact opaque fragment matches.
+        resp = requests.get("http://example.com/#/users/5")
+        assert_response(resp, "test")
+
+    run()
+    assert_reset()
+
+
 def test_fragment_identifier_matcher_error():
     @responses.activate
     def run():

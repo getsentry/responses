@@ -5,6 +5,9 @@
   registered URL's own query string) discarding blank-valued query params
   (``b=``), which caused requests with an extra or missing blank param to
   match incorrectly. See #804
+* Fixed `fragment_identifier_matcher` treating opaque fragments (those without
+  ``=``, e.g. ``/users/5``) as always equal, so a required fragment matched a
+  different one or none at all. See #806
 
 0.26.2
 ------

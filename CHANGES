@@ -1,6 +1,8 @@
 0.26.3
 ------
 
+* Fixed the element type exposed by `CallList` so static type checkers infer
+  `Call` values when iterating, indexing, or filtering recorded calls. See #722
 * Fixed `query_string_matcher` (and the query matching auto-applied to a
   registered URL's own query string) discarding blank-valued query params
   (``b=``), which caused requests with an extra or missing blank param to

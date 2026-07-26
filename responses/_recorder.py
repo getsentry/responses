@@ -1,3 +1,4 @@
+import logging
 from functools import wraps
 from typing import TYPE_CHECKING
 
@@ -28,6 +29,8 @@ from responses import RequestsMock
 from responses import Response
 from responses import _real_send
 from responses.registries import OrderedRegistry
+
+logger = logging.getLogger("responses")
 
 
 def _remove_nones(d: "Any") -> "Any":
@@ -115,12 +118,25 @@ class Recorder(RequestsMock):
             @wraps(function)
             def wrapper(*args: "Any", **kwargs: "Any") -> "Any":  # type: ignore[misc]
                 with self:
-                    ret = function(*args, **kwargs)
-                    self.dump_to_file(
-                        file_path=file_path, registered=self.get_registry().registered
-                    )
-
-                    return ret
+                    function_raised = False
+                    try:
+                        return function(*args, **kwargs)
+                    except BaseException:
+                        function_raised = True
+                        raise
+                    finally:
+                        try:
+                            self.dump_to_file(
+                                file_path=file_path,
+                                registered=self.get_registry().registered,
+                            )
+                        except BaseException:
+                            if not function_raised:
+                                raise
+                            logger.exception(
+                                "Failed to dump recorded responses while handling "
+                                "an exception from the decorated function"
+                            )
 
             return wrapper
 

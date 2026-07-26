@@ -133,6 +133,63 @@ class TestRecord:
             data = yaml.safe_load(file)
         assert data == get_data(httpserver.host, httpserver.port)
 
+    def test_recorder_dumps_when_decorated_function_raises(self, httpserver):
+        _, _, url404, _ = self.prepare_server(httpserver)
+        original_error = RuntimeError("original failure")
+
+        @_recorder.record(file_path=self.out_file)
+        def run():
+            requests.get(url404)
+            raise original_error
+
+        with pytest.raises(RuntimeError) as exc_info:
+            run()
+
+        assert exc_info.value is original_error
+        with open(self.out_file) as file:
+            data = yaml.safe_load(file)
+        assert (
+            data["responses"]
+            == get_data(httpserver.host, httpserver.port)["responses"][:1]
+        )
+
+    def test_dump_failure_does_not_mask_function_exception(self, httpserver, caplog):
+        custom_recorder = _recorder.Recorder()
+        _, _, url404, _ = self.prepare_server(httpserver)
+        original_error = RuntimeError("original failure")
+
+        def dump_to_file(*args, **kwargs):
+            raise OSError("dump failure")
+
+        custom_recorder.dump_to_file = dump_to_file  # type: ignore[method-assign]
+
+        @custom_recorder.record(file_path=self.out_file)
+        def run():
+            requests.get(url404)
+            raise original_error
+
+        with caplog.at_level("ERROR", logger="responses"):
+            with pytest.raises(RuntimeError) as exc_info:
+                run()
+
+        assert exc_info.value is original_error
+        assert "Failed to dump recorded responses" in caplog.text
+
+    def test_dump_failure_is_raised_when_function_succeeds(self):
+        custom_recorder = _recorder.Recorder()
+
+        def dump_to_file(*args, **kwargs):
+            raise OSError("dump failure")
+
+        custom_recorder.dump_to_file = dump_to_file  # type: ignore[method-assign]
+
+        @custom_recorder.record(file_path=self.out_file)
+        def run():
+            return None
+
+        with pytest.raises(OSError, match="dump failure"):
+            run()
+
     def test_recorder_toml(self, httpserver):
         custom_recorder = _recorder.Recorder()
 

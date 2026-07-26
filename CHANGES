@@ -10,6 +10,9 @@
 * Fixed `fragment_identifier_matcher` treating opaque fragments (those without
   ``=``, e.g. ``/users/5``) as always equal, so a required fragment matched a
   different one or none at all. See #806
+* Fixed the recorder decorator not writing captured responses when the decorated
+  function raises. Dump failures during exception handling are logged without
+  replacing the original exception. See #705
 
 0.26.2
 ------

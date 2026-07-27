@@ -1,6 +1,10 @@
 0.26.3
 ------
 
+* Added a ``keep_headers`` argument to ``_recorder.record`` and
+  ``Recorder.dump_to_file`` to preserve named headers (for example ``Date``)
+  that are otherwise stripped as verbose defaults, so a signed response can be
+  recorded and later verified. Matching is case-insensitive. See #763
 * Fixed the element type exposed by `CallList` so static type checkers infer
   `Call` values when iterating, indexing, or filtering recorded calls. See #722
 * Fixed `query_string_matcher` (and the query matching auto-applied to a

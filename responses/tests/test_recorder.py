@@ -106,6 +106,63 @@ def test_remove_default_headers_is_case_insensitive():
     assert "headers" not in result["responses"][1]["response"]
 
 
+def test_remove_default_headers_keeps_requested_headers():
+    """Headers named in ``keep_headers`` survive the default-header stripping.
+
+    Some consumers need a normally-stripped header in the recorded file, for
+    example a ``Date`` value that is part of a signed response they later
+    verify. Matching is case-insensitive so a lowercase HTTP/2 name is kept
+    too, while the other default headers are still removed.
+    """
+    data = {
+        "responses": [
+            {
+                "response": {
+                    "headers": {
+                        "date": "Mon, 01 Jan 2024 00:00:00 GMT",
+                        "Server": "nginx",
+                        "Content-Length": "12",
+                        "x-custom": "keep-me",
+                    }
+                }
+            },
+        ]
+    }
+
+    result = _remove_default_headers(data, keep_headers=["Date"])
+
+    assert result["responses"][0]["response"]["headers"] == {
+        "date": "Mon, 01 Jan 2024 00:00:00 GMT",
+        "x-custom": "keep-me",
+    }
+
+
+def test_remove_default_headers_accepts_a_single_string():
+    """A bare string is treated as one header name, not a set of characters."""
+    data = {
+        "responses": [
+            {"response": {"headers": {"Date": "d", "Server": "nginx"}}},
+        ]
+    }
+
+    result = _remove_default_headers(data, keep_headers="Date")
+
+    assert result["responses"][0]["response"]["headers"] == {"Date": "d"}
+
+
+def test_remove_default_headers_keep_non_default_is_noop():
+    """Naming a non-default header does not change which headers are stripped."""
+    data = {
+        "responses": [
+            {"response": {"headers": {"Date": "d", "x-custom": "keep-me"}}},
+        ]
+    }
+
+    result = _remove_default_headers(data, keep_headers=["x-custom"])
+
+    assert result["responses"][0]["response"]["headers"] == {"x-custom": "keep-me"}
+
+
 class TestRecord:
     def setup_method(self):
         self.out_file = Path("response_record")
@@ -133,12 +190,57 @@ class TestRecord:
             data = yaml.safe_load(file)
         assert data == get_data(httpserver.host, httpserver.port)
 
+    def test_recorder_keep_headers_preserves_date(self, httpserver):
+        """``keep_headers`` keeps a normally-stripped header in the record.
+
+        Reproduces the reported need to record the ``Date`` header so a signed
+        response can be verified against the recording (issue #763). Without
+        ``keep_headers`` the same header is stripped as a verbose default.
+        """
+        httpserver.expect_request("/signed").respond_with_data(
+            "ok",
+            status=200,
+            content_type="text/plain",
+            headers={"Date": "Mon, 01 Jan 2024 00:00:00 GMT"},
+        )
+        url = httpserver.url_for("/signed")
+
+        @_recorder.record(file_path=self.out_file, keep_headers=["Date"])
+        def run_kept():
+            requests.get(url)
+
+        run_kept()
+        with open(self.out_file) as file:
+            kept = yaml.safe_load(file)
+        kept_headers = kept["responses"][0]["response"]["headers"]
+        # The server owns the exact Date value, so assert the header survives
+        # rather than pinning its contents.
+        assert "Date" in kept_headers
+        assert "2024" in kept_headers["Date"]
+
+        self.out_file.unlink()
+
+        @_recorder.record(file_path=self.out_file)
+        def run_default():
+            requests.get(url)
+
+        run_default()
+        with open(self.out_file) as file:
+            default = yaml.safe_load(file)
+        default_headers = default["responses"][0]["response"].get("headers", {})
+        assert "Date" not in default_headers
+
     def test_recorder_toml(self, httpserver):
         custom_recorder = _recorder.Recorder()
 
-        def dump_to_file(file_path, registered):
+        def dump_to_file(file_path, registered, *, keep_headers=None):
             with open(file_path, "wb") as file:
-                _dump(registered, file, tomli_w.dump)  # type: ignore[arg-type]
+                _dump(
+                    registered,
+                    file,
+                    tomli_w.dump,  # type: ignore[arg-type]
+                    keep_headers=keep_headers,
+                )
 
         custom_recorder.dump_to_file = dump_to_file  # type: ignore[assignment]
 

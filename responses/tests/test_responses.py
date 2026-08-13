@@ -1441,6 +1441,82 @@ def test_headers_deduplicated_content_type():
     assert_reset()
 
 
+def test_content_encoding_header_is_stripped():
+    """Test that a stale/misleading 'Content-Encoding' header does not
+    cause 'requests' to fail trying to decompress an uncompressed body.
+
+    ``responses`` always serves ``body`` verbatim -- it never actually
+    compresses it -- so a "Content-Encoding: gzip" header (e.g. copied over
+    from a real recorded response, or present in a hand-written/legacy
+    fixture file) is always inaccurate and causes ``requests``/``urllib3``
+    to raise ``ContentDecodingError`` when they try to honor it.
+
+    For more details see https://github.com/getsentry/responses/issues/724
+    """
+
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "https://example.org/",
+            body='{"first_name": true}',
+            status=200,
+            content_type="application/json",
+            headers={"content-encoding": "gzip", "x-request-id": "abc123"},
+        )
+
+        resp = requests.get("https://example.org/")
+
+        assert resp.status_code == 200
+        # The body should come through untouched and be readable without
+        # raising a ContentDecodingError.
+        assert resp.json() == {"first_name": True}
+        assert "Content-Encoding" not in resp.headers
+        # Unrelated headers must be preserved.
+        assert resp.headers["x-request-id"] == "abc123"
+
+    run()
+    assert_reset()
+
+
+def test_content_encoding_header_is_stripped_when_loaded_from_file(tmp_path):
+    """Same as ``test_content_encoding_header_is_stripped`` but exercising
+    the ``_add_from_file`` replay path, which is how fixtures recorded by
+    older versions of ``responses`` (or hand-crafted/imported files) are
+    typically loaded.
+
+    For more details see https://github.com/getsentry/responses/issues/724
+    """
+    fixture = tmp_path / "recorded.yaml"
+    fixture.write_text(
+        """\
+responses:
+- response:
+    auto_calculate_content_length: false
+    body: '{"first_name": true}'
+    content_type: application/json
+    headers:
+      content-encoding: gzip
+    method: GET
+    status: 200
+    url: https://example.org/lookup
+"""
+    )
+
+    @responses.activate
+    def run():
+        responses._add_from_file(file_path=str(fixture))
+
+        resp = requests.get("https://example.org/lookup")
+
+        assert resp.status_code == 200
+        assert resp.json() == {"first_name": True}
+        assert "Content-Encoding" not in resp.headers
+
+    run()
+    assert_reset()
+
+
 def test_content_length_error(monkeypatch):
     """
     Currently 'requests' does not enforce content length validation,

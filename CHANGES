@@ -1,6 +1,13 @@
 0.26.3
 ------
 
+* Fixed a mocked response with a ``Content-Encoding`` header (e.g.
+  ``gzip``) and a plain, uncompressed ``body`` causing ``requests``/
+  ``urllib3`` to raise ``ContentDecodingError`` when reading the response.
+  ``responses`` never actually compresses ``body``, so the header is now
+  stripped when the response is served, whether registered directly via
+  ``add()``/``headers=`` or replayed from a fixture file via
+  ``_add_from_file()``. See #724
 * Fixed the element type exposed by `CallList` so static type checkers infer
   `Call` values when iterating, indexing, or filtering recorded calls. See #722
 * Fixed `query_string_matcher` (and the query matching auto-applied to a

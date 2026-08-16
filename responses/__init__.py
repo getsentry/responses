@@ -1,3 +1,4 @@
+import copy
 import inspect
 import json as json_module
 import logging
@@ -1104,6 +1105,16 @@ class RequestsMock:
         match, match_failed_reasons = self._find_match(request)
         resp_callback = self.response_callback
 
+        # `request` is the same live PreparedRequest object that `requests` threads
+        # back to the caller (e.g. via a raised exception's `.request`, or the
+        # outer `Response.request`), so it must not carry responses-internal
+        # attributes. Keep a copy with those attributes attached for use only in
+        # the internal call log (`responses.calls`), and strip them off the
+        # object that flows back to the caller. See GH #738.
+        call_request = copy.copy(request)
+        del request.params  # type: ignore[attr-defined]
+        del request.req_kwargs  # type: ignore[attr-defined]
+
         if match is None:
             if any(
                 [
@@ -1136,7 +1147,7 @@ class RequestsMock:
             response = ConnectionError(error_msg)
             response.request = request
 
-            self._calls.add(request, response)
+            self._calls.add(call_request, response)
             raise response
 
         if match.passthrough:
@@ -1148,14 +1159,14 @@ class RequestsMock:
                     request, match.get_response(request)
                 )
             except BaseException as response:
-                call = Call(request, response)
+                call = Call(call_request, response)
                 self._calls.add_call(call)
                 match.calls.add_call(call)
                 raise
 
         if resp_callback:
             response = resp_callback(response)  # type: ignore[misc]
-        call = Call(request, response)  # type: ignore[misc]
+        call = Call(call_request, response)  # type: ignore[misc]
         self._calls.add_call(call)
         match.calls.add_call(call)
 

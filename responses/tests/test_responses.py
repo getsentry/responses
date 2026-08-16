@@ -48,11 +48,19 @@ def assert_response(
 
 
 def assert_params(resp, expected):
+    # NOTE: `params`/`req_kwargs` are responses-internal attributes and are
+    # intentionally only exposed via `responses.calls[i].request`, not on the
+    # actual request/response objects returned to the caller. See GH #738.
     assert hasattr(resp, "request"), "Missing request"
-    assert hasattr(
+    assert not hasattr(
         resp.request, "params"
-    ), "Missing params on request that responses should add"
-    assert getattr(resp.request, "params") == expected, "Incorrect parameters"
+    ), "params leaked onto the live request object returned to the caller"
+    assert len(responses.calls) >= 1, "Missing calls"
+    call_request = responses.calls[-1].request
+    assert hasattr(
+        call_request, "params"
+    ), "Missing params on responses.calls[-1].request that responses should add"
+    assert getattr(call_request, "params") == expected, "Incorrect parameters"
 
 
 def test_response():
@@ -349,6 +357,60 @@ def test_connection_error():
         assert responses.calls[0].request.url == "http://example.com/foo"
         assert type(responses.calls[0].response) is ConnectionError
         assert responses.calls[0].response.request
+
+    run()
+    assert_reset()
+
+
+def test_response_params_not_leaked_to_caller_request():
+    """The live ``PreparedRequest`` object that `requests` threads back to the
+    caller (e.g. via a raised exception's ``.request``) must not carry
+    responses-internal ``params``/``req_kwargs`` attributes -- those exist
+    only on ``responses.calls[i].request`` as documented. See GH #738.
+    """
+
+    @responses.activate
+    def run():
+        url = "http://example.com/test"
+        params = {"hello": "world"}
+        responses.get(url, status=403)
+
+        with pytest.raises(HTTPError) as exc_info:
+            resp = requests.get(url, params=params)
+            resp.raise_for_status()
+
+        caught_request = exc_info.value.request
+        assert not hasattr(caught_request, "params")
+        assert not hasattr(caught_request, "req_kwargs")
+
+        # meanwhile, the documented convenience attributes are still available
+        # on the internal call log.
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.params == params
+        assert isinstance(responses.calls[0].request.req_kwargs, dict)
+
+    run()
+    assert_reset()
+
+
+def test_connection_error_request_params_not_leaked():
+    """Same guarantee as above, but for the ``ConnectionError`` raised when a
+    request doesn't match any registered mock.
+    """
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com")
+
+        with pytest.raises(ConnectionError) as exc_info:
+            requests.get("http://example.com/foo", params={"hello": "world"})
+
+        caught_request = exc_info.value.request
+        assert not hasattr(caught_request, "params")
+        assert not hasattr(caught_request, "req_kwargs")
+
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.params == {"hello": "world"}
 
     run()
     assert_reset()

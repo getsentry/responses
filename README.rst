@@ -368,7 +368,10 @@ deprecated argument.
         constructed_url = r"http://example.com/test?I+am=a+big+test&hello=world"
         assert resp.url == constructed_url
         assert resp.request.url == constructed_url
-        assert resp.request.params == params
+        # ``params`` is only available on ``responses.calls[i].request``, not on the
+        # actual request/response objects returned to the caller, so that mocked
+        # requests don't expose responses-internal attributes to production code.
+        assert responses.calls[0].request.params == params
 
 By default, matcher will validate that all parameters match strictly.
 To validate that only parameters specified in the matcher are present in original request

@@ -583,8 +583,12 @@ def test_request_matches_params():
         assert resp.url == constructed_url
         assert resp.request.url == constructed_url
 
-        resp_params = getattr(resp.request, "params")
-        assert resp_params == params
+        # `params` is a responses-internal attribute and is only exposed via
+        # `responses.calls[i].request`, not on the live request/response
+        # objects returned to the caller. See GH #738.
+        assert not hasattr(resp.request, "params")
+        call_params = getattr(responses.calls[0].request, "params")
+        assert call_params == params
 
     run()
     assert_reset()

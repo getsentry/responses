@@ -1,6 +1,17 @@
 0.26.3
 ------
 
+* Fixed ``_recorder.record`` capturing a real response's ``Content-Encoding``
+  header (e.g. ``gzip``) alongside the already-decompressed body that
+  ``requests`` exposes via ``response.text``. The mismatched header caused
+  ``requests``/``urllib3`` to raise ``ContentDecodingError`` when the
+  recorded fixture was later replayed. The recorder now drops
+  ``Content-Encoding`` at capture time, so both the in-memory recorded
+  response and any file dumped from it are consistent. Genuinely
+  gzip-compressed mocked responses (real compressed bytes paired with a
+  matching ``Content-Encoding`` header, registered directly via ``add()``)
+  are unaffected and continue to be decoded normally by ``requests``. See
+  #724
 * Fixed the element type exposed by `CallList` so static type checkers infer
   `Call` values when iterating, indexing, or filtering recorded calls. See #722
 * Fixed `query_string_matcher` (and the query matching auto-applied to a

@@ -1,3 +1,4 @@
+import gzip
 from pathlib import Path
 
 import pytest
@@ -219,6 +220,69 @@ class TestRecord:
         assert _recorder.recorder.get_registry().registered
         _recorder.recorder.reset()
         assert not _recorder.recorder.get_registry().registered
+
+    def test_recorder_strips_content_encoding(self, httpserver):
+        """A real gzip-encoded response should not retain a misleading
+        "Content-Encoding" header once recorded.
+
+        ``requests`` transparently decompresses the response body before
+        the recorder captures it via ``response.text``, so keeping the
+        original "Content-Encoding: gzip" header alongside that already
+        decompressed body would make the recorded response internally
+        inconsistent: replaying it would cause ``requests``/``urllib3`` to
+        attempt to decompress content that is no longer compressed.
+
+        This checks the in-memory registered response *before* it is
+        dumped to a file: ``_remove_default_headers`` already strips
+        "Content-Encoding" at dump time (see
+        ``test_remove_default_headers_is_case_insensitive`` above), so
+        only inspecting the dumped file would not prove that the recorder
+        itself -- ``Recorder._on_request`` -- avoids capturing the stale
+        header in the first place (which matters e.g. for the REPL usage
+        exercised by ``test_use_recorder_without_decorator``, where a file
+        may never be written at all).
+
+        See https://github.com/getsentry/responses/issues/724
+        """
+        original_body = b'{"first_name": true}'
+        httpserver.expect_request("/gzipped").respond_with_data(
+            gzip.compress(original_body),
+            status=200,
+            content_type="application/json",
+            headers={"Content-Encoding": "gzip"},
+        )
+        url = httpserver.url_for("/gzipped")
+
+        _recorder.recorder.start()
+        requests.get(url)
+        _recorder.recorder.stop()
+
+        # The in-memory recorded response must not retain the header...
+        [recorded] = _recorder.recorder.get_registry().registered
+        assert recorded.headers is not None
+        assert "Content-Encoding" not in recorded.headers
+        assert "content-encoding" not in recorded.headers
+        assert recorded.body == original_body.decode()
+
+        # ...and neither should the file dumped from it.
+        _recorder.recorder.dump_to_file(self.out_file)
+        with open(self.out_file) as file:
+            data = yaml.safe_load(file)
+        dumped_headers = data["responses"][0]["response"].get("headers", {})
+        assert "Content-Encoding" not in dumped_headers
+        assert "content-encoding" not in dumped_headers
+
+        _recorder.recorder.reset()
+
+        # Replaying the recorded fixture must not raise ContentDecodingError.
+        @responses.activate
+        def replay():
+            responses._add_from_file(file_path=self.out_file)
+            resp = requests.get(url)
+            assert resp.status_code == 200
+            assert resp.content == original_body
+
+        replay()
 
 
 class TestReplay:

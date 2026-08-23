@@ -1,3 +1,4 @@
+import gzip
 import inspect
 import os
 import re
@@ -1436,6 +1437,48 @@ def test_headers_deduplicated_content_type():
         resp = requests.get("https://example.org/")
 
         assert resp.headers["Content-Type"] == "application/json"
+
+    run()
+    assert_reset()
+
+
+def test_genuinely_gzip_encoded_response_is_decoded():
+    """A mocked response CAN legitimately be gzip-encoded: if ``body`` is
+    real compressed bytes and a matching ``Content-Encoding: gzip`` header
+    is registered, ``requests``/``urllib3`` should transparently decompress
+    it on read, exactly as they would for a real server response.
+
+    This is the counterpart to the recorder-side fix for
+    https://github.com/getsentry/responses/issues/724: that issue was
+    caused by the recorder pairing a *decompressed* body with a leftover
+    ``Content-Encoding`` header, not by ``responses`` mishandling genuinely
+    encoded bodies. ``get_headers()``/response serving must not strip a
+    ``Content-Encoding`` header unconditionally, or this legitimate case
+    breaks.
+    """
+    original_body = b'{"first_name": true}'
+    compressed_body = gzip.compress(original_body)
+
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "https://example.org/",
+            body=compressed_body,
+            status=200,
+            content_type="application/json",
+            headers={"Content-Encoding": "gzip", "x-request-id": "abc123"},
+        )
+
+        resp = requests.get("https://example.org/")
+
+        assert resp.status_code == 200
+        # urllib3/requests should decode the real gzip bytes back to the
+        # original, uncompressed content.
+        assert resp.content == original_body
+        assert resp.json() == {"first_name": True}
+        # Unrelated headers must be preserved.
+        assert resp.headers["x-request-id"] == "abc123"
 
     run()
     assert_reset()

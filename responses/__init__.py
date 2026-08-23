@@ -503,21 +503,6 @@ class BaseResponse:
         if self.headers:
             headers.extend(self.headers)
 
-        # ``responses`` always serves ``body`` as literal, uncompressed bytes:
-        # it never actually applies the encoding named in a "Content-Encoding"
-        # header. If such a header is present (e.g. copied over verbatim from
-        # a real recorded response, or from a hand-written/legacy fixture
-        # file produced by an older version of ``responses``), HTTP clients
-        # that honor the header -- such as ``requests``/``urllib3`` -- will
-        # try to decompress the already-uncompressed body and raise a
-        # confusing ``ContentDecodingError``/``DecodeError``. Since the
-        # header would always be a lie in that scenario, strip it here so
-        # the mocked response is internally consistent regardless of how it
-        # was registered (``add()``, ``_add_from_file()``, or the recorder's
-        # in-memory registry).
-        if "Content-Encoding" in headers:
-            del headers["Content-Encoding"]
-
         return headers
 
     def get_response(self, request: "PreparedRequest") -> HTTPResponse:

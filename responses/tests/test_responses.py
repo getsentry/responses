@@ -1,3 +1,4 @@
+import gzip
 import inspect
 import os
 import re
@@ -1441,77 +1442,43 @@ def test_headers_deduplicated_content_type():
     assert_reset()
 
 
-def test_content_encoding_header_is_stripped():
-    """Test that a stale/misleading 'Content-Encoding' header does not
-    cause 'requests' to fail trying to decompress an uncompressed body.
+def test_genuinely_gzip_encoded_response_is_decoded():
+    """A mocked response CAN legitimately be gzip-encoded: if ``body`` is
+    real compressed bytes and a matching ``Content-Encoding: gzip`` header
+    is registered, ``requests``/``urllib3`` should transparently decompress
+    it on read, exactly as they would for a real server response.
 
-    ``responses`` always serves ``body`` verbatim -- it never actually
-    compresses it -- so a "Content-Encoding: gzip" header (e.g. copied over
-    from a real recorded response, or present in a hand-written/legacy
-    fixture file) is always inaccurate and causes ``requests``/``urllib3``
-    to raise ``ContentDecodingError`` when they try to honor it.
-
-    For more details see https://github.com/getsentry/responses/issues/724
+    This is the counterpart to the recorder-side fix for
+    https://github.com/getsentry/responses/issues/724: that issue was
+    caused by the recorder pairing a *decompressed* body with a leftover
+    ``Content-Encoding`` header, not by ``responses`` mishandling genuinely
+    encoded bodies. ``get_headers()``/response serving must not strip a
+    ``Content-Encoding`` header unconditionally, or this legitimate case
+    breaks.
     """
+    original_body = b'{"first_name": true}'
+    compressed_body = gzip.compress(original_body)
 
     @responses.activate
     def run():
         responses.add(
             responses.GET,
             "https://example.org/",
-            body='{"first_name": true}',
+            body=compressed_body,
             status=200,
             content_type="application/json",
-            headers={"content-encoding": "gzip", "x-request-id": "abc123"},
+            headers={"Content-Encoding": "gzip", "x-request-id": "abc123"},
         )
 
         resp = requests.get("https://example.org/")
 
         assert resp.status_code == 200
-        # The body should come through untouched and be readable without
-        # raising a ContentDecodingError.
+        # urllib3/requests should decode the real gzip bytes back to the
+        # original, uncompressed content.
+        assert resp.content == original_body
         assert resp.json() == {"first_name": True}
-        assert "Content-Encoding" not in resp.headers
         # Unrelated headers must be preserved.
         assert resp.headers["x-request-id"] == "abc123"
-
-    run()
-    assert_reset()
-
-
-def test_content_encoding_header_is_stripped_when_loaded_from_file(tmp_path):
-    """Same as ``test_content_encoding_header_is_stripped`` but exercising
-    the ``_add_from_file`` replay path, which is how fixtures recorded by
-    older versions of ``responses`` (or hand-crafted/imported files) are
-    typically loaded.
-
-    For more details see https://github.com/getsentry/responses/issues/724
-    """
-    fixture = tmp_path / "recorded.yaml"
-    fixture.write_text(
-        """\
-responses:
-- response:
-    auto_calculate_content_length: false
-    body: '{"first_name": true}'
-    content_type: application/json
-    headers:
-      content-encoding: gzip
-    method: GET
-    status: 200
-    url: https://example.org/lookup
-"""
-    )
-
-    @responses.activate
-    def run():
-        responses._add_from_file(file_path=str(fixture))
-
-        resp = requests.get("https://example.org/lookup")
-
-        assert resp.status_code == 200
-        assert resp.json() == {"first_name": True}
-        assert "Content-Encoding" not in resp.headers
 
     run()
     assert_reset()

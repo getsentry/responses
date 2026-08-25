@@ -210,6 +210,23 @@ def test_json_params_matcher_not_strict_diff_values():
     assert_reset()
 
 
+def test_json_params_matcher_not_strict_scalar_vs_nested_does_not_raise():
+    # Regression test for #814: a non-strict match where the expected value is a
+    # scalar but the actual value is a nested dict used to raise
+    # `TypeError: argument of type 'int' is not iterable` instead of reporting a
+    # normal mismatch. The matcher should return (False, reason) in both the
+    # scalar-vs-nested and nested-vs-scalar directions.
+    matcher = matchers.json_params_matcher({"page": 1}, strict_match=False)
+    result = matcher(Mock(body='{"page": {"type": "json"}}'))
+    assert result[0] is False
+
+    matcher = matchers.json_params_matcher(
+        {"page": {"type": "json"}}, strict_match=False
+    )
+    result = matcher(Mock(body='{"page": 1}'))
+    assert result[0] is False
+
+
 def test_failed_matchers_dont_modify_inputs_order_in_error_message():
     json_a = {"array": ["C", "B", "A"]}
     json_b = '{"array" : ["B", "A", "C"]}'

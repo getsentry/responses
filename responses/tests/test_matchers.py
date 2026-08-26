@@ -210,6 +210,25 @@ def test_json_params_matcher_not_strict_diff_values():
     assert_reset()
 
 
+def test_json_params_matcher_not_strict_nested_type_mismatch():
+    mock_request = Mock(body='{"page": {"type": "json"}}')
+
+    result = matchers.json_params_matcher(
+        {"page": 1},
+        strict_match=False,
+    )(mock_request)
+
+    assert result == (
+        False,
+        (
+            "request.body doesn't match: {'page': {'type': 'json'}} "
+            "doesn't match {'page': 1}\n"
+            "Note: You use non-strict parameters check, "
+            "to change it use `strict_match=True`."
+        ),
+    )
+
+
 def test_failed_matchers_dont_modify_inputs_order_in_error_message():
     json_a = {"array": ["C", "B", "A"]}
     json_b = '{"array" : ["B", "A", "C"]}'

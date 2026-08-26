@@ -14,6 +14,8 @@
 * Fixed `fragment_identifier_matcher` treating opaque fragments (those without
   ``=``, e.g. ``/users/5``) as always equal, so a required fragment matched a
   different one or none at all. See #806
+* Fixed non-strict `json_params_matcher` raising `TypeError` when an actual
+  nested object is compared with an expected scalar value.
 
 0.26.2
 ------

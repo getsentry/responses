@@ -405,6 +405,34 @@ def test_query_params_numbers():
     assert_reset()
 
 
+@pytest.mark.parametrize(
+    "expected_query_params",
+    [
+        {"ids": [1, 2]},
+        {"ids": (1, 2)},
+        {"ids": ["a", 2], "page": 1},
+        {"ids": [1]},
+        {"ids": ("a",)},
+    ],
+)
+def test_query_params_sequences(expected_query_params):  # type: ignore[misc]
+    """A ``params`` value may be a sequence, which sends the key repeatedly."""
+
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "https://example.com/",
+            match=[
+                matchers.query_param_matcher(expected_query_params),
+            ],
+        )
+        requests.get("https://example.com", params=expected_query_params)
+
+    run()
+    assert_reset()
+
+
 def test_query_param_matcher_does_not_mutate_input():
     """query_param_matcher must not modify the caller's params dict.
 

@@ -222,11 +222,24 @@ def query_param_matcher(
 
     """
 
-    params_dict = dict(params) if params else {}
+    def _normalize(value: Any) -> Any:
+        """Present a ``params`` value the way the request's query string parses.
 
-    for k, v in params_dict.items():
-        if isinstance(v, (int, float)):
-            params_dict[k] = str(v)
+        ``responses`` reads the query string back as strings and groups a
+        repeated key into a list, collapsing a key that appears once to a bare
+        value. Sequences here are normalized the same way so that the dict
+        given to ``requests`` can be reused verbatim as the expectation.
+        """
+        if isinstance(value, (list, tuple)):
+            values = [
+                str(item) if isinstance(item, (int, float)) else item for item in value
+            ]
+            return values[0] if len(values) == 1 else values
+        if isinstance(value, (int, float)):
+            return str(value)
+        return value
+
+    params_dict = {k: _normalize(v) for k, v in params.items()} if params else {}
 
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""

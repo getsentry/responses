@@ -11,6 +11,8 @@ Unreleased
   include the ``params`` and ``req_kwargs`` attributes added by ``responses``.
 * Fixed non-strict `json_params_matcher` raising `TypeError` when an actual
   nested object is compared with an expected scalar value.
+* Fixed `query_param_matcher` rejecting sequence-valued params such as
+  ``{"ids": [1, 2]}``, which `requests` sends as a repeated key. See #816
 
 0.26.3
 ------

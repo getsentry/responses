@@ -1,6 +1,7 @@
 0.26.3
 ------
 
+* Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810
 * Added a ``keep_headers`` argument to ``_recorder.record`` and
   ``Recorder.dump_to_file`` to preserve named headers (for example ``Date``)
   that are otherwise stripped as verbose defaults, so a signed response can be

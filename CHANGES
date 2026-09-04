@@ -1,3 +1,14 @@
+0.26.4
+------
+
+* Fixed `query_param_matcher` rejecting sequence-valued params such as
+  ``{"ids": [1, 2]}``, which `requests` sends as a repeated key. Numeric items
+  inside a list or tuple are now converted to strings, and a sequence is
+  normalized the way `responses` parses the request's own query string, so the
+  dict passed to `requests` can be reused as the matcher's expectation. A
+  sequence nested inside a sequence value is flattened and a ``None`` element is
+  dropped, matching how `requests` builds the query string. See #816
+
 0.26.3
 ------
 

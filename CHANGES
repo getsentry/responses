@@ -10,7 +10,9 @@ Unreleased
 * Added ``responses.CallbackRequest`` so callback and matcher annotations can
   include the ``params`` and ``req_kwargs`` attributes added by ``responses``.
 * Fixed `query_param_matcher` rejecting sequence-valued params such as
-  ``{"ids": [1, 2]}``, which `requests` sends as a repeated key. See #816
+  ``{"ids": [1, 2]}``, which `requests` sends as a repeated key. Numeric items
+  are converted to strings, a nested sequence is flattened and a ``None``
+  element is dropped, matching how `requests` builds the query string. See #816
 
 0.26.3
 ------

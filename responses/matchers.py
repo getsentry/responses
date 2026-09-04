@@ -222,6 +222,9 @@ def query_param_matcher(
 
     """
 
+    def _stringify(item: Any) -> Any:
+        return str(item) if isinstance(item, (int, float)) else item
+
     def _normalize(value: Any) -> Any:
         """Present a ``params`` value the way the request's query string parses.
 
@@ -229,15 +232,26 @@ def query_param_matcher(
         repeated key into a list, collapsing a key that appears once to a bare
         value. Sequences here are normalized the same way so that the dict
         given to ``requests`` can be reused verbatim as the expectation.
+
+        This mirrors how ``requests`` builds the query string: it iterates a
+        sequence value once, drops a ``None`` element, and then hands the
+        result to ``urlencode(..., doseq=True)``, which splices a nested
+        sequence in one further level. Anything deeper is url-encoded by
+        ``requests`` as its ``str()`` and is left alone here.
         """
-        if isinstance(value, (list, tuple)):
-            values = [
-                str(item) if isinstance(item, (int, float)) else item for item in value
-            ]
-            return values[0] if len(values) == 1 else values
-        if isinstance(value, (int, float)):
-            return str(value)
-        return value
+        if not isinstance(value, (list, tuple)):
+            return _stringify(value)
+
+        values: List[Any] = []
+        for item in value:
+            if item is None:
+                # ``requests`` omits a ``None`` element from the query string.
+                continue
+            if isinstance(item, (list, tuple)):
+                values.extend(_stringify(nested) for nested in item)
+            else:
+                values.append(_stringify(item))
+        return values[0] if len(values) == 1 else values
 
     params_dict = {k: _normalize(v) for k, v in params.items()} if params else {}
 

@@ -433,6 +433,38 @@ def test_query_params_sequences(expected_query_params):  # type: ignore[misc]
     assert_reset()
 
 
+@pytest.mark.parametrize(
+    "expected_query_params",
+    [
+        {"ids": [[1, 2], [3]]},
+        {"ids": [[1, 2]], "page": 1},
+        {"ids": [1, None]},
+        {"ids": [None, "a", 2]},
+    ],
+)
+def test_query_params_nested_sequences(expected_query_params):  # type: ignore[misc]
+    """``requests`` flattens a nested sequence and drops a ``None`` element.
+
+    ``urlencode(..., doseq=True)`` splices a sequence inside a sequence value
+    into the query string one level deep, and ``requests`` omits a ``None``
+    element entirely, so both are normalized the same way here.
+    """
+
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "https://example.com/",
+            match=[
+                matchers.query_param_matcher(expected_query_params),
+            ],
+        )
+        requests.get("https://example.com", params=expected_query_params)
+
+    run()
+    assert_reset()
+
+
 def test_query_param_matcher_does_not_mutate_input():
     """query_param_matcher must not modify the caller's params dict.
 

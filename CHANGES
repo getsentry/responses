@@ -8,7 +8,9 @@ Unreleased
 * Fixed ``urlencoded_params_matcher`` rejecting matching form data supplied
   as bytes or a binary file-like object.
 * Fixed `query_param_matcher` rejecting sequence-valued params such as
-  ``{"ids": [1, 2]}``, which `requests` sends as a repeated key. See #816
+  ``{"ids": [1, 2]}``, which `requests` sends as a repeated key. Numeric items
+  are converted to strings, a nested sequence is flattened and a ``None``
+  element is dropped, matching how `requests` builds the query string. See #816
 
 0.26.3
 ------

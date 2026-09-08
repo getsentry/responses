@@ -1,3 +1,9 @@
+Next
+----
+
+* Added ``responses.CallbackRequest`` so callback and matcher annotations can
+  include the ``params`` and ``req_kwargs`` attributes added by ``responses``.
+
 0.26.3
 ------
 

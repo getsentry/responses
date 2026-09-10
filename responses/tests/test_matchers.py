@@ -451,12 +451,17 @@ def test_query_params_numbers():
         {"ids": [1, 2]},
         {"ids": (1, 2)},
         {"ids": ["a", 2], "page": 1},
+        {"ids": [1, 2], "attrs": {"counter": 3, "favorites": [1, 2]}},
         {"ids": [1]},
         {"ids": ("a",)},
     ],
 )
 def test_query_params_sequences(expected_query_params):  # type: ignore[misc]
-    """A ``params`` value may be a sequence, which sends the key repeatedly."""
+    """A ``params`` value may be a sequence, which sends the key repeatedly.
+
+    A mapping counts as one: ``requests`` iterates it, so only its keys are
+    sent.
+    """
 
     @responses.activate
     def run():

@@ -240,7 +240,14 @@ def query_param_matcher(
         result to ``urlencode(..., doseq=True)``, which splices a nested
         sequence in one further level. Anything deeper is url-encoded by
         ``requests`` as its ``str()`` and is left alone here.
+
+        A mapping is iterated too, which yields its keys, so
+        ``{"attrs": {"counter": 3}}`` is sent as ``attrs=counter`` and the
+        values never reach the query string. It is treated here as the
+        sequence of its keys for the same reason.
         """
+        if isinstance(value, Mapping):
+            value = list(value)
         if not isinstance(value, (list, tuple)):
             return _stringify(value)
 
@@ -249,6 +256,8 @@ def query_param_matcher(
             if item is None:
                 # ``requests`` omits a ``None`` element from the query string.
                 continue
+            if isinstance(item, Mapping):
+                item = list(item)
             if isinstance(item, (list, tuple)):
                 values.extend(_stringify(nested) for nested in item)
             else:

@@ -66,7 +66,7 @@ class RequestKwargs(TypedDict, total=False):
     """Keyword arguments passed to ``requests.adapters.HTTPAdapter.send``."""
 
     stream: bool
-    timeout: Union[float, Tuple[float, float], Tuple[float, None], None]
+    timeout: Union[float, Tuple[float, Union[float, None]], None]
     verify: Union[bool, str]
     cert: Union[
         bytes,

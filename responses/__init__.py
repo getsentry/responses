@@ -495,7 +495,7 @@ class BaseResponse:
 
         # Add Content-Type if it exists and is not already in headers
         if self.content_type and (
-            not self.headers or "Content-Type" not in self.headers
+            not self.headers or "Content-Type" not in HTTPHeaderDict(self.headers)
         ):
             headers["Content-Type"] = self.content_type
 
@@ -687,7 +687,7 @@ class CallbackResponse(BaseResponse):
         # set in add_callback() so that we don't have multiple
         # content type values.
         has_content_type = False
-        if isinstance(r_headers, dict) and "Content-Type" in r_headers:
+        if isinstance(r_headers, dict) and "Content-Type" in HTTPHeaderDict(r_headers):
             has_content_type = True
         elif isinstance(r_headers, list):
             has_content_type = any(

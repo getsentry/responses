@@ -1,3 +1,10 @@
+Unreleased
+----------
+
+* Match response ``Content-Type`` header names case-insensitively so lowercase
+  headers do not produce duplicate content types or incorrect response decoding.
+  This also applies to headers returned by callbacks.
+
 0.26.3
 ------
 

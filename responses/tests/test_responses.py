@@ -2055,6 +2055,41 @@ def test_request_param_with_multiple_values_for_the_same_key():
 
 
 @pytest.mark.parametrize(
+    "params, expected",
+    [
+        (
+            [("key1", "two"), ("key2", "three"), ("key1", "one")],
+            {"key1": ["two", "one"], "key2": "three"},
+        ),
+        (
+            "key1=&key1=one&key2=three&key1=&key2=four",
+            {"key1": ["", "one", ""], "key2": ["three", "four"]},
+        ),
+        (
+            "key%31=two&key2=three&key1=one",
+            {"key1": ["two", "one"], "key2": "three"},
+        ),
+    ],
+)
+def test_request_param_with_interleaved_keys(params, expected):  # type: ignore[misc]
+    @responses.activate
+    def run():
+        url = "http://example.com"
+        responses.add(
+            method=responses.GET,
+            url=url,
+            body="test",
+            match=[matchers.query_param_matcher(expected)],
+        )
+        resp = requests.get(url, params=params)
+        assert_response(resp, "test")
+        assert_params(resp, expected)
+
+    run()
+    assert_reset()
+
+
+@pytest.mark.parametrize(
     "url", ("http://example.com", "http://example.com?hello=world")
 )
 def test_assert_call_count(url):  # type: ignore[misc]

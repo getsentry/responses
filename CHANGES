@@ -5,6 +5,8 @@ Unreleased
 * Match response ``Content-Type`` header names case-insensitively so lowercase
   headers do not produce duplicate content types or incorrect response decoding.
   This also applies to headers returned by callbacks.
+* Fixed repeated query parameter values being lost when another key appears
+  between them, affecting ``request.params`` and ``query_param_matcher``.
 
 0.26.3
 ------

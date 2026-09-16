@@ -4,7 +4,6 @@ import logging
 from functools import partialmethod
 from functools import wraps
 from http import client
-from itertools import groupby
 from re import Pattern
 from threading import Lock as _ThreadingLock
 from typing import TYPE_CHECKING
@@ -44,7 +43,7 @@ except ImportError:  # pragma: no cover
 from io import BufferedReader
 from io import BytesIO
 from unittest import mock as std_mock
-from urllib.parse import parse_qsl
+from urllib.parse import parse_qs
 from urllib.parse import quote
 from urllib.parse import urlsplit
 from urllib.parse import urlunparse
@@ -1060,11 +1059,9 @@ class RequestsMock:
         self, url: str
     ) -> Dict[str, Union[str, int, float, List[Optional[Union[str, int, float]]]]]:
         params: Dict[str, Union[str, int, float, List[Any]]] = {}
-        for key, val in groupby(
-            parse_qsl(urlsplit(url).query, keep_blank_values=True),
-            lambda kv: kv[0],
-        ):
-            values = list(map(lambda x: x[1], val))
+        for key, values in parse_qs(
+            urlsplit(url).query, keep_blank_values=True
+        ).items():
             if len(values) == 1:
                 values = values[0]  # type: ignore[assignment]
             params[key] = values

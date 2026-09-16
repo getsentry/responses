@@ -1,6 +1,7 @@
 Unreleased
 ----------
 
+* Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810
 * Match response ``Content-Type`` header names case-insensitively so lowercase
   headers do not produce duplicate content types or incorrect response decoding.
   This also applies to headers returned by callbacks.

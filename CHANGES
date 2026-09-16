@@ -5,6 +5,8 @@ Unreleased
 * Match response ``Content-Type`` header names case-insensitively so lowercase
   headers do not produce duplicate content types or incorrect response decoding.
   This also applies to headers returned by callbacks.
+* Fixed ``urlencoded_params_matcher`` rejecting matching form data supplied
+  as bytes or a binary file-like object.
 
 0.26.3
 ------

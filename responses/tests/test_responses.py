@@ -18,6 +18,8 @@ from requests.exceptions import ChunkedEncodingError
 from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
 from requests.exceptions import RetryError
+from requests.structures import CaseInsensitiveDict
+from urllib3.response import HTTPHeaderDict
 from urllib3.util.retry import Retry
 
 import responses
@@ -708,19 +710,23 @@ def test_callback_no_content_type():
 @pytest.mark.parametrize(
     "header_name", ["Content-Type", "content-type", "CONTENT-TYPE"]
 )
-def test_callback_content_type_dict(header_name):  # type: ignore[misc]
+@pytest.mark.parametrize("headers_type", [dict, CaseInsensitiveDict, HTTPHeaderDict])
+def test_callback_content_type_dict(header_name, headers_type):  # type: ignore[misc]
+    body = '"café"'
+
     def request_callback(_request):
         return (
             200,
-            {header_name: "application/json"},
-            b"foo",
+            headers_type({header_name: "application/json"}),
+            body.encode("utf-8"),
         )
 
     @responses.activate
     def run():
         responses.add_callback("GET", "http://mockhost/.foo", callback=request_callback)
         resp = requests.get("http://mockhost/.foo")
-        assert resp.text == "foo"
+        assert resp.text == body
+        assert resp.json() == "café"
         assert resp.headers["content-type"] == "application/json"
 
     run()

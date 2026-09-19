@@ -687,7 +687,9 @@ class CallbackResponse(BaseResponse):
         # set in add_callback() so that we don't have multiple
         # content type values.
         has_content_type = False
-        if isinstance(r_headers, dict) and "Content-Type" in HTTPHeaderDict(r_headers):
+        if isinstance(r_headers, Mapping) and "Content-Type" in HTTPHeaderDict(
+            r_headers
+        ):
             has_content_type = True
         elif isinstance(r_headers, list):
             has_content_type = any(

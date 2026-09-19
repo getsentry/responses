@@ -1,6 +1,12 @@
-Next
-----
+Unreleased
+----------
 
+* Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810
+* Match response ``Content-Type`` header names case-insensitively so lowercase
+  headers do not produce duplicate content types or incorrect response decoding.
+  This also applies to headers returned by callbacks.
+* Fixed ``urlencoded_params_matcher`` rejecting matching form data supplied
+  as bytes or a binary file-like object.
 * Added ``responses.CallbackRequest`` so callback and matcher annotations can
   include the ``params`` and ``req_kwargs`` attributes added by ``responses``.
 

@@ -72,8 +72,10 @@ def urlencoded_params_matcher(
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         request_body = request.body
+        if isinstance(request_body, bytes):
+            request_body = request_body.decode("utf-8")
         qsl_body: Mapping[Any, Any] = (
-            dict(parse_qsl(request_body, keep_blank_values=allow_blank))  # type: ignore[type-var]
+            dict(parse_qsl(request_body, keep_blank_values=allow_blank))
             if request_body
             else {}
         )

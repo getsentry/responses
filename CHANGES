@@ -1,6 +1,8 @@
 Unreleased
 ----------
 
+* Preserve callback ``Content-Type`` overrides from mappings such as
+  ``CaseInsensitiveDict`` and ``HTTPHeaderDict`` to avoid incorrect response decoding.
 * Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810
 * Match response ``Content-Type`` header names case-insensitively so lowercase
   headers do not produce duplicate content types or incorrect response decoding.

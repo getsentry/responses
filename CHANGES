@@ -271,8 +271,8 @@ Unreleased
 ------
 
 * Added `responses.PassthroughResponse` and
-  `reponses.BaseResponse.passthrough`. These features make building passthrough
-  responses more compatible with dynamcially generated response objects.
+  `responses.BaseResponse.passthrough`. These features make building passthrough
+  responses more compatible with dynamically generated response objects.
 * Removed the unused ``_is_redirect()`` function from responses internals.
 * Added `responses.matchers.request_kwargs_matcher`. This matcher allows you
   to match additional request arguments like `stream`.

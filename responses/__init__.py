@@ -1114,7 +1114,15 @@ class RequestsMock:
                 ]
             ):
                 logger.info("request.allowed-passthru", extra={"url": request_url})
-                return self._real_send(adapter, request, **kwargs)  # type: ignore
+                try:
+                    passthrough_response: Any = self._real_send(  # type: ignore[call-arg]
+                        adapter, request, **kwargs
+                    )
+                except BaseException as error:
+                    self._calls.add(request, error)
+                    raise
+                self._calls.add(request, passthrough_response)
+                return passthrough_response
 
             error_msg = (
                 "Connection refused by Responses - the call doesn't "

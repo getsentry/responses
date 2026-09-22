@@ -14,6 +14,7 @@ from unittest.mock import patch
 import pytest
 import requests
 import urllib3
+from pytest_httpserver import HTTPServer
 from requests.exceptions import ChunkedEncodingError
 from requests.exceptions import ConnectionError
 from requests.exceptions import HTTPError
@@ -1914,6 +1915,42 @@ class TestPassthru:
 
         run()
         assert_reset()
+
+    @pytest.mark.parametrize("use_regex", [False, True])
+    def test_passthru_records_calls(
+        self, httpserver: HTTPServer, use_regex: bool
+    ) -> None:
+        httpserver.expect_request("/real").respond_with_data("REAL")
+        url = httpserver.url_for("/")
+        prefix = re.compile(re.escape(url)) if use_regex else url
+        with responses.RequestsMock() as mock:
+            mock.add_passthru(prefix)
+            registered = mock.get(f"{url}mock", body="MOCK")
+            mocked = requests.get(f"{url}mock")
+            real = requests.get(f"{url}real")
+
+            assert mocked.text == "MOCK"
+            assert real.text == "REAL"
+            assert [call.response for call in mock.calls] == [mocked, real]
+            assert mock.calls[1].request is real.request
+            assert registered.call_count == 1
+
+    @pytest.mark.parametrize("use_regex", [False, True])
+    def test_passthru_records_connection_errors(self, use_regex: bool) -> None:
+        url = "https://example.com/"
+        prefix = re.compile(re.escape(url)) if use_regex else url
+        error = ConnectionError("connection failed")
+        sender = Mock(side_effect=error)
+        with responses.RequestsMock(real_adapter_send=sender) as mock:
+            mock.add_passthru(prefix)
+            with pytest.raises(ConnectionError) as caught:
+                requests.get(url)
+
+            assert caught.value is error
+            assert len(mock.calls) == 1
+            assert mock.calls[0].request.url == url
+            assert mock.calls[0].response is error
+            sender.assert_called_once()
 
     def test_passthru_does_not_persist_across_tests(self, httpserver):
         """

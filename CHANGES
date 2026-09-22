@@ -1,6 +1,9 @@
 Unreleased
 ----------
 
+* Record requests allowed by ``add_passthru`` in the call history, including
+  connection errors, consistently with registered responses. See #755.
+
 * Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810
 * Match response ``Content-Type`` header names case-insensitively so lowercase
   headers do not produce duplicate content types or incorrect response decoding.

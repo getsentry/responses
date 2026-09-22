@@ -21,7 +21,9 @@ from typing import Sequence
 from typing import Sized
 from typing import Tuple
 from typing import Type
+from typing import TypedDict
 from typing import Union
+from typing import cast
 from typing import overload
 from warnings import warn
 
@@ -54,6 +56,27 @@ from urllib3.response import HTTPHeaderDict
 from urllib3.response import HTTPResponse
 from urllib3.util.url import parse_url
 
+RequestParams = Dict[
+    str,
+    Union[str, int, float, List[Optional[Union[str, int, float]]]],
+]
+
+
+class RequestKwargs(TypedDict, total=False):
+    """Keyword arguments passed to ``requests.adapters.HTTPAdapter.send``."""
+
+    stream: bool
+    timeout: Union[float, Tuple[float, Union[float, None]], None]
+    verify: Union[bool, str]
+    cert: Union[
+        bytes,
+        str,
+        Tuple[Union[bytes, str], Union[bytes, str]],
+        None,
+    ]
+    proxies: Optional[Mapping[str, str]]
+
+
 if TYPE_CHECKING:  # pragma: no cover
     # import only for linter run
     import os
@@ -63,6 +86,12 @@ if TYPE_CHECKING:  # pragma: no cover
     from requests import PreparedRequest
     from requests import models
     from urllib3 import Retry as _Retry
+
+    class CallbackRequest(PreparedRequest):
+        """A prepared request augmented for callbacks and matchers."""
+
+        params: RequestParams
+        req_kwargs: RequestKwargs
 
     class UnboundSend(Protocol):
         def __call__(
@@ -93,6 +122,10 @@ if TYPE_CHECKING:  # pragma: no cover
         ],
         models.Response,
     ]
+else:
+    # Callback requests are ordinary PreparedRequest instances at runtime.
+    # The TYPE_CHECKING definition describes the attributes added below.
+    from requests import PreparedRequest as CallbackRequest
 
 
 class Call(NamedTuple):
@@ -655,7 +688,7 @@ class CallbackResponse(BaseResponse):
         self,
         method: str,
         url: "_URLPatternType",
-        callback: Callable[[Any], Any],
+        callback: Callable[["CallbackRequest"], Any],
         stream: Optional[bool] = None,
         content_type: Optional[str] = "text/plain",
         **kwargs: Any,
@@ -675,7 +708,7 @@ class CallbackResponse(BaseResponse):
     def get_response(self, request: "PreparedRequest") -> HTTPResponse:
         headers = self.get_headers()
 
-        result = self.callback(request)
+        result = self.callback(cast("CallbackRequest", request))
         if isinstance(result, Exception):
             raise result
 
@@ -972,7 +1005,7 @@ class RequestsMock:
         method: str,
         url: "_URLPatternType",
         callback: Callable[
-            ["PreparedRequest"],
+            ["CallbackRequest"],
             Union[Exception, Tuple[int, Mapping[str, str], "_Body"]],
         ],
         match_querystring: Union[bool, FalseBool] = FalseBool(),
@@ -1056,9 +1089,7 @@ class RequestsMock:
         with self._thread_lock:
             return self._registry.find(request)
 
-    def _parse_request_params(
-        self, url: str
-    ) -> Dict[str, Union[str, int, float, List[Optional[Union[str, int, float]]]]]:
+    def _parse_request_params(self, url: str) -> RequestParams:
         params: Dict[str, Union[str, int, float, List[Any]]] = {}
         for key, val in groupby(
             parse_qsl(urlsplit(url).query, keep_blank_values=True),
@@ -1269,6 +1300,9 @@ class RequestsMock:
 mock = _default_mock = RequestsMock(assert_all_requests_are_fired=False)
 __all__ = [
     "CallbackResponse",
+    "CallbackRequest",
+    "RequestKwargs",
+    "RequestParams",
     "Response",
     "RequestsMock",
     # Exposed by the RequestsMock class:

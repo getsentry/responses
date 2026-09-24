@@ -1281,12 +1281,21 @@ class RequestsMock:
             )
 
     def assert_call_count(self, url: str, count: int) -> bool:
+        target = _ensure_url_default_path(url)
+        target_parts = urlsplit(str(target))
+        target_base = urlunsplit(target_parts._replace(query=""))
+        target_qsl = sorted(parse_qsl(target_parts.query, keep_blank_values=True))
+
+        def _url_matches_target(request_url: Optional[str]) -> bool:
+            if request_url is None:
+                return False
+            req_parts = urlsplit(request_url)
+            req_base = urlunsplit(req_parts._replace(query=""))
+            req_qsl = sorted(parse_qsl(req_parts.query, keep_blank_values=True))
+            return req_base == target_base and req_qsl == target_qsl
+
         call_count = len(
-            [
-                1
-                for call in self.calls
-                if call.request.url == _ensure_url_default_path(url)
-            ]
+            [1 for call in self.calls if _url_matches_target(call.request.url)]
         )
         if call_count == count:
             return True

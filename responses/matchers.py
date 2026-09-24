@@ -94,11 +94,28 @@ def urlencoded_params_matcher(
         if not params and request_body:
             valid = False
 
+        # `dict(parse_qsl(...))` above collapses repeated keys (last value wins),
+        # so a strict match would otherwise accept a body carrying data the dict
+        # params cannot represent (e.g. body "a=1&a=2" against {"a": "2"}).
+        repeated_keys = bool(
+            strict_match
+            and request_body
+            and len(parse_qsl(request_body, keep_blank_values=allow_blank))
+            != len(qsl_body)
+        )
+        if repeated_keys:
+            valid = False
+
         if not valid:
             reason = (
                 f"request.body doesn't match: {qsl_body} doesn't match {match_params}"
             )
-            if strict_match:
+            if repeated_keys:
+                reason += (
+                    "\nNote: the request body has repeated keys that a strict "
+                    "dict match cannot represent."
+                )
+            elif strict_match:
                 reason += (
                     "\nNote: You're using strict parameter check. "
                     "To try a partial match, use strict_match=False"

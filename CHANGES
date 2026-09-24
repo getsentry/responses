@@ -7,6 +7,9 @@ Unreleased
   This also applies to headers returned by callbacks.
 * Fixed ``urlencoded_params_matcher`` rejecting matching form data supplied
   as bytes or a binary file-like object.
+* Fixed ``urlencoded_params_matcher`` accepting, under ``strict_match``, a
+  request body with repeated keys that the params dict cannot represent (for
+  example ``a=1&a=2`` against ``{"a": "2"}``).
 * Added ``responses.CallbackRequest`` so callback and matcher annotations can
   include the ``params`` and ``req_kwargs`` attributes added by ``responses``.
 * Fixed non-strict `json_params_matcher` raising `TypeError` when an actual

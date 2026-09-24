@@ -9,6 +9,9 @@ Unreleased
   as bytes or a binary file-like object.
 * Added ``responses.CallbackRequest`` so callback and matcher annotations can
   include the ``params`` and ``req_kwargs`` attributes added by ``responses``.
+* Fixed ``request.params`` (and therefore ``query_param_matcher``) dropping
+  values of a repeated query parameter when its occurrences are not adjacent,
+  e.g. ``?a=1&b=2&a=3``.
 
 0.26.3
 ------

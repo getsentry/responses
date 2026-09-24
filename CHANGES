@@ -1,6 +1,9 @@
 Unreleased
 ----------
 
+* Match query parameters independently of order in ``assert_call_count``,
+  including repeated values and bracket-encoded nested keys. See #822.
+
 * Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810
 * Match response ``Content-Type`` header names case-insensitively so lowercase
   headers do not produce duplicate content types or incorrect response decoding.

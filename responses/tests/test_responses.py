@@ -2106,6 +2106,34 @@ def test_assert_call_count_query_param_order():
     assert_reset()
 
 
+@pytest.mark.parametrize(
+    "query",
+    [
+        "filter[name]=alice&filter[roles][]=reader&filter[roles][]=writer",
+        "filter[roles][]=writer&filter[name]=alice&filter[roles][]=reader",
+        "filter%5Broles%5D%5B%5D=reader&filter%5Broles%5D%5B%5D=writer&filter%5Bname%5D=alice",
+    ],
+)
+def test_assert_call_count_nested_query_params(query):  # type: ignore[misc]
+    with responses.RequestsMock() as mock:
+        url = "http://example.com/api"
+        mock.get(url, body="ok")
+        requests.get(
+            url,
+            params={"filter[name]": "alice", "filter[roles][]": ["writer", "reader"]},
+        )
+
+        assert mock.assert_call_count(f"{url}?{query}", 1) is True
+        # Missing, changed, or duplicated nested values must not match.
+        for other in (
+            "filter[name]=alice&filter[roles][]=reader",
+            "filter[name]=bob&filter[roles][]=writer&filter[roles][]=reader",
+            "filter[name]=alice&filter[roles][]=writer"
+            "&filter[roles][]=reader&filter[roles][]=reader",
+        ):
+            assert mock.assert_call_count(f"{url}?{other}", 0) is True
+
+
 def test_call_count_with_matcher():
     @responses.activate
     def run():

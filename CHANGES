@@ -9,6 +9,8 @@ Unreleased
   as bytes or a binary file-like object.
 * Added ``responses.CallbackRequest`` so callback and matcher annotations can
   include the ``params`` and ``req_kwargs`` attributes added by ``responses``.
+* Fixed non-strict `json_params_matcher` raising `TypeError` when an actual
+  nested object is compared with an expected scalar value.
 
 0.26.3
 ------

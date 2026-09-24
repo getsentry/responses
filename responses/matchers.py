@@ -229,6 +229,8 @@ def query_param_matcher(
     for k, v in params_dict.items():
         if isinstance(v, (int, float)):
             params_dict[k] = str(v)
+        elif isinstance(v, list):
+            params_dict[k] = [str(i) if isinstance(i, (int, float)) else i for i in v]
 
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""

@@ -445,6 +445,23 @@ def test_query_params_numbers():
     assert_reset()
 
 
+def test_query_params_numbers_in_list():
+    @responses.activate
+    def run():
+        expected_query_params = {"ids": [1, 2], "ratio": [0.5, "x"]}
+        responses.add(
+            responses.GET,
+            "https://example.com/",
+            match=[
+                matchers.query_param_matcher(expected_query_params),
+            ],
+        )
+        requests.get("https://example.com", params=expected_query_params)
+
+    run()
+    assert_reset()
+
+
 def test_query_param_matcher_does_not_mutate_input():
     """query_param_matcher must not modify the caller's params dict.
 

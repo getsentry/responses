@@ -9,6 +9,8 @@ Unreleased
   as bytes or a binary file-like object.
 * Added ``responses.CallbackRequest`` so callback and matcher annotations can
   include the ``params`` and ``req_kwargs`` attributes added by ``responses``.
+* Fixed ``query_param_matcher`` failing to match when a list value contains
+  numbers, e.g. ``{"ids": [1, 2]}``.
 
 0.26.3
 ------

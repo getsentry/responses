@@ -2088,6 +2088,24 @@ def test_assert_call_count(url):  # type: ignore[misc]
     assert_reset()
 
 
+def test_assert_call_count_query_param_order():
+    """assert_call_count matches URLs with query params in any order."""
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com/api", body="ok")
+
+        # Make a request; requests preserves the insertion order of params.
+        requests.get("http://example.com/api", params={"b": "2", "a": "1"})
+        # The stored URL is ?b=2&a=1.  Asserting with reversed order must still pass.
+        assert responses.assert_call_count("http://example.com/api?a=1&b=2", 1) is True
+        # Asserting with the original order must also pass.
+        assert responses.assert_call_count("http://example.com/api?b=2&a=1", 1) is True
+
+    run()
+    assert_reset()
+
+
 def test_call_count_with_matcher():
     @responses.activate
     def run():

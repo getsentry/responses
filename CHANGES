@@ -12,6 +12,8 @@ Unreleased
 * Fixed ``request.params`` (and therefore ``query_param_matcher``) dropping
   values of a repeated query parameter when its occurrences are not adjacent,
   e.g. ``?a=1&b=2&a=3``.
+* Fixed non-strict `json_params_matcher` raising `TypeError` when an actual
+  nested object is compared with an expected scalar value.
 
 0.26.3
 ------
@@ -29,6 +31,8 @@ Unreleased
 * Fixed `fragment_identifier_matcher` treating opaque fragments (those without
   ``=``, e.g. ``/users/5``) as always equal, so a required fragment matched a
   different one or none at all. See #806
+* Fixed non-strict `json_params_matcher` raising `TypeError` when an actual
+  nested object is compared with an expected scalar value.
 
 0.26.2
 ------

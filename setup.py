@@ -36,7 +36,7 @@ extras_require = {"tests": tests_require}
 
 setup(
     name="responses",
-    version="0.26.2",
+    version="0.26.3",
     author="David Cramer",
     description="A utility library for mocking out the `requests` Python library.",
     url="https://github.com/getsentry/responses",
@@ -69,6 +69,7 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
         "Topic :: Software Development",
     ],
 )

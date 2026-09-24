@@ -1,7 +1,9 @@
 import gzip
 import re
+from io import BytesIO
 from typing import Any
 from typing import List
+from typing import Mapping
 from unittest.mock import Mock
 
 import pytest
@@ -294,6 +296,44 @@ def test_urlencoded_params_matcher_blank():
 
     run()
     assert_reset()
+
+
+@pytest.mark.parametrize("as_file", [False, True])
+@pytest.mark.parametrize("strict_match", [False, True])
+@pytest.mark.parametrize(
+    "body, params, allow_blank",
+    [
+        (b"name=alice", {"name": "alice"}, False),
+        (b"name=caf%C3%A9", {"name": "café"}, False),
+        (b"name=", {"name": ""}, True),
+    ],
+)
+def test_urlencoded_params_matcher_bytes(
+    body: bytes,
+    params: Mapping[str, str],
+    allow_blank: bool,
+    strict_match: bool,
+    as_file: bool,
+) -> None:
+    if not strict_match:
+        body += b"&extra=value"
+
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.post(
+            "http://example.com/",
+            body="matched",
+            match=[
+                matchers.urlencoded_params_matcher(
+                    params, allow_blank=allow_blank, strict_match=strict_match
+                )
+            ],
+        )
+        resp = requests.post(
+            "http://example.com/",
+            data=BytesIO(body) if as_file else body,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        assert_response(resp, "matched")
 
 
 def test_urlencoded_params_matcher_strict():

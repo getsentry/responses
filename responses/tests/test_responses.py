@@ -6,8 +6,10 @@ import warnings
 from io import BufferedReader
 from io import BytesIO
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -569,13 +571,17 @@ def test_callback():
     }
     url = "http://example.com/"
 
-    def request_callback(_request):
+    def request_callback(
+        request: responses.CallbackRequest,
+    ) -> Tuple[int, Dict[str, str], bytes]:
+        assert request.params == {}
+        assert request.req_kwargs["timeout"] == (1.0, 2.0)
         return status, headers, body
 
     @responses.activate
     def run():
         rsp = responses.add_callback(responses.GET, url, request_callback)
-        resp = requests.get(url)
+        resp = requests.get(url, timeout=(1.0, 2.0))
         assert resp.text == "test callback"
         assert resp.status_code == status
         assert resp.reason == reason
@@ -705,11 +711,14 @@ def test_callback_no_content_type():
     assert_reset()
 
 
-def test_callback_content_type_dict():
+@pytest.mark.parametrize(
+    "header_name", ["Content-Type", "content-type", "CONTENT-TYPE"]
+)
+def test_callback_content_type_dict(header_name):  # type: ignore[misc]
     def request_callback(_request):
         return (
             200,
-            {"Content-Type": "application/json"},
+            {header_name: "application/json"},
             b"foo",
         )
 
@@ -780,11 +789,14 @@ def test_callback_matchers_fail():
     assert_reset()
 
 
-def test_callback_content_type_tuple():
+@pytest.mark.parametrize(
+    "header_name", ["Content-Type", "content-type", "CONTENT-TYPE"]
+)
+def test_callback_content_type_tuple(header_name):  # type: ignore[misc]
     def request_callback(_request):
         return (
             200,
-            [("Content-Type", "application/json")],
+            [(header_name, "application/json")],
             b"foo",
         )
 
@@ -1418,7 +1430,10 @@ def test_headers():
     assert_reset()
 
 
-def test_headers_deduplicated_content_type():
+@pytest.mark.parametrize(
+    "header_name", ["Content-Type", "content-type", "CONTENT-TYPE"]
+)
+def test_headers_deduplicated_content_type(header_name):  # type: ignore[misc]
     """Test to ensure that we do not have two values for `content-type`.
 
     For more details see https://github.com/getsentry/responses/issues/644
@@ -1429,7 +1444,7 @@ def test_headers_deduplicated_content_type():
         responses.get(
             "https://example.org/",
             json={},
-            headers={"Content-Type": "application/json"},
+            headers={header_name: "application/json"},
         )
         responses.start()
 

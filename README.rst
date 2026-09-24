@@ -570,10 +570,10 @@ Creating Custom Matcher
 If your application requires other encodings or different data validation you can build
 your own matcher that returns ``Tuple[matches: bool, reason: str]``.
 Where boolean represents ``True`` or ``False`` if the request parameters match and
-the string is a reason in case of match failure. Your matcher can
-expect a ``PreparedRequest`` parameter to be provided by ``responses``.
-
-Note, ``PreparedRequest`` is customized and has additional attributes ``params`` and ``req_kwargs``.
+the string is a reason in case of match failure. Your matcher can expect a
+``responses.CallbackRequest`` parameter. This describes the
+``requests.PreparedRequest`` provided by ``responses``, including the additional
+``params`` and ``req_kwargs`` attributes.
 
 Response Registry
 ---------------------------
@@ -1400,6 +1400,17 @@ will produce next output:
         method: GET
         status: 202
         url: https://httpstat.us/202
+
+Common headers such as ``Content-Type``, ``Date`` and ``Server`` are stripped
+from the recording to keep the file terse. If you need to keep one of them, for
+example a ``Date`` value that is part of a signed response you later verify,
+pass its name in ``keep_headers`` (matched case-insensitively):
+
+.. code-block:: python
+
+    @_recorder.record(file_path="out.yaml", keep_headers=["Date"])
+    def test_recorder():
+        ...
 
 If you are in the REPL, you can also activate the recorder for all following responses:
 

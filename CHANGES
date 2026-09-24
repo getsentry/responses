@@ -1,6 +1,22 @@
+Unreleased
+----------
+
+* Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810
+* Match response ``Content-Type`` header names case-insensitively so lowercase
+  headers do not produce duplicate content types or incorrect response decoding.
+  This also applies to headers returned by callbacks.
+* Fixed ``urlencoded_params_matcher`` rejecting matching form data supplied
+  as bytes or a binary file-like object.
+* Added ``responses.CallbackRequest`` so callback and matcher annotations can
+  include the ``params`` and ``req_kwargs`` attributes added by ``responses``.
+
 0.26.3
 ------
 
+* Added a ``keep_headers`` argument to ``_recorder.record`` and
+  ``Recorder.dump_to_file`` to preserve named headers (for example ``Date``)
+  that are otherwise stripped as verbose defaults, so a signed response can be
+  recorded and later verified. Matching is case-insensitive. See #763
 * Fixed the element type exposed by `CallList` so static type checkers infer
   `Call` values when iterating, indexing, or filtering recorded calls. See #722
 * Fixed `query_string_matcher` (and the query matching auto-applied to a
@@ -257,8 +273,8 @@
 ------
 
 * Added `responses.PassthroughResponse` and
-  `reponses.BaseResponse.passthrough`. These features make building passthrough
-  responses more compatible with dynamcially generated response objects.
+  `responses.BaseResponse.passthrough`. These features make building passthrough
+  responses more compatible with dynamically generated response objects.
 * Removed the unused ``_is_redirect()`` function from responses internals.
 * Added `responses.matchers.request_kwargs_matcher`. This matcher allows you
   to match additional request arguments like `stream`.

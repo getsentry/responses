@@ -4,6 +4,7 @@ import re
 from json.decoder import JSONDecodeError
 from typing import Any
 from typing import Callable
+from typing import Dict
 from typing import List
 from typing import Mapping
 from typing import MutableMapping
@@ -38,6 +39,19 @@ def _filter_dict_recursively(
     return filtered_dict
 
 
+def _parse_form_values(body: str, *, allow_blank: bool) -> Dict[str, Any]:
+    """Parse URL encoded data, keeping every value of a repeated key in a list."""
+    values: Dict[str, Any] = {}
+    for key, value in parse_qsl(body, keep_blank_values=allow_blank):
+        if key not in values:
+            values[key] = value
+        elif isinstance(values[key], list):
+            values[key].append(value)
+        else:
+            values[key] = [values[key], value]
+    return values
+
+
 def body_matcher(params: str, *, allow_blank: bool = False) -> Callable[..., Any]:
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
@@ -54,7 +68,7 @@ def body_matcher(params: str, *, allow_blank: bool = False) -> Callable[..., Any
 
 
 def urlencoded_params_matcher(
-    params: Optional[Mapping[str, str]],
+    params: Optional[Mapping[str, Union[str, List[str]]]],
     *,
     allow_blank: bool = False,
     strict_match: bool = True,
@@ -62,7 +76,8 @@ def urlencoded_params_matcher(
     """
     Matches URL encoded data
 
-    :param params: (dict) data provided to 'data' arg of request
+    :param params: (dict) data provided to 'data' arg of request. Use a list
+        for a key that is sent more than once, e.g. ``{"id": ["1", "2"]}``
     :param allow_blank If true, blank values are accounted as empty strings
     :param strict_match If true, all keys must match;
         otherwise, partial matches allowed
@@ -75,7 +90,7 @@ def urlencoded_params_matcher(
         if isinstance(request_body, bytes):
             request_body = request_body.decode("utf-8")
         qsl_body: Mapping[Any, Any] = (
-            dict(parse_qsl(request_body, keep_blank_values=allow_blank))
+            _parse_form_values(request_body, allow_blank=allow_blank)
             if request_body
             else {}
         )

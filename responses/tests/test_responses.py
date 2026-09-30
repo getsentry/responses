@@ -1557,6 +1557,39 @@ def test_legacy_adding_headers_with_content_type():
     assert_reset()
 
 
+def test_content_type_with_list_of_header_tuples():
+    @responses.activate
+    def run():
+        url = "http://example.com/"
+        responses.add(
+            responses.GET,
+            url,
+            body="<p>ok</p>",
+            content_type="text/html",
+            headers=[("Set-Cookie", "a=1"), ("Set-Cookie", "b=2")],
+        )
+        resp = requests.get(url)
+        assert resp.headers["Content-Type"] == "text/html"
+        assert resp.cookies["a"] == "1"
+        assert resp.cookies["b"] == "2"
+
+        with pytest.raises(RuntimeError) as excinfo:
+            responses.add(
+                responses.GET,
+                url,
+                body="test",
+                content_type="text/html",
+                headers=[("content-type", "text/html; charset=utf-8")],
+            )
+        assert (
+            "You cannot define both `content_type` and `headers[Content-Type]`"
+            in str(excinfo.value)
+        )
+
+    run()
+    assert_reset()
+
+
 def test_auto_calculate_content_length_string_body():
     @responses.activate
     def run():

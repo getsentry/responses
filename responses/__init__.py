@@ -859,8 +859,8 @@ class RequestsMock:
             and "headers" in kwargs
             and kwargs["headers"] is not None
         ):
-            header_keys = [header.lower() for header in kwargs["headers"]]
-            if "content-type" in header_keys:
+            # headers may be a mapping or a list of (name, value) tuples
+            if "Content-Type" in HTTPHeaderDict(kwargs["headers"]):
                 raise RuntimeError(
                     "You cannot define both `content_type` and `headers[Content-Type]`."
                     " Using the `content_type` kwarg is recommended."

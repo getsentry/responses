@@ -293,6 +293,12 @@ def test_json_params_matcher_body_not_utf8_or_gzip():
     assert not valid
     assert "Cannot decode request.body" in reason
 
+    # gzip header followed by corrupt deflate data raises zlib.error
+    mock_request = Mock(body=b"\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff")
+    valid, reason = matchers.json_params_matcher({"foo": 42})(mock_request)
+    assert not valid
+    assert "Cannot decode request.body" in reason
+
 
 def test_urlencoded_params_matcher_blank():
     @responses.activate

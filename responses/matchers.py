@@ -167,6 +167,13 @@ def json_params_matcher(
             reason = (
                 "request.body doesn't match: JSONDecodeError: Cannot parse request.body"
             )
+        except (UnicodeDecodeError, OSError, EOFError):
+            # body is neither UTF-8 text nor gzip-compressed UTF-8 text
+            valid = False
+            reason = (
+                "request.body doesn't match: Cannot decode request.body "
+                "as UTF-8 or gzip-compressed UTF-8"
+            )
 
         return valid, reason
 

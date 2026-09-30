@@ -272,6 +272,28 @@ def test_json_params_matcher_body_is_gzipped():
     assert result == (True, "")
 
 
+def test_json_params_matcher_body_not_utf8_or_gzip():
+    @responses.activate
+    def run():
+        url = "http://example.com/upload"
+        responses.post(url, match=[matchers.json_params_matcher({"name": "a.png"})])
+        responses.post(url, body="uploaded")
+
+        # a binary body that is neither UTF-8 nor gzip must be reported as a
+        # mismatch so the next registered response can match
+        resp = requests.post(url, data=b"\x89PNG\r\n\x1a\n\xff\x00")
+        assert_response(resp, "uploaded")
+
+    run()
+    assert_reset()
+
+    # gzip-compressed body whose content is not UTF-8
+    mock_request = Mock(body=gzip.compress(b"\xff\xfe\x00"))
+    valid, reason = matchers.json_params_matcher({"foo": 42})(mock_request)
+    assert not valid
+    assert "Cannot decode request.body" in reason
+
+
 def test_urlencoded_params_matcher_blank():
     @responses.activate
     def run():

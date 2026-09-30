@@ -11,6 +11,9 @@ Unreleased
   include the ``params`` and ``req_kwargs`` attributes added by ``responses``.
 * Fixed non-strict `json_params_matcher` raising `TypeError` when an actual
   nested object is compared with an expected scalar value.
+* Fixed `json_params_matcher` raising `UnicodeDecodeError` or `BadGzipFile`
+  for a request body that is neither UTF-8 nor gzip (e.g. a binary upload)
+  instead of reporting a mismatch and letting other responses match.
 
 0.26.3
 ------

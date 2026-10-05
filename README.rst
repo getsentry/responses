@@ -308,6 +308,7 @@ JSON encoded data
 """""""""""""""""
 
 Matching JSON encoded data can be done with ``matchers.json_params_matcher()``.
+It supports JSON dictionaries, lists, and scalar values.
 
 .. code-block:: python
 
@@ -330,6 +331,25 @@ Matching JSON encoded data can be done with ``matchers.json_params_matcher()``.
             "http://example.com/",
             headers={"Content-Type": "application/json"},
             json={"page": {"name": "first", "type": "json"}},
+        )
+
+
+To perform partial matching where the request dictionary may contain additional keys, pass ``strict_match=False``:
+
+.. code-block:: python
+
+    @responses.activate
+    def test_partial_json():
+        responses.post(
+            url="http://example.com/",
+            body="one",
+            match=[
+                matchers.json_params_matcher({"page": "first"}, strict_match=False)
+            ],
+        )
+        resp = requests.post(
+            "http://example.com/",
+            json={"page": "first", "extra_key": "extra_val"},
         )
 
 

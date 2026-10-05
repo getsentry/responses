@@ -10,10 +10,14 @@ on:
 
 jobs:
   linting:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
     - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+    # tox's `precom` env pins python3.10, which only ubuntu-22.04 had preinstalled.
+    - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
+      with:
+        python-version: '3.10'
     - name: Install dependencies
       run: |
         python -m pip install tox

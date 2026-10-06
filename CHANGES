@@ -1,6 +1,8 @@
 Unreleased
 ----------
 
+* Fixed ``fragment_identifier_matcher`` ignoring blank-valued fragment
+  parameters, which allowed missing or different parameters to match.
 * Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810
 * Match response ``Content-Type`` header names case-insensitively so lowercase
   headers do not produce duplicate content types or incorrect response decoding.

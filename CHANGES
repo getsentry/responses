@@ -13,6 +13,9 @@ Unreleased
   include the ``params`` and ``req_kwargs`` attributes added by ``responses``.
 * Fixed non-strict `json_params_matcher` raising `TypeError` when an actual
   nested object is compared with an expected scalar value.
+* Fixed ``responses.add()`` raising ``AttributeError`` when ``content_type`` is
+  combined with ``headers`` given as a list of ``(name, value)`` tuples (for
+  example, several ``Set-Cookie`` headers).
 
 0.26.3
 ------

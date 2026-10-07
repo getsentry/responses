@@ -2094,6 +2094,52 @@ def test_assert_call_count(url):  # type: ignore[misc]
     assert_reset()
 
 
+def test_assert_call_count_query_param_order():
+    """assert_call_count matches URLs with query params in any order."""
+
+    @responses.activate
+    def run():
+        responses.add(responses.GET, "http://example.com/api", body="ok")
+
+        # Make a request; requests preserves the insertion order of params.
+        requests.get("http://example.com/api", params={"b": "2", "a": "1"})
+        # The stored URL is ?b=2&a=1.  Asserting with reversed order must still pass.
+        assert responses.assert_call_count("http://example.com/api?a=1&b=2", 1) is True
+        # Asserting with the original order must also pass.
+        assert responses.assert_call_count("http://example.com/api?b=2&a=1", 1) is True
+
+    run()
+    assert_reset()
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "filter[name]=alice&filter[roles][]=reader&filter[roles][]=writer",
+        "filter[roles][]=writer&filter[name]=alice&filter[roles][]=reader",
+        "filter%5Broles%5D%5B%5D=reader&filter%5Broles%5D%5B%5D=writer&filter%5Bname%5D=alice",
+    ],
+)
+def test_assert_call_count_nested_query_params(query):  # type: ignore[misc]
+    with responses.RequestsMock() as mock:
+        url = "http://example.com/api"
+        mock.get(url, body="ok")
+        requests.get(
+            url,
+            params={"filter[name]": "alice", "filter[roles][]": ["writer", "reader"]},
+        )
+
+        assert mock.assert_call_count(f"{url}?{query}", 1) is True
+        # Missing, changed, or duplicated nested values must not match.
+        for other in (
+            "filter[name]=alice&filter[roles][]=reader",
+            "filter[name]=bob&filter[roles][]=writer&filter[roles][]=reader",
+            "filter[name]=alice&filter[roles][]=writer"
+            "&filter[roles][]=reader&filter[roles][]=reader",
+        ):
+            assert mock.assert_call_count(f"{url}?{other}", 0) is True
+
+
 def test_call_count_with_matcher():
     @responses.activate
     def run():

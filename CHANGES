@@ -1,6 +1,9 @@
 Unreleased
 ----------
 
+* Match query parameters independently of order in ``assert_call_count``,
+  including repeated values and bracket-encoded nested keys. See #822.
+
 * Fixed ``fragment_identifier_matcher`` ignoring blank-valued fragment
   parameters, which allowed missing or different parameters to match.
 * Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810

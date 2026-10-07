@@ -6,8 +6,10 @@ import warnings
 from io import BufferedReader
 from io import BytesIO
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -569,13 +571,17 @@ def test_callback():
     }
     url = "http://example.com/"
 
-    def request_callback(_request):
+    def request_callback(
+        request: responses.CallbackRequest,
+    ) -> Tuple[int, Dict[str, str], bytes]:
+        assert request.params == {}
+        assert request.req_kwargs["timeout"] == (1.0, 2.0)
         return status, headers, body
 
     @responses.activate
     def run():
         rsp = responses.add_callback(responses.GET, url, request_callback)
-        resp = requests.get(url)
+        resp = requests.get(url, timeout=(1.0, 2.0))
         assert resp.text == "test callback"
         assert resp.status_code == status
         assert resp.reason == reason

@@ -212,6 +212,25 @@ def test_json_params_matcher_not_strict_diff_values():
     assert_reset()
 
 
+def test_json_params_matcher_not_strict_nested_type_mismatch():
+    mock_request = Mock(body='{"page": {"type": "json"}}')
+
+    result = matchers.json_params_matcher(
+        {"page": 1},
+        strict_match=False,
+    )(mock_request)
+
+    assert result == (
+        False,
+        (
+            "request.body doesn't match: {'page': {'type': 'json'}} "
+            "doesn't match {'page': 1}\n"
+            "Note: You use non-strict parameters check, "
+            "to change it use `strict_match=True`."
+        ),
+    )
+
+
 def test_failed_matchers_dont_modify_inputs_order_in_error_message():
     json_a = {"array": ["C", "B", "A"]}
     json_b = '{"array" : ["B", "A", "C"]}'
@@ -1012,6 +1031,44 @@ def test_fragment_identifier_matcher():
 
     run()
     assert_reset()
+
+
+@pytest.mark.parametrize(
+    "expected, actual, matches",
+    [
+        ("flag=", "flag=", True),
+        ("flag=", "other=", False),
+        ("flag=", "", False),
+        ("flag=&value=1", "value=1&flag=", True),
+        ("flag=&value=1", "value=1", False),
+        ("flag=&value=1", "flag=present&value=1", False),
+        ("flag=&flag=1", "flag=1&flag=", True),
+        ("flag=&flag=1", "flag=1", False),
+    ],
+)
+def test_fragment_identifier_matcher_blank_values(
+    expected: str, actual: str, matches: bool
+) -> None:
+    request = requests.Request("GET", f"http://example.com/#{actual}").prepare()
+    valid, reason = matchers.fragment_identifier_matcher(expected)(request)
+    assert valid is matches
+    if matches:
+        assert reason == ""
+    else:
+        assert "URL fragment identifier is different" in reason
+
+
+@responses.activate
+def test_fragment_identifier_matcher_blank_values_in_requests() -> None:
+    responses.add(
+        responses.GET,
+        "http://example.com/",
+        match=[matchers.fragment_identifier_matcher("flag=&value=1")],
+        body=b"test",
+    )
+    with pytest.raises(ConnectionError, match="URL fragment identifier is different"):
+        requests.get("http://example.com/#value=1")
+    assert_response(requests.get("http://example.com/#value=1&flag="), "test")
 
 
 def test_fragment_identifier_matcher_opaque():

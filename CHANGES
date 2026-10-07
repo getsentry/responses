@@ -4,12 +4,18 @@ Unreleased
 * Match query parameters independently of order in ``assert_call_count``,
   including repeated values and bracket-encoded nested keys. See #822.
 
+* Fixed ``fragment_identifier_matcher`` ignoring blank-valued fragment
+  parameters, which allowed missing or different parameters to match.
 * Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810
 * Match response ``Content-Type`` header names case-insensitively so lowercase
   headers do not produce duplicate content types or incorrect response decoding.
   This also applies to headers returned by callbacks.
 * Fixed ``urlencoded_params_matcher`` rejecting matching form data supplied
   as bytes or a binary file-like object.
+* Added ``responses.CallbackRequest`` so callback and matcher annotations can
+  include the ``params`` and ``req_kwargs`` attributes added by ``responses``.
+* Fixed non-strict `json_params_matcher` raising `TypeError` when an actual
+  nested object is compared with an expected scalar value.
 
 0.26.3
 ------
@@ -27,6 +33,8 @@ Unreleased
 * Fixed `fragment_identifier_matcher` treating opaque fragments (those without
   ``=``, e.g. ``/users/5``) as always equal, so a required fragment matched a
   different one or none at all. See #806
+* Fixed non-strict `json_params_matcher` raising `TypeError` when an actual
+  nested object is compared with an expected scalar value.
 
 0.26.2
 ------
@@ -272,8 +280,8 @@ Unreleased
 ------
 
 * Added `responses.PassthroughResponse` and
-  `reponses.BaseResponse.passthrough`. These features make building passthrough
-  responses more compatible with dynamcially generated response objects.
+  `responses.BaseResponse.passthrough`. These features make building passthrough
+  responses more compatible with dynamically generated response objects.
 * Removed the unused ``_is_redirect()`` function from responses internals.
 * Added `responses.matchers.request_kwargs_matcher`. This matcher allows you
   to match additional request arguments like `stream`.

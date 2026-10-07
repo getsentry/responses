@@ -575,10 +575,10 @@ Creación de un Comparador Personalizado
 Si tu aplicación requiere otras codificaciones o una validación de datos diferente,
 puedes crear tu propio comparador que devuelva ``Tuple[matches: bool, reason: str]``.
 El booleano indica ``True`` o ``False`` según si los parámetros de la solicitud
-coinciden, y la cadena contiene la razón en caso de fallo. Tu comparador puede esperar
-recibir un parámetro ``PreparedRequest`` proporcionado por ``responses``.
-
-Nota: ``PreparedRequest`` está personalizado y tiene atributos adicionales ``params`` y ``req_kwargs``.
+coinciden, y la cadena contiene la razón en caso de fallo. Tu comparador puede
+esperar un parámetro ``responses.CallbackRequest``. Este describe el
+``requests.PreparedRequest`` proporcionado por ``responses``, incluidos los
+atributos adicionales ``params`` y ``req_kwargs``.
 
 Registro de Responses
 ----------------------

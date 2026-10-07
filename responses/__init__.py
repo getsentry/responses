@@ -4,7 +4,6 @@ import logging
 from functools import partialmethod
 from functools import wraps
 from http import client
-from itertools import groupby
 from re import Pattern
 from threading import Lock as _ThreadingLock
 from typing import TYPE_CHECKING
@@ -1090,15 +1089,13 @@ class RequestsMock:
             return self._registry.find(request)
 
     def _parse_request_params(self, url: str) -> RequestParams:
+        grouped: Dict[str, List[str]] = {}
+        for key, value in parse_qsl(urlsplit(url).query, keep_blank_values=True):
+            grouped.setdefault(key, []).append(value)
+
         params: Dict[str, Union[str, int, float, List[Any]]] = {}
-        for key, val in groupby(
-            parse_qsl(urlsplit(url).query, keep_blank_values=True),
-            lambda kv: kv[0],
-        ):
-            values = list(map(lambda x: x[1], val))
-            if len(values) == 1:
-                values = values[0]  # type: ignore[assignment]
-            params[key] = values
+        for key, values in grouped.items():
+            params[key] = values[0] if len(values) == 1 else values
         return params
 
     def _read_filelike_body(

@@ -272,6 +272,23 @@ def test_json_params_matcher_body_is_gzipped():
     assert result == (True, "")
 
 
+@pytest.mark.parametrize(
+    ("param", "body_str"),
+    [
+        (0, "0"),
+        (False, "false"),
+        ("", '""'),
+        (0.0, "0.0"),
+        (True, "true"),
+        ("hello", '"hello"'),
+    ],
+)
+def test_json_params_matcher_primitives(param, body_str):
+    mock_request = Mock(body=body_str)
+    result = matchers.json_params_matcher(param)(mock_request)
+    assert result == (True, "")
+
+
 def test_urlencoded_params_matcher_blank():
     @responses.activate
     def run():

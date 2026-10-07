@@ -298,6 +298,48 @@ def test_urlencoded_params_matcher_blank():
     assert_reset()
 
 
+@pytest.mark.parametrize("strict_match", [False, True])
+def test_urlencoded_params_matcher_repeated_keys(strict_match: bool) -> None:
+    @responses.activate
+    def run():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="all values",
+            match=[
+                matchers.urlencoded_params_matcher(
+                    {"id": ["1", "2"], "page": "a"}, strict_match=strict_match
+                )
+            ],
+        )
+        # only the last value of the repeated key must not match
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="last value",
+            match=[
+                matchers.urlencoded_params_matcher(
+                    {"id": "2", "page": "a"}, strict_match=strict_match
+                )
+            ],
+        )
+
+        resp = requests.post(
+            "http://example.com/", data={"id": ["1", "2"], "page": "a"}
+        )
+        assert_response(resp, "all values")
+
+        # values of a repeated key are kept even when they are not adjacent
+        resp = requests.post("http://example.com/", data="id=1&page=a&id=2")
+        assert_response(resp, "all values")
+
+        resp = requests.post("http://example.com/", data={"id": "2", "page": "a"})
+        assert_response(resp, "last value")
+
+    run()
+    assert_reset()
+
+
 @pytest.mark.parametrize("as_file", [False, True])
 @pytest.mark.parametrize("strict_match", [False, True])
 @pytest.mark.parametrize(

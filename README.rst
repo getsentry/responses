@@ -333,6 +333,29 @@ Matching JSON encoded data can be done with ``matchers.json_params_matcher()``.
         )
 
 
+To ignore the ordering of elements inside JSON lists/arrays, pass ``ignore_order=True``:
+
+.. code-block:: python
+
+    @responses.activate
+    def test_order_insensitive_json():
+        responses.post(
+            url="http://example.com/items",
+            body="OK",
+            match=[
+                matchers.json_params_matcher(
+                    {"tags": ["python", "testing", "api"]}, ignore_order=True
+                )
+            ],
+        )
+        # Matches regardless of array item order
+        requests.post(
+            "http://example.com/items",
+            json={"tags": ["api", "python", "testing"]},
+        )
+
+
+
 Query Parameters Matcher
 ^^^^^^^^^^^^^^^^^^^^^^^^
 

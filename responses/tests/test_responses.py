@@ -2874,3 +2874,48 @@ def test_file_like_body_in_request():
 
     run()
     assert_reset()
+
+
+def test_generator_body_in_request():
+    """Validate that a generator/iterator body is fully consumed, the same way a real
+    network send would read it, instead of being stored unconsumed. GH #713.
+    """
+
+    @responses.activate
+    def run():
+        responses.add(responses.POST, "https://example.com")
+
+        def gen():
+            yield b"te"
+            yield b"st"
+
+        generator = gen()
+        requests.post("https://example.com", data=generator)
+
+        assert list(generator) == []
+        assert len(responses.calls) == 1
+        assert responses.calls[0].request.body == b"test"
+
+    run()
+    assert_reset()
+
+
+def test_str_generator_body_in_request():
+    """A generator yielding str chunks is also valid for requests/urllib3 - make sure
+    draining it doesn't raise, and chunks are encoded the same way urllib3 would. GH #713.
+    """
+
+    @responses.activate
+    def run():
+        responses.add(responses.POST, "https://example.com")
+
+        def gen():
+            yield "te"
+            yield "st"
+
+        requests.post("https://example.com", data=gen())
+
+        assert responses.calls[0].request.body == b"test"
+
+    run()
+    assert_reset()

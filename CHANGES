@@ -13,6 +13,8 @@ Unreleased
   include the ``params`` and ``req_kwargs`` attributes added by ``responses``.
 * Fixed non-strict `json_params_matcher` raising `TypeError` when an actual
   nested object is compared with an expected scalar value.
+* Fixed a generator/iterator request body not being consumed, leaving it
+  sitting unread even after a successful mocked call. See #713
 
 0.26.3
 ------

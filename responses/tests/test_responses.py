@@ -2898,3 +2898,24 @@ def test_generator_body_in_request():
 
     run()
     assert_reset()
+
+
+def test_str_generator_body_in_request():
+    """A generator yielding str chunks is also valid for requests/urllib3 - make sure
+    draining it doesn't raise, and chunks are encoded the same way urllib3 would. GH #713.
+    """
+
+    @responses.activate
+    def run():
+        responses.add(responses.POST, "https://example.com")
+
+        def gen():
+            yield "te"
+            yield "st"
+
+        requests.post("https://example.com", data=gen())
+
+        assert responses.calls[0].request.body == b"test"
+
+    run()
+    assert_reset()

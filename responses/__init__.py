@@ -1102,7 +1102,7 @@ class RequestsMock:
         return params
 
     def _read_filelike_body(
-        self, body: Union[str, bytes, BufferedReader, Iterable[bytes], None]
+        self, body: Union[str, bytes, BufferedReader, Iterable[Union[str, bytes]], None]
     ) -> Union[str, bytes, None]:
         # Requests/urllib support multiple types of body, including file-like objects.
         # Read from the file if it's a file-like object to avoid storing a closed file
@@ -1117,7 +1117,9 @@ class RequestsMock:
             return body.read()
         # Drain a streamed iterator/generator body too, same as a real send would. GH #713.
         if isinstance(body, Iterable):
-            return b"".join(body)
+            # urllib3 encodes a str chunk as utf-8 before writing it, same as any other chunk.
+            chunks = (chunk.encode("utf-8") if isinstance(chunk, str) else chunk for chunk in body)
+            return b"".join(chunks)
         return body
 
     def _on_request(

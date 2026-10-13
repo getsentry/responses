@@ -1,6 +1,7 @@
 import gzip
 import json as json_module
 import re
+import zlib
 from json.decoder import JSONDecodeError
 from typing import Any
 from typing import Callable
@@ -166,6 +167,13 @@ def json_params_matcher(
             valid = False
             reason = (
                 "request.body doesn't match: JSONDecodeError: Cannot parse request.body"
+            )
+        except (UnicodeDecodeError, OSError, EOFError, zlib.error):
+            # body is neither UTF-8 text nor gzip-compressed UTF-8 text
+            valid = False
+            reason = (
+                "request.body doesn't match: Cannot decode request.body "
+                "as UTF-8 or gzip-compressed UTF-8"
             )
 
         return valid, reason

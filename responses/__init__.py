@@ -189,12 +189,15 @@ def _clean_unicode(url: str) -> str:
     urllist = list(urlsplit(url))
     netloc = urllist[1]
     if _has_unicode(netloc):
-        domains = netloc.split(".")
+        # Encode only the hostname, keeping userinfo and the port out of punycode.
+        userinfo, at, hostport = netloc.rpartition("@")
+        host, colon, port = hostport.partition(":")
+        domains = host.split(".")
         for i, d in enumerate(domains):
             if _has_unicode(d):
                 d = "xn--" + d.encode("punycode").decode("ascii")
                 domains[i] = d
-        urllist[1] = ".".join(domains)
+        urllist[1] = userinfo + at + ".".join(domains) + colon + port
         url = urlunsplit(urllist)
 
     # Clean up path/query/params, which use url-encoding to handle unicode chars

@@ -1,6 +1,8 @@
 Unreleased
 ----------
 
+* Fixed matching and passthrough registration for Unicode hostnames with ports
+  or userinfo, preserving credentials and ports during hostname encoding.
 * Fixed ``fragment_identifier_matcher`` ignoring blank-valued fragment
   parameters, which allowed missing or different parameters to match.
 * Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810

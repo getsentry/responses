@@ -1387,6 +1387,77 @@ def test_handles_unicode_url():
     assert_reset()
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://example.рф:8443/path",
+        "https://пример.рф:8443/path",
+        "https://user:pass@пример.рф/path",
+        "https://user:pass@пример.рф:8443/path",
+        "https://üser:päss@example.com:8443/path",
+        "https://üser:päss@пример.рф:8443/path",
+        "https://пример.рф:8443/путь?key=значение",
+        "https://пример.рф/path",
+        "https://user:pass@example.com:8443/path",
+        "https://üser:päss@[::1]:8443/path",
+    ],
+)
+def test_unicode_url_authority(url):  # type: ignore[misc]
+    with responses.RequestsMock() as mock:
+        mock.get(url, body="matched")
+
+        response = requests.get(url)
+
+        assert_response(response, "matched")
+        assert len(mock.calls) == 1
+
+
+@pytest.mark.parametrize(
+    ("prefix", "expected"),
+    [
+        ("https://пример.рф:8443", "https://xn--e1afmkfd.xn--p1ai:8443"),
+        (
+            "https://user:pass@пример.рф:8443/path",
+            "https://user:pass@xn--e1afmkfd.xn--p1ai:8443/path",
+        ),
+        (
+            "https://üser:päss@example.com:8443/path",
+            "https://%C3%BCser:p%C3%A4ss@example.com:8443/path",
+        ),
+    ],
+)
+def test_unicode_authority_passthru(prefix, expected):  # type: ignore[misc]
+    real_send = Mock(return_value=requests.Response())
+    with responses.RequestsMock(real_adapter_send=real_send) as mock:
+        mock.add_passthru(prefix)
+        assert mock.passthru_prefixes == (expected,)
+
+        requests.get(prefix + "/child")
+
+        real_send.assert_called_once()
+        assert real_send.call_args[0][1].url == expected + "/child"
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://user:pass@пример.рф:8444/path",
+        "https://other:pass@пример.рф:8443/path",
+        "https://user:other@пример.рф:8443/path",
+        "https://user:pass@пример.рф:8443/other",
+    ],
+)
+def test_unicode_authority_keeps_url_components_significant(url):  # type: ignore[misc]
+    response = responses.Response(
+        responses.GET, "https://user:pass@пример.рф:8443/path"
+    )
+
+    matched, reason = response.matches(requests.Request("GET", url).prepare())
+
+    assert not matched
+    assert reason == "URL does not match"
+
+
 def test_handles_unicode_body():
     url = "http://example.com/test"
 

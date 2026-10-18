@@ -50,6 +50,41 @@ def test_body_match_post():
     assert_reset()
 
 
+def test_body_matcher_bytes():
+    @responses.activate
+    def run():
+        url = "http://example.com"
+        responses.add(
+            responses.POST,
+            url,
+            body=b"test",
+            match=[matchers.body_matcher("123456")],
+        )
+        resp = requests.post("http://example.com", data=b"123456")
+        assert_response(resp, "test")
+
+    run()
+    assert_reset()
+
+
+def test_body_matcher_mismatch():
+    mock_request = Mock(body="mismatch_data")
+    result = matchers.body_matcher("expected_data")(mock_request)
+    assert result == (
+        False,
+        "request.body doesn't match expected_data doesn't match mismatch_data",
+    )
+
+
+def test_body_matcher_bytes_mismatch():
+    mock_request = Mock(body=b"mismatch_bytes")
+    result = matchers.body_matcher("expected_bytes")(mock_request)
+    assert result == (
+        False,
+        "request.body doesn't match expected_bytes doesn't match mismatch_bytes",
+    )
+
+
 def test_query_string_matcher():
     @responses.activate
     def run():

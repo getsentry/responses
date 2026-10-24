@@ -38,6 +38,20 @@ def _filter_dict_recursively(
     return filtered_dict
 
 
+def _json_values_equal(expected: Any, actual: Any) -> bool:
+    if isinstance(expected, bool) or isinstance(actual, bool):
+        return type(expected) is type(actual) and expected == actual
+    if isinstance(expected, dict) and isinstance(actual, dict):
+        return expected.keys() == actual.keys() and all(
+            _json_values_equal(value, actual[key]) for key, value in expected.items()
+        )
+    if isinstance(expected, list) and isinstance(actual, list):
+        return len(expected) == len(actual) and all(
+            _json_values_equal(left, right) for left, right in zip(expected, actual)
+        )
+    return expected == actual
+
+
 def body_matcher(params: str, *, allow_blank: bool = False) -> Callable[..., Any]:
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
@@ -152,7 +166,11 @@ def json_params_matcher(
                 # filter down to just the params specified in the matcher
                 json_body = _filter_dict_recursively(json_body, json_params)
 
-            valid = params is None if request_body is None else json_params == json_body
+            valid = (
+                params is None
+                if request_body is None
+                else _json_values_equal(json_params, json_body)
+            )
 
             if not valid:
                 reason = f"request.body doesn't match: {json_body} doesn't match {json_params}"

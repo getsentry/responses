@@ -16,6 +16,41 @@ from responses.tests.test_responses import assert_reset
 from responses.tests.test_responses import assert_response
 
 
+@pytest.mark.parametrize("strict_match", [False, True])
+@pytest.mark.parametrize(
+    "expected, actual",
+    [
+        ({"enabled": True}, {"enabled": 1}),
+        ({"enabled": 1}, {"enabled": True}),
+        ({"enabled": False}, {"enabled": 0}),
+        ({"enabled": 0}, {"enabled": False}),
+        ([True], [1]),
+        ({"nested": [{"enabled": False}]}, {"nested": [{"enabled": 0.0}]}),
+    ],
+)
+def test_json_boolean_number_mismatch(expected, actual, strict_match):  # type: ignore[misc]
+    request = requests.Request("POST", "http://example.com", json=actual).prepare()
+    matched, reason = matchers.json_params_matcher(expected, strict_match=strict_match)(
+        request
+    )
+    assert not matched
+    assert "request.body doesn't match" in reason
+
+
+@pytest.mark.parametrize("value", [1, 1.0, True, False])
+def test_json_scalar_equality(value):  # type: ignore[misc]
+    expected = {"value": value}
+    request = requests.Request("POST", "http://example.com", json=expected).prepare()
+    assert matchers.json_params_matcher(expected)(request) == (True, "")
+
+
+def test_json_params_matcher_preserves_numeric_equality():
+    request = requests.Request(
+        "POST", "http://example.com", json={"value": [1.0]}
+    ).prepare()
+    assert matchers.json_params_matcher({"value": [1]})(request) == (True, "")
+
+
 def test_body_match_get():
     @responses.activate
     def run():

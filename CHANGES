@@ -1,6 +1,8 @@
 Unreleased
 ----------
 
+* Fixed ``json_params_matcher`` treating JSON booleans as equal to the numbers
+  0 and 1, including inside nested objects and arrays.
 * Fixed ``fragment_identifier_matcher`` ignoring blank-valued fragment
   parameters, which allowed missing or different parameters to match.
 * Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810

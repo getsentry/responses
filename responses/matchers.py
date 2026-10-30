@@ -224,8 +224,24 @@ def query_param_matcher(
 
     """
 
+    # A params value that produces no query string at all, which is not the
+    # same as one that produces an empty value.
+    _DROP = object()
+
     def _stringify(item: Any) -> Any:
-        return str(item) if isinstance(item, (int, float)) else item
+        """Render one value the way it comes back out of the query string.
+
+        Everything reaching here is already a scalar as far as the query string
+        is concerned, and ``responses`` reads the query string back as text, so
+        the comparison has to be against text. ``bytes`` are decoded rather
+        than ``str()``-ed, because ``urlencode`` percent-encodes the bytes
+        themselves and ``b"x"`` comes back as ``"x"`` rather than ``"b'x'"``.
+        """
+        if isinstance(item, str):
+            return item
+        if isinstance(item, bytes):
+            return item.decode()
+        return str(item)
 
     def _normalize(value: Any) -> Any:
         """Present a ``params`` value the way the request's query string parses.
@@ -245,7 +261,16 @@ def query_param_matcher(
         ``{"attrs": {"counter": 3}}`` is sent as ``attrs=counter`` and the
         values never reach the query string. It is treated here as the
         sequence of its keys for the same reason.
+
+        A value that contributes nothing to the query string returns ``_DROP``
+        so the key can be removed, because ``requests`` omits the key entirely
+        rather than sending it empty. That covers ``None``, an empty sequence
+        and a sequence of nothing but ``None``. An empty string is not one of
+        these: ``{"a": ""}`` is sent as ``a=``, and ``0`` and ``False`` are
+        sent as themselves, so emptiness here is never truthiness.
         """
+        if value is None:
+            return _DROP
         if isinstance(value, Mapping):
             value = list(value)
         if not isinstance(value, (list, tuple)):
@@ -254,7 +279,10 @@ def query_param_matcher(
         values: List[Any] = []
         for item in value:
             if item is None:
-                # ``requests`` omits a ``None`` element from the query string.
+                # ``requests`` omits a ``None`` element from the sequence it
+                # iterates. One level deeper is a different rule: that splice is
+                # done by ``urlencode``, which renders a ``None`` there as the
+                # string ``"None"``, so only this level drops it.
                 continue
             if isinstance(item, Mapping):
                 item = list(item)
@@ -262,9 +290,19 @@ def query_param_matcher(
                 values.extend(_stringify(nested) for nested in item)
             else:
                 values.append(_stringify(item))
+        if not values:
+            return _DROP
         return values[0] if len(values) == 1 else values
 
-    params_dict = {k: _normalize(v) for k, v in params.items()} if params else {}
+    params_dict = (
+        {
+            k: normalized
+            for k, v in params.items()
+            if (normalized := _normalize(v)) is not _DROP
+        }
+        if params
+        else {}
+    )
 
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""

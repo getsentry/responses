@@ -464,6 +464,119 @@ def test_query_params_numbers():
     assert_reset()
 
 
+@pytest.mark.parametrize(
+    "expected_query_params",
+    [
+        {"ids": None},
+        {"ids": []},
+        {"ids": [None]},
+        {"ids": [None, None]},
+        {"attrs": {}},
+        {"a": "", "ids": None},
+        {"a": 0},
+        {"a": False},
+    ],
+)
+def test_query_params_sending_nothing(expected_query_params):  # type: ignore[misc]
+    """A ``params`` value can contribute nothing to the query string.
+
+    ``requests`` omits the key outright for ``None`` and for a sequence that
+    yields no elements, rather than sending it with an empty value, so the
+    matcher has to drop it as well. Emptiness here is not truthiness: ``""``
+    is sent as ``a=``, and ``0`` and ``False`` are sent as themselves.
+    """
+
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "https://example.com/",
+            match=[
+                matchers.query_param_matcher(expected_query_params),
+            ],
+        )
+        requests.get("https://example.com", params=expected_query_params)
+
+    run()
+    assert_reset()
+
+
+@pytest.mark.parametrize(
+    "expected_query_params",
+    [
+        {"ids": [1, 2]},
+        {"ids": (1, 2)},
+        {"ids": ["a", 2], "page": 1},
+        {"ids": [1, 2], "attrs": {"counter": 3, "favorites": [1, 2]}},
+        {"ids": [1]},
+        {"ids": ("a",)},
+        {"ids": [b"x"]},
+        {"ids": [{"k": 1}]},
+        {"ids": [[1, [2, 3]]]},
+        {"ids": [[None, 1]]},
+        {"ids": [[b"x", 1]]},
+        {"ids": [[{"k": 1}]]},
+    ],
+)
+def test_query_params_sequences(expected_query_params):  # type: ignore[misc]
+    """A ``params`` value may be a sequence, which sends the key repeatedly.
+
+    A mapping counts as one: ``requests`` iterates it, so only its keys are
+    sent.
+
+    One level deeper is a different rule, because that splice is done by
+    ``urlencode`` rather than by ``requests``: a nested sequence is spliced in,
+    anything left below that is sent as its ``str()``, and a ``None`` there
+    becomes the string ``"None"`` instead of being dropped.
+    """
+
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "https://example.com/",
+            match=[
+                matchers.query_param_matcher(expected_query_params),
+            ],
+        )
+        requests.get("https://example.com", params=expected_query_params)
+
+    run()
+    assert_reset()
+
+
+@pytest.mark.parametrize(
+    "expected_query_params",
+    [
+        {"ids": [[1, 2], [3]]},
+        {"ids": [[1, 2]], "page": 1},
+        {"ids": [1, None]},
+        {"ids": [None, "a", 2]},
+    ],
+)
+def test_query_params_nested_sequences(expected_query_params):  # type: ignore[misc]
+    """``requests`` flattens a nested sequence and drops a ``None`` element.
+
+    ``urlencode(..., doseq=True)`` splices a sequence inside a sequence value
+    into the query string one level deep, and ``requests`` omits a ``None``
+    element entirely, so both are normalized the same way here.
+    """
+
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "https://example.com/",
+            match=[
+                matchers.query_param_matcher(expected_query_params),
+            ],
+        )
+        requests.get("https://example.com", params=expected_query_params)
+
+    run()
+    assert_reset()
+
+
 def test_query_param_matcher_does_not_mutate_input():
     """query_param_matcher must not modify the caller's params dict.
 

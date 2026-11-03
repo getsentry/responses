@@ -1,8 +1,11 @@
-minVersion: "0.21.0"
+minVersion: "3.9.0"
 github:
   owner: getsentry
   repo: responses
 changelog: CHANGES
+preReleaseCommand: bash scripts/bump-version.sh
+versioning:
+  policy: manual
 targets:
   - name: pypi
   - name: github

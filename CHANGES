@@ -1,6 +1,8 @@
 Unreleased
 ----------
 
+* Fixed fully consumed mocked responses not being cached by CacheControl.
+  See #780.
 * Fixed ``fragment_identifier_matcher`` ignoring blank-valued fragment
   parameters, which allowed missing or different parameters to match.
 * Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810

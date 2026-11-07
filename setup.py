@@ -18,6 +18,7 @@ install_requires = [
 ]
 
 tests_require = [
+    "cachecontrol>=0.13",
     "pytest>=7.0.0",
     "coverage >= 6.0.0",
     "pytest-cov",

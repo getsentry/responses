@@ -358,6 +358,20 @@ def _get_url_and_path(url: str) -> str:
     return parse_url(url_and_path).url
 
 
+class _BodyBuffer(BytesIO):
+    def read(self, size: Optional[int] = -1) -> bytes:
+        data = super().read(size)
+        # Notify wrappers while they are reading, rather than closing during
+        # urllib3's later isclosed() check. Sized reads need an empty read to
+        # expose truncated bodies to urllib3's Content-Length validation.
+        if size is None or size < 0 or (size != 0 and not data):
+            self.close()
+        return data
+
+    def isclosed(self) -> bool:
+        return self.closed
+
+
 def _handle_body(
     body: Optional[Union[bytes, BufferedReader, str]]
 ) -> Union[BufferedReader, BytesIO]:
@@ -379,35 +393,7 @@ def _handle_body(
     if isinstance(body, BufferedReader):
         return body
 
-    data = BytesIO(body)  # type: ignore[arg-type]
-
-    def is_closed() -> bool:
-        """
-        Real Response uses HTTPResponse as body object.
-        Thus, when method is_closed is called first to check if there is any more
-        content to consume and the file-like object is still opened
-
-        This method ensures stability to work for both:
-        https://github.com/getsentry/responses/issues/438
-        https://github.com/getsentry/responses/issues/394
-
-        where file should be intentionally be left opened to continue consumption
-        """
-        if not data.closed and data.read(1):
-            # if there is more bytes to read then keep open, but return pointer
-            data.seek(-1, 1)
-            return False
-        else:
-            if not data.closed:
-                # close but return False to mock like is still opened
-                data.close()
-                return False
-
-            # only if file really closed (by us) return True
-            return True
-
-    data.isclosed = is_closed  # type: ignore[attr-defined]
-    return data
+    return _BodyBuffer(body)  # type: ignore[arg-type]
 
 
 class BaseResponse:

@@ -1,6 +1,8 @@
+import gzip
 import inspect
 import json as json_module
 import logging
+import zlib
 from functools import partialmethod
 from functools import wraps
 from http import client
@@ -606,6 +608,48 @@ def _form_response(
     )
 
 
+_TEXT_BODY_COMPRESSORS = {
+    "gzip": lambda value: gzip.compress(value, mtime=0),
+    "x-gzip": lambda value: gzip.compress(value, mtime=0),
+    "deflate": zlib.compress,
+}
+
+
+def _encode_recorded_text_body(
+    body: Any, headers: Optional[Dict[str, str]]
+) -> "Tuple[Any, Optional[Dict[str, str]]]":
+    """Compress a decoded record-file text body to match its declared encoding.
+
+    Record files store text bodies decoded, but some files still declare a
+    ``Content-Encoding`` (and the ``Content-Length`` of the encoded body).
+    Instead of ignoring those explicit headers, re-encode the text to the
+    declared coding and correct any declared length, so replay matches what
+    the file says. Only ``gzip``/``x-gzip`` and ``deflate`` are re-encoded;
+    other codings pass through unchanged, as do bytes bodies.
+    """
+    if headers is None or not isinstance(body, str):
+        return body, headers
+
+    declared = next(
+        (value for key, value in headers.items() if key.lower() == "content-encoding"),
+        None,
+    )
+    compressor = (
+        None
+        if declared is None
+        else _TEXT_BODY_COMPRESSORS.get(declared.strip().lower())
+    )
+    if compressor is None:
+        return body, headers
+
+    encoded = compressor(body.encode("utf-8"))
+    headers = {
+        key: (str(len(encoded)) if key.lower() == "content-length" else value)
+        for key, value in headers.items()
+    }
+    return encoded, headers
+
+
 class Response(BaseResponse):
     def __init__(
         self,
@@ -900,10 +944,14 @@ class RequestsMock:
                 if not headers:
                     headers = None
 
+            body = rsp["body"]
+            if headers is not None:
+                body, headers = _encode_recorded_text_body(body, headers)
+
             self.add(
                 method=rsp["method"],
                 url=rsp["url"],
-                body=rsp["body"],
+                body=body,
                 status=rsp["status"],
                 headers=headers,
                 content_type=rsp["content_type"],

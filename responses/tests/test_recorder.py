@@ -1,3 +1,4 @@
+import gzip
 from pathlib import Path
 
 import pytest
@@ -461,5 +462,80 @@ class TestReplay:
             # Non-content-type headers should be preserved
             resp = requests.post("http://example.com/submit")
             assert resp.headers["X-Request-Id"] == "abc123"
+
+        run()
+
+    def test_add_from_file_honors_content_encoding_for_text_bodies(self):
+        """A declared encoding is honored by encoding the stored text body.
+
+        Record files store text bodies decoded. When a file still declares
+        ``Content-Encoding`` (recorded by an older version, or preserved via
+        ``keep_headers``), replay encodes the text to that coding instead of
+        ignoring the header, and corrects a stale ``Content-Length``. Bytes
+        bodies are already encoded and pass through unchanged.
+        """
+        payload = '{"status": "ok"}'
+        encoded_payload = gzip.compress(payload.encode("utf-8"), mtime=0)
+        data = {
+            "responses": [
+                {
+                    "response": {
+                        "method": "GET",
+                        "url": "http://example.com/text",
+                        "body": payload,
+                        "status": 200,
+                        # This length measured the originally encoded body.
+                        "headers": {"Content-Encoding": "gzip", "Content-Length": "5"},
+                        "content_type": "application/json",
+                        "auto_calculate_content_length": False,
+                    }
+                },
+                {
+                    "response": {
+                        "method": "GET",
+                        "url": "http://example.com/deflate",
+                        "body": payload,
+                        "status": 200,
+                        "headers": {"Content-Encoding": "deflate"},
+                        "content_type": "application/json",
+                        "auto_calculate_content_length": False,
+                    }
+                },
+                {
+                    "response": {
+                        "method": "GET",
+                        "url": "http://example.com/encoded",
+                        "body": gzip.compress(b'{"status": "encoded"}'),
+                        "status": 200,
+                        "headers": {"Content-Encoding": "gzip"},
+                        "content_type": "application/json",
+                        "auto_calculate_content_length": False,
+                    }
+                },
+            ]
+        }
+
+        yaml_file = Path(str(self.out_file) + ".yaml")
+        with open(yaml_file, "w") as f:
+            yaml.dump(data, f)
+
+        @responses.activate
+        def run():
+            responses._add_from_file(file_path=yaml_file)
+
+            resp = requests.get("http://example.com/text")
+            assert resp.status_code == 200
+            assert resp.json() == {"status": "ok"}
+            assert resp.headers["Content-Encoding"] == "gzip"
+            assert resp.headers["Content-Length"] == str(len(encoded_payload))
+
+            resp = requests.get("http://example.com/deflate")
+            assert resp.status_code == 200
+            assert resp.json() == {"status": "ok"}
+            assert resp.headers["Content-Encoding"] == "deflate"
+
+            resp = requests.get("http://example.com/encoded")
+            assert resp.status_code == 200
+            assert resp.json() == {"status": "encoded"}
 
         run()

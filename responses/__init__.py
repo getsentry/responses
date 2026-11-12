@@ -434,7 +434,7 @@ class BaseResponse:
                 _query_string_matcher(urlsplit(self.url).query),  # type: ignore[arg-type]
             )
 
-        self.match: "_MatcherIterable" = match
+        self.match: "_MatcherIterable" = tuple(match)
         self._calls: CallList = CallList()
         self.passthrough = passthrough
 

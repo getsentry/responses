@@ -1,6 +1,9 @@
 Unreleased
 ----------
 
+* Retained callbacks from matcher iterators for every request instead of
+  silently skipping exhausted matchers on later requests.
+
 * Fixed ``fragment_identifier_matcher`` ignoring blank-valued fragment
   parameters, which allowed missing or different parameters to match.
 * Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810

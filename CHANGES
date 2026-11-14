@@ -13,6 +13,10 @@ Unreleased
   include the ``params`` and ``req_kwargs`` attributes added by ``responses``.
 * Fixed non-strict `json_params_matcher` raising `TypeError` when an actual
   nested object is compared with an expected scalar value.
+* Fixed the default ``header_matcher`` (``strict_match=False``) matching header
+  field names case-sensitively, so a request whose header casing differed from
+  the matcher spec (for example lowercase names over HTTP/2) failed to match.
+  See #805
 
 0.26.3
 ------

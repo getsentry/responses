@@ -17,7 +17,7 @@ Una biblioteca utilitaria para simular (*mock*) la biblioteca Python ``requests`
 
 ..  note::
 
-    Responses requiere Python 3.8 o superior, y requests >= 2.30.0
+    Responses requiere Python 3.11 o superior, y requests >= 2.30.0
 
 
 Tabla de Contenidos
@@ -1513,8 +1513,8 @@ Puedes ejecutar todas las pruebas con:
 
 .. code-block:: shell
 
-    tox -e py38
-    tox -e py310
+    tox -e py311
+    tox -e py312
 
 O activando manualmente la versión de Python requerida y ejecutando:
 

@@ -1,6 +1,8 @@
 Unreleased
 ----------
 
+* Dropped support for Python 3.8, 3.9 and 3.10. Python 3.11 is now the minimum.
+
 * Fixed ``fragment_identifier_matcher`` ignoring blank-valued fragment
   parameters, which allowed missing or different parameters to match.
 * Added Python 3.14 support (classifiers, tox envlist, and CI test matrix). See #810

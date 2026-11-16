@@ -1,3 +1,4 @@
+import tomllib as _toml
 from pathlib import Path
 
 import pytest
@@ -9,12 +10,6 @@ import responses
 from responses import _recorder
 from responses._recorder import _dump
 from responses._recorder import _remove_default_headers
-
-try:
-    import tomli as _toml
-except ImportError:
-    # python 3.11+
-    import tomllib as _toml  # type: ignore[no-redef]
 
 
 def get_data(host, port):

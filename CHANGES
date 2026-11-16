@@ -4,7 +4,7 @@ Unreleased
 * Dropped support for Python 3.8, 3.9 and 3.10. Python 3.11 is now the minimum.
 * Fixed ``fragment_identifier_matcher`` ignoring blank-valued fragment
   parameters, which allowed missing or different parameters to match.
-* Added Python 3.14 and 3.15 support (classifiers, tox envlist, and CI test matrix). See #810
+* Added Python 3.14, and 3.15 (classifiers, tox envlist, and CI test matrix). See #810, #849
 * Match response ``Content-Type`` header names case-insensitively so lowercase
   headers do not produce duplicate content types or incorrect response decoding.
   This also applies to headers returned by callbacks.

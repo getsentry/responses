@@ -944,9 +944,7 @@ class RequestsMock:
                 if not headers:
                     headers = None
 
-            body = rsp["body"]
-            if headers is not None:
-                body, headers = _encode_recorded_text_body(body, headers)
+            body, headers = _encode_recorded_text_body(rsp["body"], headers)
 
             self.add(
                 method=rsp["method"],

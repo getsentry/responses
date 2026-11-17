@@ -17,7 +17,7 @@ A utility library for mocking out the ``requests`` Python library.
 
 ..  note::
 
-    Responses requires Python 3.8 or newer, and requests >= 2.30.0
+    Responses requires Python 3.11 or newer, and requests >= 2.30.0
 
 
 Table of Contents
@@ -1512,8 +1512,8 @@ testing. You can run all tests by:
 
 .. code-block:: shell
 
-    tox -e py38
-    tox -e py310
+    tox -e py311
+    tox -e py312
 
 OR manually activate required version of Python and run
 

@@ -195,8 +195,8 @@ def fragment_identifier_matcher(identifier: Optional[str]) -> Callable[..., Any]
 
         if not valid:
             reason = (
-                "URL fragment identifier is different: "  # type: ignore[str-bytes-safe]
-                f"{identifier} doesn't match {url_fragment}"
+                "URL fragment identifier is different: "
+                f"{identifier} doesn't match {url_fragment}"  # type: ignore[str-bytes-safe]
             )
 
         return valid, reason

@@ -826,6 +826,53 @@ You can then access it in a pytest script using:
         resp = requests.get("http://twitter.com/api/1/foobar")
         assert resp.status_code == 200
 
+Composing ``pytest`` fixtures for multiple APIs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When a test needs mocks for several APIs, share one active ``RequestsMock``
+instance between the fixtures. Independent ``RequestsMock`` contexts have
+separate registries; nesting them does not combine their registered responses.
+
+Let one function-scoped fixture own the context manager. Other fixtures depend
+on it and register responses without starting another context:
+
+.. code-block:: python
+
+    import pytest
+    import requests
+    import responses
+
+
+    @pytest.fixture
+    def mocked_http():
+        with responses.RequestsMock() as rsps:
+            yield rsps
+
+
+    @pytest.fixture
+    def foo_api(mocked_http):
+        mocked_http.get("https://example.foo/", json={"msg": "foo"})
+        return mocked_http
+
+
+    @pytest.fixture
+    def bar_api(mocked_http):
+        mocked_http.get("https://example.bar/", json={"msg": "bar"})
+        return mocked_http
+
+
+    def test_both_apis(foo_api, bar_api):
+        assert requests.get("https://example.foo/").json() == {"msg": "foo"}
+        assert requests.get("https://example.bar/").json() == {"msg": "bar"}
+
+Pytest caches ``mocked_http`` within each test, so both API fixtures register on
+the same instance regardless of their argument order. A test can also request
+only ``foo_api`` or only ``bar_api``. Each test gets a fresh context and call
+history, and the context exits after the dependent fixtures are torn down.
+The default check that all registered responses were called still applies.
+No additional ``@responses.activate`` decorator or ``pytest-responses`` plugin
+is needed for this pattern.
+
 Add default responses for each test
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

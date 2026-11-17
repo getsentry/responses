@@ -464,6 +464,22 @@ def test_query_params_numbers():
     assert_reset()
 
 
+def test_query_param_matcher_non_adjacent_repeated_keys():
+    @responses.activate
+    def run():
+        responses.add(
+            responses.GET,
+            "https://example.com/",
+            match=[
+                matchers.query_param_matcher({"a": ["1", "3"], "b": "2"}),
+            ],
+        )
+        requests.get("https://example.com/?a=1&b=2&a=3")
+
+    run()
+    assert_reset()
+
+
 def test_query_param_matcher_does_not_mutate_input():
     """query_param_matcher must not modify the caller's params dict.
 

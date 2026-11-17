@@ -12,19 +12,42 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class FirstMatchRegistry:
+    """Default registry: the first registered `Response` that matches the request is used.
+
+    Responses are checked in the order they were added. If more than one response
+    matches, the earliest match is used once and then removed, so later calls get
+    the next match; the last remaining match is reused for every further call.
+    """
+
     def __init__(self) -> None:
         self._responses: List["BaseResponse"] = []
 
     @property
     def registered(self) -> List["BaseResponse"]:
+        """List of the registered `Response` objects, in the order they were added."""
         return self._responses
 
     def reset(self) -> None:
+        """Remove all registered responses."""
         self._responses = []
 
     def find(
         self, request: "PreparedRequest"
     ) -> Tuple[Optional["BaseResponse"], List[str]]:
+        """Find the first registered `Response` that matches the request.
+
+        Parameters
+        ----------
+        request : PreparedRequest
+            Request that was caught by the custom adapter.
+
+        Returns
+        -------
+        Tuple[Optional["BaseResponse"], List[str]]
+            Matched `Response` object (or None) and the reasons why the other
+            registered responses did not match.
+
+        """
         found = None
         found_match = None
         match_failed_reasons = []
@@ -47,6 +70,12 @@ class FirstMatchRegistry:
         return found_match, match_failed_reasons
 
     def add(self, response: "BaseResponse") -> "BaseResponse":
+        """Register a response and return it.
+
+        If the same `Response` instance is already registered, a deep copy is
+        registered and returned instead, so the same object is never
+        registered twice.
+        """
         if any(response is resp for resp in self.registered):
             # if user adds multiple responses that reference the same instance.
             # do a comparison by memory allocation address.
@@ -57,6 +86,10 @@ class FirstMatchRegistry:
         return response
 
     def remove(self, response: "BaseResponse") -> List["BaseResponse"]:
+        """Remove every registered response with the same method and URL as ``response``.
+
+        Returns the removed responses.
+        """
         removed_responses = []
         while response in self.registered:
             self.registered.remove(response)
@@ -64,6 +97,14 @@ class FirstMatchRegistry:
         return removed_responses
 
     def replace(self, response: "BaseResponse") -> "BaseResponse":
+        """Replace the registered response with the same method and URL as ``response``.
+
+        Raises
+        ------
+        ValueError
+            If no response with that method and URL is registered.
+
+        """
         try:
             index = self.registered.index(response)
         except ValueError:

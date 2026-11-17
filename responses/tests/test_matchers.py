@@ -447,6 +447,33 @@ def test_urlencoded_params_matcher_strict():
     assert_reset()
 
 
+def test_urlencoded_params_matcher_strict_repeated_keys():
+    """Strict matching must reject a body with repeated keys the params dict
+    cannot represent (e.g. body "a=1&a=2" against {"a": "2"})."""
+
+    @responses.activate
+    def run():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="body1",
+            match=[matchers.urlencoded_params_matcher({"a": "2"})],
+        )
+
+        # data as a list of pairs encodes to "a=1&a=2"; the stray a=1 must fail
+        with pytest.raises(ConnectionError) as excinfo:
+            requests.request(
+                "POST",
+                "http://example.com/",
+                headers={"Content-Type": "x-www-form-urlencoded"},
+                data=[("a", "1"), ("a", "2")],
+            )
+        assert "repeated keys" in str(excinfo.value)
+
+    run()
+    assert_reset()
+
+
 def test_query_params_numbers():
     @responses.activate
     def run():

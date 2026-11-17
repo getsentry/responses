@@ -272,6 +272,68 @@ def test_json_params_matcher_body_is_gzipped():
     assert result == (True, "")
 
 
+def test_json_params_matcher_ignore_order():
+    # Top-level list reordered
+    mock_req = Mock(body='["C", "A", "B"]')
+    matcher = matchers.json_params_matcher(["A", "B", "C"], ignore_order=True)
+    assert matcher(mock_req) == (True, "")
+
+    # Default ignore_order=False fails on different order
+    matcher_default = matchers.json_params_matcher(["A", "B", "C"])
+    assert matcher_default(mock_req)[0] is False
+
+    # Nested lists inside dictionary
+    mock_nested = Mock(body='{"tags": ["python", "api"], "ids": [3, 1, 2]}')
+    matcher_nested = matchers.json_params_matcher(
+        {"tags": ["api", "python"], "ids": [1, 2, 3]}, ignore_order=True
+    )
+    assert matcher_nested(mock_nested) == (True, "")
+
+    # List of nested dictionaries in different order
+    mock_dict_list = Mock(
+        body='[{"id": 2, "name": "b"}, {"id": 1, "name": "a"}]'
+    )
+    matcher_dict_list = matchers.json_params_matcher(
+        [{"id": 1, "name": "a"}, {"id": 2, "name": "b"}], ignore_order=True
+    )
+    assert matcher_dict_list(mock_dict_list) == (True, "")
+
+    # Duplicate elements must match multiplicity
+    mock_dup = Mock(body="[1, 2, 2]")
+    matcher_dup = matchers.json_params_matcher([1, 1, 2], ignore_order=True)
+    assert matcher_dup(mock_dup)[0] is False
+
+    # Length mismatch fails
+    mock_len = Mock(body="[1, 2, 3]")
+    matcher_len = matchers.json_params_matcher([1, 2], ignore_order=True)
+    assert matcher_len(mock_len)[0] is False
+
+
+def test_json_params_matcher_ignore_order_integration():
+    @responses.activate(assert_all_requests_are_fired=True)
+    def run():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/api",
+            body="OK",
+            match=[
+                matchers.json_params_matcher(
+                    {"items": [10, 20, 30], "group": "test"},
+                    ignore_order=True,
+                )
+            ],
+        )
+
+        resp = requests.post(
+            "http://example.com/api",
+            json={"group": "test", "items": [30, 10, 20]},
+        )
+        assert_response(resp, "OK")
+
+    run()
+    assert_reset()
+
+
 def test_urlencoded_params_matcher_blank():
     @responses.activate
     def run():

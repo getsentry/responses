@@ -38,6 +38,38 @@ def _filter_dict_recursively(
     return filtered_dict
 
 
+def _compare_json(
+    matcher_val: Any, request_val: Any, *, ignore_order: bool = False
+) -> bool:
+    if ignore_order:
+        if isinstance(matcher_val, list) and isinstance(request_val, list):
+            if len(matcher_val) != len(request_val):
+                return False
+            matched = [False] * len(request_val)
+            for m_item in matcher_val:
+                found = False
+                for idx, r_item in enumerate(request_val):
+                    if not matched[idx] and _compare_json(
+                        m_item, r_item, ignore_order=True
+                    ):
+                        matched[idx] = True
+                        found = True
+                        break
+                if not found:
+                    return False
+            return True
+        elif isinstance(matcher_val, dict) and isinstance(request_val, dict):
+            if set(matcher_val.keys()) != set(request_val.keys()):
+                return False
+            for k in matcher_val:
+                if not _compare_json(
+                    matcher_val[k], request_val[k], ignore_order=True
+                ):
+                    return False
+            return True
+    return matcher_val == request_val
+
+
 def body_matcher(params: str, *, allow_blank: bool = False) -> Callable[..., Any]:
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
@@ -110,7 +142,10 @@ def urlencoded_params_matcher(
 
 
 def json_params_matcher(
-    params: Optional[Union[Mapping[str, Any], List[Any]]], *, strict_match: bool = True
+    params: Optional[Union[Mapping[str, Any], List[Any]]],
+    *,
+    strict_match: bool = True,
+    ignore_order: bool = False,
 ) -> Callable[..., Any]:
     """Matches JSON encoded data of request body.
 
@@ -123,6 +158,9 @@ def json_params_matcher(
         Applied only when JSON object is a dictionary.
         If set to ``True``, validates that all keys of JSON object match.
         If set to ``False``, original request may contain additional keys.
+    ignore_order : bool, default=False
+        If set to ``True``, list elements in JSON structures are compared
+        without regard to their ordering.
 
 
     Returns
@@ -152,7 +190,12 @@ def json_params_matcher(
                 # filter down to just the params specified in the matcher
                 json_body = _filter_dict_recursively(json_body, json_params)
 
-            valid = params is None if request_body is None else json_params == json_body
+            if params is None:
+                valid = request_body is None
+            elif ignore_order:
+                valid = _compare_json(json_params, json_body, ignore_order=True)
+            else:
+                valid = json_params == json_body
 
             if not valid:
                 reason = f"request.body doesn't match: {json_body} doesn't match {json_params}"

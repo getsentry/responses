@@ -1894,6 +1894,10 @@ class TestPassthru:
             resp = requests.get(url)
             assert_response(resp, "OK")
 
+            assert len(responses.calls) == 3
+            assert responses.calls[2].response.content == b"OK"
+            responses.assert_call_count(url, 1)
+
         run()
         assert_reset()
 
@@ -1917,6 +1921,11 @@ class TestPassthru:
             assert_response(resp, "OK")
             resp = requests.get(f"{url}/three")
             assert_response(resp, "OK")
+
+            assert len(responses.calls) == 4
+            assert responses.calls[3].response.content == b"OK"
+            responses.assert_call_count(f"{url}/two", 1)
+            responses.assert_call_count(f"{url}/three", 1)
 
         run()
         assert_reset()

@@ -256,6 +256,54 @@ def test_json_params_matcher_json_list():
     )
 
 
+@pytest.mark.parametrize(
+    "value,body",
+    [(0, "0"), (False, "false"), ("", '""'), (0.0, "0.0")],
+)
+def test_json_params_matcher_falsy_primitives(value, body):
+    """Falsy top-level JSON primitives must match themselves, not ``{}``.
+
+    Regression test for https://github.com/getsentry/responses/issues/834:
+    ``(params or {})`` silently replaced ``0``, ``False``, ``""`` and
+    ``0.0`` with an empty dict, so such bodies never matched.
+    """
+    mock_request = Mock(body=body)
+    result = matchers.json_params_matcher(value)(mock_request)
+    assert result == (True, "")
+
+
+def test_json_params_matcher_falsy_primitive_mismatch():
+    mock_request = Mock(body='""')
+    result = matchers.json_params_matcher(0)(mock_request)
+    assert result == (
+        False,
+        "request.body doesn't match:  doesn't match 0",
+    )
+
+
+@pytest.mark.parametrize("value", [0, False, ""])
+def test_json_params_matcher_falsy_primitives_end_to_end(value):
+    @responses.activate
+    def run():
+        responses.add(
+            method=responses.POST,
+            url="http://example.com/",
+            body="one",
+            match=[matchers.json_params_matcher(value)],
+        )
+
+        resp = requests.request(
+            "POST",
+            "http://example.com/",
+            headers={"Content-Type": "application/json"},
+            json=value,
+        )
+        assert_response(resp, "one")
+
+    run()
+    assert_reset()
+
+
 def test_json_params_matcher_json_list_empty():
     json_a: "List[Any]" = []
     json_b = "[]"

@@ -239,7 +239,8 @@ auto_calculate_content_length (``bool``)
 
 match (``tuple``)
     An iterable (``tuple`` is recommended) of callbacks to match requests
-    based on request attributes.
+    based on request attributes. The iterable is consumed when the response is
+    created and reused for every matching attempt.
     Current module provides multiple matchers that you can use to match:
 
     * body contents in JSON format

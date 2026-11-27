@@ -1,4 +1,5 @@
 import gzip
+import json
 import re
 from io import BytesIO
 from typing import Any
@@ -262,6 +263,25 @@ def test_json_params_matcher_json_list_empty():
     mock_request = Mock(body=json_b)
     result = matchers.json_params_matcher(json_a)(mock_request)
     assert result == (True, "")
+
+
+def test_json_params_matcher_falsy_json_primitives() -> None:
+    for params in (0, False, ""):
+        mock_request = Mock(body=json.dumps(params))
+
+        result = matchers.json_params_matcher(params)(mock_request)
+
+        assert result == (True, "")
+
+
+def test_json_params_matcher_falsy_json_primitives_do_not_match_different_values() -> None:
+    for params, request_body in ((0, "1"), (False, "true"), ("", '"value"')):
+        mock_request = Mock(body=request_body)
+
+        result = matchers.json_params_matcher(params)(mock_request)
+
+        assert result[0] is False
+        assert result[1]
 
 
 def test_json_params_matcher_body_is_gzipped():

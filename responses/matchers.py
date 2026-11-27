@@ -110,7 +110,11 @@ def urlencoded_params_matcher(
 
 
 def json_params_matcher(
-    params: Optional[Union[Mapping[str, Any], List[Any]]], *, strict_match: bool = True
+    params: Optional[
+        Union[Mapping[str, Any], List[Any], str, int, float, bool]
+    ],
+    *,
+    strict_match: bool = True,
 ) -> Callable[..., Any]:
     """Matches JSON encoded data of request body.
 
@@ -135,7 +139,7 @@ def json_params_matcher(
     def match(request: PreparedRequest) -> Tuple[bool, str]:
         reason = ""
         request_body = request.body
-        json_params = (params or {}) if not isinstance(params, list) else params
+        json_params = {} if params is None else params
         try:
             if isinstance(request.body, bytes):
                 try:
